@@ -56,7 +56,7 @@
 	force_wielded = 20
 	possible_item_intents = list(/datum/intent/axe/chop/stone)
 	name = "stone axe"
-	desc = "A rough stone axe. Badly balanced."
+	desc = "A primitive axe made of knapped stone, an idea as old as time. While todae's implements are much more advanced, primitive creatures and wildsmen often use stone tools."
 	icon_state = "stoneaxe"
 	icon = 'icons/roguetown/weapons/32.dmi'
 	item_state = "axe"
@@ -135,7 +135,7 @@
 	possible_item_intents = list(/datum/intent/axe/cut/battle, /datum/intent/axe/chop/battle, /datum/intent/axe/bash, /datum/intent/sword/peel)
 	wlength = WLENGTH_LONG		//It's a big battle-axe.
 	name = "battle axe"
-	desc = "A steel battleaxe of war. Has a wicked edge."
+	desc = "A steel axe made for the express purpose of war, its edge more akin to a cleaver than a traditional wood axe. It's a weapon for the brutish and the uncivilized."
 	icon_state = "battleaxe"
 	max_blade_int = 300
 	smeltresult = /obj/item/ingot/steel
@@ -159,8 +159,8 @@
 	force = 30
 	force_wielded = 40
 	possible_item_intents = list(/datum/intent/axe/cut/battle, /datum/intent/axe/chop/battle, /datum/intent/axe/bash)
-	name = "oath"
-	desc = "A hefty, steel-forged axe marred by the touch of countless Wardens. Despite it's weathered etchings and worn grip, the blade has been honed to a razor's edge and you can see your reflection in the finely polished metal."
+	name = "\"Oath\""
+	desc = "A hefty steel war-axe marred by the touch of countless Wardens. Despite it's weathered etchings and worn grip, the blade is honed to a razor's edge and you can see your reflection in the finely polished metal - as long as it's not stained with blood."
 	icon_state = "oath"
 	icon = 'icons/roguetown/weapons/64.dmi'
 	max_blade_int = 500
@@ -189,11 +189,11 @@
 				return list("shrink" = 0.5,"sx" = 1,"sy" = -1,"nx" = 1,"ny" = -1,"wx" = 4,"wy" = -1,"ex" = -1,"ey" = -1,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 8,"sflip" = 0,"wflip" = 0,"eflip" = 0,"northabove" = 1,"southabove" = 0,"eastabove" = 0,"westabove" = 0,)
 
 /obj/item/rogueweapon/stoneaxe/woodcut
-	name = "axe"
+	name = "felling axe"
 	force = 20
 	force_wielded = 26
 	possible_item_intents = list(/datum/intent/axe/cut,/datum/intent/axe/chop, /datum/intent/sword/peel)
-	desc = "A regular iron woodcutting axe."
+	desc = "An iron axe purpose-built for cutting down trees, as its name suggests. It's a tool of no evil, made for the honest woodcutter."
 	icon_state = "axe"
 	max_blade_int = 400
 	smeltresult = /obj/item/ingot/iron
@@ -212,8 +212,8 @@
 
 //Pickaxe-axe ; Technically both a tool and a weapon, but it goes here due to weapon function. Subtype of woodcutter axe, mostly a weapon.
 /obj/item/rogueweapon/stoneaxe/woodcut/pick
-	name = "Pulaski axe"
-	desc = "An odd mix of a pickaxe front and a hatchet blade back, capable of being switched between."
+	name = "mattock"
+	desc = "A steel mattock - a tool that combines a pick head with a chopping adze on the back. Some northern cultures oft call them \"grub axes\"."
 	icon_state = "paxe"
 	possible_item_intents = list(/datum/intent/axe/cut,/datum/intent/axe/chop, /datum/intent/mace/warhammer/pick, /datum/intent/axe/bash)
 	gripped_intents = list(/datum/intent/axe/cut,/datum/intent/axe/chop, /datum/intent/mace/warhammer/pick, /datum/intent/axe/bash)
@@ -222,8 +222,8 @@
 	toolspeed = 2
 
 /obj/item/rogueweapon/stoneaxe/woodcut/wardenpick
-	name = "Wardens' axe"
-	desc = "A multi-use axe smithed by the Wardens since time immemorial for both it's use as a tool and a weapon."
+	name = "Warden's axe"
+	desc = "A type of mattock that combines a pick head with a war axe's, seen in the hands of the local wardens. Its first appearance was seen after the dissolution of the bog guard, this design is native to Azuria."
 	icon_state = "wardenpax"
 	force = 22
 	force_wielded = 28
@@ -238,7 +238,7 @@
 /obj/item/rogueweapon/stoneaxe/handaxe/copper
 	force = 13
 	name = "copper hatchet"
-	desc = "A copper hand axe. It is not very durable."
+	desc = "A hand axe made of copper, outdated even before the discovery of iron. It's not very durable, and definitely not as sharp."
 	max_integrity = 100 // Half of the norm
 	icon_state = "chatchet"
 	smeltresult = /obj/item/ingot/copper
@@ -247,8 +247,8 @@
 /obj/item/rogueweapon/stoneaxe/handaxe
 	force = 19
 	possible_item_intents = list(/datum/intent/axe/cut,/datum/intent/axe/chop, /datum/intent/sword/peel)
-	name = "hatchet"
-	desc = "An iron hand axe."
+	name = "iron hatchet"
+	desc = "A compact hand axe made of iron, best employed by travellers who want to pack light."
 	icon_state = "hatchet"
 	minstr = 1
 	max_blade_int = 400
@@ -257,8 +257,9 @@
 	wdefense = 2
 
 /obj/item/rogueweapon/stoneaxe/woodcut/steel
+	name = "steel felling axe"
 	icon_state = "saxe"
-	desc = "A steel woodcutting axe. Performs much better than its iron counterpart."
+	desc = "A lighter, more durable steel axe purpose-built for cutting down trees, as its name suggests. It's a tool of no evil, made for the honest woodcutter."
 	force = 26
 	force_wielded = 28
 	max_blade_int = 500
@@ -288,7 +289,7 @@
 	force_wielded = 22
 	possible_item_intents = list(/datum/intent/axe/cut,/datum/intent/axe/chop)
 	name = "bone axe"
-	desc = "A rough axe made of bones"
+	desc = "A primitive axe made out of a carved large bone, it was commonly depicted in ancient elven tales."
 	icon_state = "boneaxe"
 	lefthand_file = 'icons/mob/inhands/weapons/rogue_lefthand.dmi'
 	righthand_file = 'icons/mob/inhands/weapons/rogue_righthand.dmi'
@@ -318,7 +319,7 @@
 
 /obj/item/rogueweapon/stoneaxe/silver
 	name = "silver war axe"
-	desc = "A one-handed war axe forged of silver."
+	desc = "A one-handed war axe made of pure silver, forged for the purpose of decoration or to fell a beast of the nite."
 	icon_state = "silveraxe"
 	force = 24
 	possible_item_intents = list(/datum/intent/axe/cut,/datum/intent/axe/chop, /datum/intent/axe/bash)
@@ -332,7 +333,8 @@
 
 /obj/item/rogueweapon/stoneaxe/battle/psyaxe
 	name = "psydonian war axe"
-	desc = "An ornate battle axe, plated in a ceremonial veneer of silver. The premiere instigator of conflict against elven attachees."
+	desc = "A finely made battle axe, plated in a ceremonial veneer of ornate silver - made for felling men and monsters alike.\
+		\""
 	icon_state = "psyaxe"
 	smeltresult = /obj/item/ingot/steel
 	blade_dulling = DULLING_SHAFT_METAL

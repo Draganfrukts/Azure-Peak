@@ -7,7 +7,7 @@
 	subclass_languages = list(/datum/language/aavnic)//Your character could not have possibly "graduated" without atleast some basic knowledge of Aavnic.
 	class_select_category = CLASS_CAT_AAVNR
 	category_tags = list(CTAG_MERCENARY)
-	cmode_music = 'sound/music/combat_noble.ogg'
+	cmode_music = 'sound/music/frei_fencer.ogg'
 	traits_applied = list(TRAIT_BADTRAINER, TRAIT_INTELLECTUAL)
 	//To give you an edge in specialty moves like feints and stop you from being feinted
 	subclass_stats = list(
@@ -62,6 +62,7 @@
 /datum/advclass/mercenary/freelancer/lancer
 	name = "Freifechter Lancer"
 	tutorial = "You put complete trust in your polearm, the most effective weapon the world has seen. Why wear armour when you cannot be hit? You can choose to display the banners of the Reformist Order or your own State."
+	cmode_music = 'sound/music/frei_lancer.ogg'
 	outfit = /datum/outfit/job/roguetown/mercenary/freelancer_lancer
 	subclass_languages = list(/datum/language/aavnic)//Your character could not have possibly "graduated" without atleast some basic knowledge of Aavnic.
 	traits_applied = list(TRAIT_BADTRAINER)
@@ -79,6 +80,7 @@
 		/datum/skill/misc/reading = SKILL_LEVEL_APPRENTICE,
 		/datum/skill/misc/climbing = SKILL_LEVEL_APPRENTICE,	//I got told that having zero climbing is a PITA. Bare minimum for a combat class.
 	)
+	
 		adv_stat_ceiling = list(STAT_STRENGTH = 13, STAT_SPEED = 12, STAT_WILLPOWER = 14)	//Prevent climbing to 14 by picking a +1 STR race.
 
 /datum/outfit/job/roguetown/mercenary/freelancer_lancer/pre_equip(mob/living/carbon/human/H)

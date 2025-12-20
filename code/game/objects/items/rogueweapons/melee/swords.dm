@@ -81,6 +81,71 @@
 	item_d_type = "blunt"
 	intent_intdamage_factor = BLUNT_DEFAULT_INT_DAMAGEFACTOR
 
+// Freifechter Longsword intents //
+/datum/intent/sword/cut/master
+	name = "fendente"
+	desc = "Strike the opponent from above with the true edge of the sword and penetrate light armour."
+	attack_verb = list("tears", "slits", "hacks")
+	damfactor = 1
+	penfactor = 50
+
+/datum/intent/sword/thrust/long/master
+	name = "stoccata"
+	desc = "Enter a long guard and thrust forward with your entire upper body while advancing, maximizing the effectiveness of the thrust."
+	attack_verb =  list("perforates", "punctures", "sticks")
+	damfactor = 1.1
+
+/datum/intent/sword/forced_clinch
+	name = "clinch & swipe"
+	desc = "Get up in your opponent's face and force them into a clinch, then swipe their face with the crossguard while they're distracted. Good against baited or exhausted opponents."
+	icon_state = "inpunch"
+	attack_verb = list("forcibly clinches and swipes")
+	animname = "strike"
+	target_parts = list(BODY_ZONE_HEAD, BODY_ZONE_PRECISE_SKULL, BODY_ZONE_PRECISE_NOSE, BODY_ZONE_PRECISE_EARS, BODY_ZONE_PRECISE_MOUTH)
+	blade_class = BCLASS_BLUNT
+	hitsound = list('sound/combat/hits/blunt/bluntsmall (1).ogg', 'sound/combat/hits/blunt/bluntsmall (2).ogg', 'sound/combat/hits/kick/kick.ogg')
+	damfactor = 0.7
+	penfactor = 80
+	swingdelay = 5
+	clickcd = 12
+	recovery = 15
+	item_d_type = "blunt"
+	intent_intdamage_factor = BLUNT_DEFAULT_INT_DAMAGEFACTOR
+	canparry = FALSE
+	candodge = FALSE
+
+/datum/intent/sword/thrust/long/halfsword
+	name = "mezza spada"
+	desc = "Grip the dull portion of your longsword with either hand and use it as leverage to deliver precise, powerful strikes that can dig into gaps in plate and push past maille."
+	attack_verb = list("skewers", "impales")
+	hitsound = list('sound/combat/hits/bladed/genstab (1).ogg', 'sound/combat/hits/bladed/genstab (2).ogg', 'sound/combat/hits/bladed/genstab (3).ogg')
+	penfactor = 80
+	clickcd = 14
+	swingdelay = 8
+	damfactor = 1.1
+	blade_class = BCLASS_HALFSWORD
+
+/datum/intent/effect/daze/longsword
+	name = "durchlauffen"
+	desc = "Lock the opponent's arm in place and strike their nose with the pommel of your sword before tossing them, affecting their ability to dodge and feint. Can only be performed one-handed."
+	attack_verb = list("pummels")
+	intent_effect = /datum/status_effect/debuff/dazed/longsword
+	target_parts = list(BODY_ZONE_PRECISE_NOSE)
+	damfactor = 0.8
+	clickcd = 6
+	recovery = 8
+
+/datum/intent/effect/daze/longsword2h
+	name = "zorn ort"
+	desc = "Block the opponent's weapon with a strike of your own and advance into a thrust to the face, affecting their vision severely. Can only be performed two-handed."
+	attack_verb = list("pokes")
+	intent_effect = /datum/status_effect/debuff/dazed/longsword2h
+	target_parts = list(BODY_ZONE_PRECISE_R_EYE, BODY_ZONE_PRECISE_L_EYE)
+	blade_class = BCLASS_STAB
+	damfactor = 1.1 //Same as master stab
+	clickcd = 5
+	recovery = 6
+
 // A weaker strike for sword with high damage so that it don't end up becoming better than mace
 /datum/intent/sword/strike/bad
 	damfactor = 0.7 
@@ -444,17 +509,12 @@
 
 /obj/item/rogueweapon/sword/long/etruscan
 	name = "basket-hilted longsword"
-	desc = "An uncommon and elaborate type of longsword with a compound hilt like those seen on rapiers and smallswords. It has a marked unsharpened section for safe unarmored half-swording, and it's made of Calorian steel."
+	desc = "An uncommon and elaborate type of longsword with a compound hilt like those seen on rapiers and smallswords. It has a marked unsharpened section for safe unarmoured half-swording. The quality of the steel speaks for itself; this is a weapon made by masters, for masters."
 	icon_state = "elongsword"
 
-/obj/item/rogueweapon/sword/long/frei		//Challenge weapon
-	name = "dueling longsword"
-	desc = "Fechtfeders are a type of training sword brought up by Grenzelhoft fencing guilds, their name - literally \"Feather\" - matches their construction; thinner, lighter, dull but more balanced - with a blade catcher to boot. Freifechters often modify them, giving them edges and a point for use in real dueling - this is one such example, and there's a reason they don't make it out of the fighting pit."
-	icon_state = "sharpfeder"
-	force = 22
-	force_wielded = 27
-	wdefense = 5		//+1
-	wbalance = WBALANCE_SWIFT
+/obj/item/rogueweapon/sword/long/etruscan/freifechter
+	name = "psydonic reformist longsword"
+	desc = "A newly-smithed longsword with a reverse hilt in the shape of a reformist psydonian cross. It has the same kind of hand protection of an Etruscan longsword. The cross is upright when the weapon is sheathed, bronze pommel reflecting sunlight directly - and it becomes inverted when drawn, a symbol of distress. Ad pacem servandam."
 
 /obj/item/rogueweapon/sword/long/zizo
 	name = "avantyne longsword"

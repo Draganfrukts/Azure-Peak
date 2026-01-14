@@ -8,6 +8,7 @@ GLOBAL_LIST_EMPTY(chosen_names)
 	var/path
 	var/default_slot = 1				//Holder so it doesn't default to slot 1, rather the last one used
 	var/max_save_slots = 60
+	var/loaded_slot = 1
 
 	//non-preference stuff
 	var/muted = 0
@@ -467,7 +468,7 @@ GLOBAL_LIST_EMPTY(chosen_names)
 				if(virtuetwo.type in pref_species.restricted_virtues)
 					virtuetwo = GLOB.virtues[/datum/virtue/none]
 			dat += "<b>Virtue:</b> <a href='?_src_=prefs;preference=virtue;task=input'>[virtue]</a><BR>"
-			if(statpack.name == "Virtuous")
+			if(statpack.virtuous)
 				dat += "<b>Second Virtue:</b> <a href='?_src_=prefs;preference=virtuetwo;task=input'>[virtuetwo]</a><BR>"
 			else
 				virtuetwo = GLOB.virtues[/datum/virtue/none]
@@ -1457,7 +1458,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 	else if(href_list["preference"] == "descriptors")
 		show_descriptors_ui(user)
 		return
-	
+
 	else if(href_list["preference"] == "lore_primer")
 		LorePopup(user)
 		return
@@ -2085,7 +2086,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 						rumour_display = parsemarkdown_basic(rumour_display, hyperlink = TRUE)
 						msg += "<b>You recall what you heard around Town about [real_name]...</b><br>[rumour_display]"
 					if(length(noble_gossip))
-						if(msg) 
+						if(msg)
 							msg += "<br><br>"
 						var/gossip_display = noble_gossip
 						gossip_display = html_encode(gossip_display)
@@ -2294,7 +2295,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 					if(choice)
 						preset_bounty_severity_key = sev_choices[choice]
 					return
-				
+
 				if("preset_bounty_severity_b_key")
 					var/list/sev_choices = list()
 					for(var/key in GLOB.bandit_severities)
@@ -2307,7 +2308,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 				if("preset_bounty_crime")
 					preset_bounty_crime = input(user, "What is your crime?", "Crime") as text|null
 					return
-					
+
 				if("update_mutant_colors")
 					update_mutant_colors = !update_mutant_colors
 

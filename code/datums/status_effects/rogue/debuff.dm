@@ -413,19 +413,31 @@
 /atom/movable/screen/alert/status_effect/debuff/dazed/longsword
 	name = "Master Strike"
 	desc = "How the fuck did they do that!? My ears are ringing!"
-	icon_state = "dazed"
+	icon_state = "mstrike"
 
 /datum/status_effect/debuff/dazed/longsword2h
 	id = "zorn ort"
 	alert_type = /atom/movable/screen/alert/status_effect/debuff/dazed/longsword2h
-	effectedstats = list(STATKEY_PER = -4, STATKEY_LCK = -1)
+	effectedstats = list(STATKEY_PER = -4, STATKEY_LCK = -3)
 	duration = 8 SECONDS
 	status_type = STATUS_EFFECT_REFRESH
 
 /atom/movable/screen/alert/status_effect/debuff/dazed/longsword2h
 	name = "Master Strike"
 	desc = "How the fuck did they do that!? My eye!"
-	icon_state = "dazed"
+	icon_state = "mstrike"
+
+/datum/status_effect/debuff/dazed/freisabre
+	id = "uszkodzić"
+	alert_type = /atom/movable/screen/alert/status_effect/debuff/dazed/freisabre
+	effectedstats = list(STATKEY_STR = -2, STATKEY_SPD = -3)
+	duration = 10 SECONDS
+	status_type = STATUS_EFFECT_REFRESH
+
+/atom/movable/screen/alert/status_effect/debuff/dazed/freisabre
+	name = "Master Strike"
+	desc = "How the fuck did they do that!? My wrist!"
+	icon_state = "mstrike"
 
 /*/atom/movable/screen/alert/status_effect/debuff/dazed/shield
 	name = "Dazed by fencer's wrap"

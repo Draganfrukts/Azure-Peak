@@ -86,6 +86,7 @@
 // Freifechter Longsword intents //
 /datum/intent/sword/cut/master
 	name = "fendente"
+	icon_state = "incutmaster"
 	desc = "Strike the opponent from above with the true edge of the sword and penetrate light armour."
 	attack_verb = list("tears", "slits", "hacks")
 	damfactor = 1
@@ -97,7 +98,7 @@
 	attack_verb =  list("perforates", "punctures", "sticks")
 	damfactor = 1.1
 
-/datum/intent/sword/forced_clinch
+/datum/intent/effect/daze/longsword/clinch
 	name = "clinch & swipe"
 	desc = "Get up in your opponent's face and force them into a clinch, then swipe their face with the crossguard while they're distracted. Good against baited or exhausted opponents."
 	icon_state = "inpunch"
@@ -139,7 +140,7 @@
 
 /datum/intent/effect/daze/longsword2h
 	name = "zorn ort"
-	desc = "Block the opponent's weapon with a strike of your own and advance into a thrust to the face, affecting their vision severely. Can only be performed two-handed."
+	desc = "Block the opponent's weapon with a strike of your own and advance into a thrust towards the eyes, affecting their vision severely. Can only be performed two-handed."
 	attack_verb = list("pokes")
 	intent_effect = /datum/status_effect/debuff/dazed/longsword2h
 	target_parts = list(BODY_ZONE_PRECISE_R_EYE, BODY_ZONE_PRECISE_L_EYE)
@@ -527,6 +528,11 @@
 	name = "basket-hilted longsword"
 	desc = "An uncommon and elaborate type of longsword with a compound hilt like those seen on rapiers and smallswords. It has a marked unsharpened section for safe unarmoured half-swording. The quality of the steel speaks for itself; this is a weapon made by masters, for masters."
 	icon_state = "elongsword"
+	possible_item_intents = list(/datum/intent/sword/cut/master, /datum/intent/sword/thrust/long, /datum/intent/effect/daze/longsword/clinch, /datum/intent/effect/daze/longsword)
+	gripped_intents = list(/datum/intent/sword/cut/master, /datum/intent/sword/thrust/long/master, /datum/intent/sword/thrust/long/halfsword, /datum/intent/effect/daze/longsword2h)
+	alt_intents = list(/datum/intent/sword/strike, /datum/intent/sword/bash, /datum/intent/effect/daze)
+	max_blade_int = 300
+	max_integrity = 200
 
 /obj/item/rogueweapon/sword/long/etruscan/freifechter
 	name = "psydonic reformist longsword"
@@ -1086,7 +1092,35 @@
 	icon_state = "shashka"
 	sheathe_icon = "shashka"
 
-/obj/item/rogueweapon/sword/sabre/steppesman/Initialize()
+/datum/intent/sword/cut/sabre/master
+	name = "pokrajać"
+	clickcd = 7
+	damfactor = 1.25
+	penfactor = 40//WIP. NOT FINAL
+
+/datum/intent/effect/daze/freisabre
+	name = "uszkodzić"
+	desc = "After a few misleading strikes, suddenly slash at your opponent's wrist to affect their speed and strength, preventing them from using their weapon effectively. This move can be parried, but not dodged."
+	attack_verb = list("wrist-slits")
+	intent_effect = /datum/status_effect/debuff/dazed/freisabre
+	target_parts = list(BODY_ZONE_PRECISE_L_HAND, BODY_ZONE_PRECISE_R_HAND)
+	damfactor = 1.25
+	clickcd = 12
+	recovery = 8
+	swingdelay = 3
+	canparry = TRUE
+	candodge = FALSE
+
+/obj/item/rogueweapon/sword/sabre/freifechter
+	name = "szöréndnížine sabre"
+	desc = "A rare, specialty-made sabre domestic to Szöréndnížina, made similarly to those of the Potentate's Hussars. It has a large, open hilt with a cross-shaped guard formed from quillons and langets and a heavy curved blade. A chain is attached to the crossguard and into the pommel, protecting the hand."
+	possible_item_intents = list(/datum/intent/sword/cut/sabre/master, /datum/intent/sword/thrust/sabre, /datum/intent/effect/daze/freisabre, /datum/intent/rend)
+	wdefense = 7
+	minstr = 8
+	icon_state = "szabla"
+	sheathe_icon = "szabla"
+
+/obj/item/rogueweapon/sword/sabre/freifechter/Initialize()
 	. = ..()
 	AddComponent(/datum/component/skill_blessed, TRAIT_SABRIST, /datum/skill/combat/swords, SKILL_LEVEL_MASTER, TRUE)
 

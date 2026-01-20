@@ -1423,12 +1423,14 @@
 /obj/item/rogueweapon/spear/boar/frei
 	name = "Aavnic lándzsa"
 	desc = "A regional earspoon lance with a carved handle, adorned with the colours of the Freifechters. These are smithed by the legendary armourers of Vyšvou and given to distinguished lancers upon their graduation."
-	icon_state = "praguespear"
+	icon_state = "cityspear"
 	icon = 'icons/roguetown/weapons/special/freifechter.dmi'
+	max_blade_int = 275
+	max_integrity = 235
 
 /obj/item/rogueweapon/spear/boar/frei/city
 	name = "banner of Szöréndnížina"
-	desc = "A steel pike with a white and red banner made to spend the time flowing proudly in the wind. A city founded by the free. A State made from the disciplined. Snowy peaks surround her strong walls. Her gates make any attack a suicide. Fight, Szöréndnížina. Fight to lyve in a world that rejects you."
+	desc = "A steel pike with a white and red banner made to spend the time flowing proudly in the wind. A city founded by the free. A State made from the disciplined. Snowy peaks surround her strong walls, her gates make any attack a suicide. Fight, Szöréndnížina. Fight to lyve in a world that rejects you."
 	icon_state = "citybanner"
 
 /obj/item/rogueweapon/spear/boar/frei/reformist

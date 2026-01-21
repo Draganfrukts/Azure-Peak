@@ -781,7 +781,7 @@
 	icon = 'icons/roguetown/weapons/special/freifechter32.dmi'
 	desc = "A folding Etruscan knife valued by merchants, mercenaries and peasants for its convenience. This specific kind of ornate navaja is endemic to Szöréndnížina."
 	force = 5
-	icon_state = "navaja_c"
+	icon_state = "mtnavaja_c"
 	item_state = "elfdag"
 	var/extended = FALSE
 	wdefense = 2
@@ -797,7 +797,7 @@
 		wdefense_dynamic = 7
 		w_class = WEIGHT_CLASS_NORMAL
 		throwforce = 23
-		icon_state = "navaja_o"
+		icon_state = "mtnavaja_o"
 		attack_verb = list("slashed", "stabbed", "sliced", "torn", "ripped", "diced", "cut")
 		sharpness = IS_SHARP
 		playsound(user, 'sound/items/knife_open.ogg', 100, TRUE)
@@ -809,7 +809,7 @@
 		force_dynamic = 5
 		w_class = WEIGHT_CLASS_SMALL
 		throwforce = 5
-		icon_state = "navaja_c"
+		icon_state = "mtnavaja_c"
 		attack_verb = list("stubbed", "poked")
 		sharpness = IS_BLUNT
 		wdefense = 2

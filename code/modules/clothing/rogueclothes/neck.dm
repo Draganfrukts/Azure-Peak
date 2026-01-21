@@ -416,6 +416,12 @@
 	user.emote("pray")
 	return
 
+/obj/item/clothing/neck/roguetown/psicross/reform
+	name = "reformist psycross"
+	desc = "'It occured to me that our God had left us, but not our ability to endure hardship. We shall make something out of this world, I said, before we pass onto the next.'"
+	sellprice = 0	//Heresy of the highest order. Unless...
+	icon_state = "reformistcross"
+
 /obj/item/clothing/neck/roguetown/psicross/aalloy
 	name = "decrepit psicross"
 	desc = "'A comet capable of rending all the enemies of humanity apart; oh, how graceful His power was! And His sacrifice, ever so noble! Yet now He slumbers, unaware of the fruits His efforts came to give. And He sighs. And He weeps.'"

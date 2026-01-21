@@ -36,10 +36,10 @@
 		switch(weapon_choice)
 			if("Etruscan Longsword")		//A longsword with a compound ricasso. Accompanied by a traditional flip knife.
 				r_hand = /obj/item/rogueweapon/sword/long/etruscan
-				beltr = /obj/item/rogueweapon/huntingknife/idagger/navaja
+				beltr = /obj/item/rogueweapon/huntingknife/idagger/navaja/freifechter
 			if("Reformist Longsword")
 				r_hand = /obj/item/rogueweapon/sword/long/etruscan/freifechter
-				beltr = /obj/item/rogueweapon/huntingknife/idagger
+				beltr = /obj/item/rogueweapon/huntingknife/idagger/navaja/freifechter
 
 		if(H.mind)
 			var/armors = list(
@@ -124,17 +124,17 @@
 	allowed_patrons = list(/datum/patron/old_god)
 	class_select_category = CLASS_CAT_AAVNR
 	category_tags = list(CTAG_MERCENARY)
-	cmode_music = 'sound/music/frei_fencer.ogg'
+	cmode_music = 'sound/music/frei_sabre.ogg'
 	traits_applied = list(TRAIT_BADTRAINER, TRAIT_INTELLECTUAL, TRAIT_FENCERDEXTERITY, TRAIT_SABRIST)
 	subclass_stats = list(
-		STATKEY_INT = 3,
+		STATKEY_INT = 2,
 		STATKEY_PER = 3,
-		STATKEY_SPD = 1
+		STATKEY_SPD = 2
 	)
 	subclass_skills = list(
 		/datum/skill/combat/swords = SKILL_LEVEL_JOURNEYMAN,
 		/datum/skill/misc/athletics = SKILL_LEVEL_EXPERT,
-		/datum/skill/combat/knives = SKILL_LEVEL_APPRENTICE,
+		/datum/skill/combat/knives = SKILL_LEVEL_JOURNEYMAN,	//For off-hands
 		/datum/skill/combat/wrestling = SKILL_LEVEL_JOURNEYMAN,
 		/datum/skill/misc/reading = SKILL_LEVEL_MASTER,
 		/datum/skill/misc/climbing = SKILL_LEVEL_APPRENTICE,
@@ -144,27 +144,10 @@
 
 /datum/outfit/job/roguetown/mercenary/freelancer/pre_equip(mob/living/carbon/human/H)
 	..()
-	to_chat(H, span_warning("You are a master in the arts of the longsword. Wielder of Psydonia's most versatile and noble weapon, you needn't anything else. Your professionally made longsword facilitates moves from fechtbuchs the likes of The Etruscan Flower and Grenzelhoft's Wiedenhauer."))
+	to_chat(H, span_warning("You are a master in the arts of the sabre. Wielder of Aavnr's sword by excellence, you needn't anything else. Your professionally made sabre facilitates moves from traditional Aavnic fencing treatises."))
 	l_hand = /obj/item/rogueweapon/scabbard/sword
-	var/weapons = list("Etruscan Longsword", "Reformist Longsword")
-	if(H.mind)
-		var/weapon_choice = input(H, "Choose your weapon.", "TAKE UP ARMS") as anything in weapons
-		switch(weapon_choice)
-			if("Etruscan Longsword")		//A longsword with a compound ricasso. Accompanied by a traditional flip knife.
-				r_hand = /obj/item/rogueweapon/sword/long/etruscan
-				beltr = /obj/item/rogueweapon/huntingknife/idagger/navaja
-			if("Reformist Longsword")
-				r_hand = /obj/item/rogueweapon/sword/long/etruscan/freifechter
-				beltr = /obj/item/rogueweapon/huntingknife/idagger
-
-		if(H.mind)
-			var/armors = list(
-				"Fencing Jacket"	= /obj/item/clothing/suit/roguetown/armor/leather/heavy/freifechter,
-				"Fencing Cuirass"	= /obj/item/clothing/suit/roguetown/armor/plate/cuirass/fencer
-			)
-			var/armorchoice = input(H, "Choose your armor.", "TAKE UP ARMOR") as anything in armors
-			armor = armors[armorchoice]
-
+	r_hand = /obj/item/rogueweapon/sword/sabre/freifechter
+	beltr = /obj/item/rogueweapon/huntingknife/idagger/navaja/freifechter
 	belt = /obj/item/storage/belt/rogue/leather/sash
 	beltl = /obj/item/flashlight/flare/torch/lantern
 	shirt = /obj/item/clothing/suit/roguetown/shirt/freifechter

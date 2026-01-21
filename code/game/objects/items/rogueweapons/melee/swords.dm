@@ -136,7 +136,6 @@
 	target_parts = list(BODY_ZONE_PRECISE_NOSE)
 	damfactor = 0.8
 	clickcd = 6
-	recovery = 8
 
 /datum/intent/effect/daze/longsword2h
 	name = "zorn ort"
@@ -147,7 +146,6 @@
 	blade_class = BCLASS_STAB
 	damfactor = 1.1 //Same as master stab
 	clickcd = 5
-	recovery = 6
 
 // A weaker strike for sword with high damage so that it don't end up becoming better than mace
 /datum/intent/sword/strike/bad
@@ -525,11 +523,12 @@
 	name = "basket-hilted longsword"
 	desc = "An uncommon and elaborate type of longsword with a compound hilt like those seen on rapiers and smallswords. It has a marked unsharpened section for safe unarmoured half-swording. The quality of the steel speaks for itself; this is a weapon made by masters, for masters."
 	icon_state = "elongsword"
-	possible_item_intents = list(/datum/intent/sword/cut/master, /datum/intent/sword/thrust/long, /datum/intent/effect/daze/longsword/clinch, /datum/intent/effect/daze/longsword)
+	icon = 'icons/roguetown/weapons/special/freifechter.dmi'
+	possible_item_intents = list(/datum/intent/sword/cut, /datum/intent/sword/thrust/long, /datum/intent/effect/daze/longsword/clinch, /datum/intent/effect/daze/longsword)
 	gripped_intents = list(/datum/intent/sword/cut/master, /datum/intent/sword/thrust/long/master, /datum/intent/sword/thrust/long/halfsword, /datum/intent/effect/daze/longsword2h)
 	alt_intents = list(/datum/intent/sword/strike, /datum/intent/sword/bash, /datum/intent/effect/daze)
 	max_blade_int = 300
-	max_integrity = 200
+	max_integrity = 225
 
 /obj/item/rogueweapon/sword/long/etruscan/freifechter
 	name = "psydonic reformist longsword"
@@ -1102,6 +1101,7 @@
 	attack_verb = list("wrist-slits")
 	intent_effect = /datum/status_effect/debuff/dazed/freisabre
 	target_parts = list(BODY_ZONE_PRECISE_L_HAND, BODY_ZONE_PRECISE_R_HAND)
+	blade_class = BCLASS_CUT
 	damfactor = 1.25
 	clickcd = 12
 	recovery = 8
@@ -1111,12 +1111,13 @@
 
 /obj/item/rogueweapon/sword/sabre/freifechter
 	name = "szöréndnížine sabre"
-	desc = "A rare, specialty-made sabre domestic to Szöréndnížina, made similarly to those of the Potentate's Hussars. It has a large, open hilt with a cross-shaped guard formed from quillons and langets and a heavy curved blade. A chain is attached to the crossguard and into the pommel, protecting the hand."
+	desc = "A rare, specialty-made sabre domestic to Szöréndnížina, made similarly to those of the Potentate's Hussars. It has a large, open hilt with a cross-shaped guard formed from quillons and langets and a heavy curved blade. A chain is attached to the crossguard and into the pommel, protecting the hand. Unlike shorter and ligther sabres, it's large enough to reach the feet."
 	possible_item_intents = list(/datum/intent/sword/cut/sabre/master, /datum/intent/sword/thrust/sabre, /datum/intent/effect/daze/freisabre, /datum/intent/rend)
 	wdefense = 7
 	minstr = 8
 	icon_state = "szabla"
 	sheathe_icon = "szabla"
+	bigboy = 1 	
 
 /obj/item/rogueweapon/sword/sabre/freifechter/Initialize()
 	. = ..()

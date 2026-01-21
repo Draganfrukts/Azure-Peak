@@ -142,6 +142,8 @@
 /obj/item/clothing/suit/roguetown/shirt/freifechter
 	name = "padded fencing shirt"
 	desc = "A strong loosely worn quilted shirt that places little weight on the arms, usually worn underneath a flexible leather vest. It won't cover your legs."
+	icon = 'icons/roguetown/clothing/armor.dmi'
+	mob_overlay_icon = 'icons/roguetown/clothing/onmob/armor.dmi'
 	body_parts_covered = COVERAGE_ALL_BUT_LEGS
 	icon_state = "fencingshirt"
 	color = "#FFFFFF"
@@ -150,6 +152,10 @@
 	max_integrity = ARMOR_INT_CHEST_LIGHT_MASTER
 	prevent_crits = PREVENT_CRITS_MOST
 	sellprice = 25
+
+/obj/item/clothing/suit/roguetown/shirt/freifechter/shepherd
+	name = "shepherd's shirt"
+	desc = "A strong loosely worn quilted shirt that places little weight on the arms."
 
 /obj/item/clothing/suit/roguetown/armor/gambeson/heavy/chargah
 	name = "padded caftan"

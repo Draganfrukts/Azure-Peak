@@ -1431,7 +1431,7 @@
 	desc = "A regional earspoon lance with a carved handle, adorned with the colours of the Freifechters. These are smithed by the legendary armourers of Vyšvou and given to distinguished lancers upon their graduation."
 	icon_state = "cityspear"
 	icon = 'icons/roguetown/weapons/special/freifechter.dmi'
-	max_blade_int = 275
+	max_blade_int = 300	//You're gonna parry a lot. You need it.
 	max_integrity = 235
 
 /obj/item/rogueweapon/spear/boar/frei/city

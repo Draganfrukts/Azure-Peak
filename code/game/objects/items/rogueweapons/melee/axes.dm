@@ -497,7 +497,7 @@
 	blade_class = BCLASS_CHOP
 	reach = 2
 	swingdelay = 3
-	clickd = 13
+	clickcd = 13
 
 /datum/intent/axe/cut/battle/greataxe
 	reach = 2

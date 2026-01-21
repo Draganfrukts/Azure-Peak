@@ -783,7 +783,6 @@
 	force = 5
 	icon_state = "mtnavaja_c"
 	item_state = "elfdag"
-	var/extended = FALSE
 	wdefense = 2
 	sellprice = 50
 

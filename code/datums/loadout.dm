@@ -565,7 +565,7 @@ GLOBAL_LIST_EMPTY(loadout_items)
 
 /datum/loadout_item/psicross/reform
 	name = "Reformist Psydonian Cross"
-	path = /obj/item/clothing/necck/roguetown/psicross/reform
+	path = /obj/item/clothing/neck/roguetown/psicross/reform
 
 /datum/loadout_item/psicross/astrata
 	name = "Amulet of Astrata"

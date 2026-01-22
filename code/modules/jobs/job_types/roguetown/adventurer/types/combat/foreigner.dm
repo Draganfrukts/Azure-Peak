@@ -277,3 +277,57 @@
 
 /obj/item/storage/belt/rogue/leather/shalal/purple
 	color = CLOTHING_PURPLE
+
+/datum/advclass/foreigner/shepherd
+	name = "Szöréndnížine Shepherd"
+	tutorial = "You're a simple shepherd hailing from Aavnr's Free City, taking a pilgrimage or having fled for one reason or another. You can easily fend for yourself in the wilderness, and with enough practice, fend for yourself in combat against even armoured opponents with your traditional axe. This class is for experienced adventurers with a solid grasp on footwork and stamina management. Your weapon has special intents you can juggle through to make fights easier... Sometimes."
+	allowed_sexes = list(MALE, FEMALE)
+	allowed_races = RACES_ALL_KINDS
+	outfit = /datum/outfit/job/roguetown/adventurer/freishepherd
+	traits_applied = list()
+	cmode_music = 'sound/music/combat_physician.ogg'
+	subclass_stats = list(
+		STATKEY_INT = 3,
+		STATKEY_LCK = 1,
+		STATKEY_PER = 1
+	)
+
+	subclass_skills = list(
+		/datum/skill/combat/knives = SKILL_LEVEL_JOURNEYMAN,
+		/datum/skill/combat/wrestling = SKILL_LEVEL_APPRENTICE,
+		/datum/skill/craft/crafting = SKILL_LEVEL_APPRENTICE,
+		/datum/skill/craft/carpentry = SKILL_LEVEL_APPRENTICE,
+		/datum/skill/labor/lumberjacking = SKILL_LEVEL_NOVICE,
+		/datum/skill/misc/athletics = SKILL_LEVEL_APPRENTICE,
+		/datum/skill/misc/reading = SKILL_LEVEL_JOURNEYMAN,
+		/datum/skill/misc/climbing = SKILL_LEVEL_NOVICE,
+		/datum/skill/misc/sneaking = SKILL_LEVEL_NOVICE,
+		/datum/skill/misc/medicine = SKILL_LEVEL_MASTER,
+		/datum/skill/craft/sewing = SKILL_LEVEL_JOURNEYMAN,
+		/datum/skill/craft/alchemy = SKILL_LEVEL_APPRENTICE,
+	)
+
+/datum/outfit/job/roguetown/adventurer/doctor/pre_equip(mob/living/carbon/human/H)
+	..()
+	mask = /obj/item/clothing/mask/rogue/spectacles
+	head = /obj/item/clothing/head/roguetown/nightman
+	neck = /obj/item/storage/belt/rogue/pouch/coins/mid /// they are a fine dressed doctor. no one else gonna pay em. psycross removed since it was a hold over for secular
+	armor = /obj/item/clothing/suit/roguetown/shirt/robe/physician
+	shirt = /obj/item/clothing/suit/roguetown/shirt/undershirt/puritan
+	belt = /obj/item/storage/belt/rogue/leather
+	beltl = /obj/item/storage/belt/rogue/surgery_bag/full
+	beltr = /obj/item/rogueweapon/huntingknife/cleaver /// proper self defense an tree aquiring
+	pants = /obj/item/clothing/under/roguetown/trou
+	shoes = /obj/item/clothing/shoes/roguetown/simpleshoes
+	backl = /obj/item/storage/backpack/rogue/backpack
+	backpack_contents = list(
+						/obj/item/natural/worms/leech/cheele = 1,
+						/obj/item/natural/cloth = 2,
+						/obj/item/flashlight/flare/torch = 1,
+						/obj/item/rogueweapon/huntingknife/scissors/steel = 1,
+						/obj/item/hair_dye_cream = 3,
+						/obj/item/heart_blood_canister/filled = 2,
+						/obj/item/bait/leech = 4,
+						/obj/item/folding_alchcauldron_stored = 1,
+						/obj/item/recipe_book/alchemy = 1
+						)

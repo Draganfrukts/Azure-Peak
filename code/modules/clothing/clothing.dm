@@ -68,6 +68,7 @@
 	var/altdetail_color
 	var/boobed_detail = TRUE
 	var/sleeved_detail = TRUE
+	var/malumblessed_c = FALSE
 	var/list/original_armor //For restoring broken armor
 
 /obj/item/clothing/New()
@@ -187,7 +188,7 @@
 		L.regenerate_clothes()
 
 
-/obj/item/clothing/mob_can_equip(mob/M, mob/equipper, slot, disable_warning = 0)
+/obj/item/clothing/mob_can_equip(mob/living/M, mob/living/equipper, slot, disable_warning = FALSE, bypass_equip_delay_self = FALSE)
 	. = ..()
 	if(!.)
 		return FALSE

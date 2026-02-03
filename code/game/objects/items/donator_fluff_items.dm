@@ -98,16 +98,38 @@
 	icon_state = "orin"
 	icon = 'icons/obj/items/donor_weapons_64.dmi'
 
-//Zydras donator item - merchant dress
-/obj/item/clothing/suit/roguetown/shirt/dress/silkydress/zydrasdress //Recolored silky dress
-	name = "Gold-Black silky dress"
-	desc = "A gorgeous black and gold dress. It seems the padding was removed."
-	icon_state = "zydrasdress"
-	item_state = "zydrasdress"
-	sleevetype = "zydrasdress"
+
+//Zydras donator items - iconoclast pyromaniac - who up icono they clast
+/obj/item/clothing/suit/roguetown/armor/brigandine/light/zydrasiconopauldrons
+	name = "gilded pauldrons"
+	desc = "A ritual-acquired set of pauldrons and gorget. Seemingly protects the gut, too."
+	icon_state = "zydras_iconopauldrons"
+	item_state = "zydras_iconopauldrons"
+	sleevetype = "zydras_iconopauldrons"
 	icon = 'icons/clothing/donor_clothes.dmi'
 	mob_overlay_icon = 'icons/clothing/onmob/donor_clothes.dmi'
 	sleeved = 'icons/clothing/onmob/donor_sleeves_armor.dmi' //No sleeves
+
+/obj/item/clothing/suit/roguetown/armor/chainmail/hauberk/iron/zydrasiconosash //who up icono they clast
+	name = "gilded cloth sash"
+	desc = "A ritual-acquired sash of purple cloth, lined with gold. Seemingly protects the gut, too."
+	icon_state = "zydras_iconosash"
+	item_state = "zydras_iconosash"
+	sleevetype = "zydras_iconosash"
+	icon = 'icons/clothing/donor_clothes.dmi'
+	mob_overlay_icon = 'icons/clothing/onmob/donor_clothes.dmi'
+	sleeved = 'icons/clothing/onmob/donor_sleeves_armor.dmi' //No sleeves
+
+/obj/item/clothing/head/roguetown/helmet/heavy/sheriff/zydrasiconocrown
+	name = "toper-iron crown"
+	desc = "A iron crown with a toper studded into it. Any blow landing upon the wearer's head seems to divert to the gem."
+	flags_inv = null //It's a crown, it ain't hiding anything
+	flags_cover = null 
+	icon_state = "zydras_iconocrown"
+	item_state = "zydras_iconocrown"
+	icon = 'icons/clothing/donor_clothes.dmi'
+	mob_overlay_icon = 'icons/clothing/onmob/donor_clothes.dmi'
+
 
 //Eiren's donator items - zweihander and sabres
 /obj/item/rogueweapon/greatsword/zwei/eiren
@@ -142,6 +164,34 @@
 	icon_state = "eiren3"
 	icon = 'icons/obj/items/donor_weapons.dmi'
 	sheathe_icon = "eiren3"
+
+/obj/item/clothing/suit/roguetown/armor/longcoat/eiren //Longcoat has no armor, ignore the /armor/ path.
+	name = "Darkwood's Embrace"
+	desc = "A tough leather coat, taken from one of the few remaining arcyne studies of Lord Darkwood. Ancient, but in remarkably good condition as the weight of memory and sin tries to drag you down."
+	sleeved = TRUE
+	icon = 'icons/clothing/donor_clothes.dmi'
+	icon_state = "eirencoat"
+	item_state = "eirencoat"
+	mob_overlay_icon = 'icons/clothing/onmob/donor_clothes.dmi'
+	sleeved = 'icons/clothing/onmob/donor_sleeves_armor.dmi'
+	sleevetype = "eirencoat"
+	detail_tag = "_detail"
+	detail_color = CLOTHING_RED
+	color = CLOTHING_WHITE
+	boobed = FALSE
+
+/obj/item/clothing/suit/roguetown/armor/longcoat/eiren/Initialize()
+	. = ..()
+	update_icon()
+
+/obj/item/clothing/suit/roguetown/armor/longcoat/eiren/update_icon()
+	cut_overlays()
+	if(get_detail_tag())
+		var/mutable_appearance/pic = mutable_appearance(icon(icon, "[icon_state][detail_tag]"))
+		pic.appearance_flags = RESET_COLOR
+		if(get_detail_color())
+			pic.color = get_detail_color()
+		add_overlay(pic)
 
 //pretzel's special sword
 /obj/item/rogueweapon/greatsword/weeperslathe
@@ -259,3 +309,9 @@
 	icon_state = "ryan_maimedhelm"
 	icon = 'icons/clothing/donor_clothes.dmi'
 	mob_overlay_icon = 'icons/clothing/onmob/donor_clothes64.dmi'
+
+//koruu
+/obj/item/clothing/head/roguetown/mentorhat/koruu
+	name = "well-worn bamboo hat"
+	desc = "A bamboo hat, made from shaven rice straw and woven into place alongside a coating of lacquer. This particular hat seems worn with age, yet well maintained. The phrase, '葉隠' can be seen stitched in gold in the inner lining of the hat."
+	armor = ARMOR_CLOTHING

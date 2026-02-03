@@ -5,7 +5,7 @@
 	name = "gambeson"
 	desc = "A thick jacket of cloth, and the finest compatriot to alloyed chestpieces. In tymes of peace, the humble gambeson wards off a blizzard's chill - and in tymes of peril, it rebukes the crippling blows of bludgeons-and-bows alike."
 	icon_state = "gambeson"
-	body_parts_covered = COVERAGE_FULL
+	body_parts_covered = COVERAGE_ALL_BUT_HANDFEET
 	armor = ARMOR_PADDED
 	prevent_crits = PREVENT_CRITS_NONE
 	blocksound = SOFTUNDERHIT
@@ -23,6 +23,7 @@
 
 /obj/item/clothing/suit/roguetown/armor/gambeson/ComponentInitialize()
 	AddComponent(/datum/component/armour_filtering/positive, TRAIT_FENCERDEXTERITY)
+	AddComponent(/datum/component/armour_filtering/negative, TRAIT_HONORBOUND)
 
 /obj/item/clothing/suit/roguetown/armor/gambeson/dark
 	color = "#646464"
@@ -33,6 +34,8 @@
 	icon_state = "dgamb"
 	body_parts_covered = COVERAGE_ALL_BUT_LEGS
 	prevent_crits = PREVENT_CRITS_MOST
+	color = null
+	chunkcolor = null
 	allowed_sex = list(MALE, FEMALE)
 
 /obj/item/clothing/suit/roguetown/armor/gambeson/shadowrobe
@@ -58,6 +61,13 @@
 	armor = ARMOR_PADDED_GOOD
 	max_integrity = ARMOR_INT_CHEST_LIGHT_MASTER
 	prevent_crits = PREVENT_CRITS_MOST
+
+/obj/item/clothing/suit/roguetown/armor/gambeson/lord/heavy/silkjacket
+	name = "besilked jacket"
+	desc = "A lightweight jacket, who's besilked stitchwork allows it to catch thrusts-and-arrows alike without compromise. For reasons that needn't be spoken, such traits make it coveted among lesser nobility."
+	icon = 'icons/roguetown/clothing/shirts.dmi'
+	mob_overlay_icon = 'icons/roguetown/clothing/onmob/shirts.dmi'
+	icon_state = "puritan_shirt"
 
 /obj/item/clothing/suit/roguetown/armor/gambeson/heavy
 	name = "padded gambeson"
@@ -236,7 +246,7 @@
 	color = null
 	armor = ARMOR_PADDED
 	shiftable = FALSE
-	body_parts_covered = COVERAGE_ALL_BUT_LEGS
+	body_parts_covered = COVERAGE_ALL_BUT_HANDFEET
 
 /obj/item/clothing/suit/roguetown/armor/gambeson/heavy/shadowrobe
 	name = "stalker robe"

@@ -93,10 +93,11 @@
 	penfactor = 50
 
 /datum/intent/sword/thrust/long/master
-	name = "stoccata"
+	name = "stoccato"
+	icon_state = "instabmaster"
 	desc = "Enter a long guard and thrust forward with your entire upper body while advancing, maximizing the effectiveness of the thrust."
 	attack_verb =  list("perforates", "punctures", "sticks")
-	damfactor = 1.1
+	damfactor = 1.15
 
 /datum/intent/effect/daze/longsword/clinch
 	name = "clinch & swipe"
@@ -119,6 +120,7 @@
 
 /datum/intent/sword/thrust/long/halfsword
 	name = "mezza spada"
+	icon_state = "inimpale"
 	desc = "Grip the dull portion of your longsword with either hand and use it as leverage to deliver precise, powerful strikes that can dig into gaps in plate and push past maille."
 	attack_verb = list("skewers", "impales")
 	hitsound = list('sound/combat/hits/bladed/genstab (1).ogg', 'sound/combat/hits/bladed/genstab (2).ogg', 'sound/combat/hits/bladed/genstab (3).ogg')

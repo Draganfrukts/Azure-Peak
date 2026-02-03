@@ -149,13 +149,14 @@
 	color = "#FFFFFF"
 	var/shiftable = FALSE
 	armor = ARMOR_PADDED_GOOD
-	max_integrity = ARMOR_INT_CHEST_LIGHT_MASTER
+	max_integrity = ARMOR_INT_CHEST_LIGHT_MASTER + 35
 	prevent_crits = PREVENT_CRITS_MOST
 	sellprice = 25
 
 /obj/item/clothing/suit/roguetown/shirt/freifechter/shepherd
 	name = "shepherd's shirt"
 	desc = "A strong loosely worn quilted shirt that places little weight on the arms."
+	max_integrity = ARMOR_INT_CHEST_LIGHT_MASTER - 35
 
 /obj/item/clothing/suit/roguetown/armor/gambeson/heavy/chargah
 	name = "padded caftan"

@@ -54,7 +54,7 @@
 	shirt = /obj/item/clothing/suit/roguetown/shirt/freifechter
 	pants = /obj/item/clothing/under/roguetown/heavy_leather_pants/otavan/generic
 	shoes = /obj/item/clothing/shoes/roguetown/boots/leather/reinforced/short
-	gloves = /obj/item/clothing/gloves/roguetown/fingerless_leather
+	gloves = /obj/item/clothing/gloves/roguetown/angle/grenzelgloves/freifechter
 	backr = /obj/item/storage/backpack/rogue/satchel/short
 
 	backpack_contents = list(/obj/item/roguekey/mercenary)	
@@ -108,7 +108,7 @@
 	shirt = /obj/item/clothing/suit/roguetown/shirt/freifechter
 	pants = /obj/item/clothing/under/roguetown/heavy_leather_pants/otavan/generic
 	shoes = /obj/item/clothing/shoes/roguetown/boots/leather/reinforced/short
-	gloves = /obj/item/clothing/gloves/roguetown/fingerless_leather
+	gloves = /obj/item/clothing/gloves/roguetown/angle/grenzelgloves/freifechter
 	backr = /obj/item/storage/backpack/rogue/satchel/short
 
 	backpack_contents = list(/obj/item/roguekey/mercenary)
@@ -119,7 +119,7 @@
 	tutorial = "You are a graduate of the Aavnic Freifechters - \"Freelancers\" - part of a prestigious fighting guild localized in the independent City-state of Szöréndnížina. It has formed an odd thirty yils ago, but its visitors come from all over Western Psydonia. You have swung one weapon ten-thousand times, and not the other way around. Your faith is stalwart in the teachings of the Psydonic Reformation, and you've become a warrior poet of sorts - educating the peasantry in the ways of the New Word and angering the Orthodoxy in turn. You've left your cradle in search of riches to fund your people's armies. This class is for experienced players who have a solid grasp on footwork and stamina management, master skills alone won't save your lyfe. You make up for your inherent weaknesses and limitations with \"master strike\" mechanics."
 	allowed_sexes = list(MALE, FEMALE)
 	allowed_races = RACES_ALL_KINDS
-	outfit = /datum/outfit/job/roguetown/mercenary/freelancer
+	outfit = /datum/outfit/job/roguetown/mercenary/sabrist
 	subclass_languages = list(/datum/language/aavnic)//Your character could not have possibly "graduated" without atleast some basic knowledge of Aavnic.
 	allowed_patrons = list(/datum/patron/old_god)
 	class_select_category = CLASS_CAT_AAVNR
@@ -142,7 +142,7 @@
 	)
 	adv_stat_ceiling = list(STAT_STRENGTH = 12)
 
-/datum/outfit/job/roguetown/mercenary/freelancer/pre_equip(mob/living/carbon/human/H)
+/datum/outfit/job/roguetown/mercenary/sabrist/pre_equip(mob/living/carbon/human/H)
 	..()
 	to_chat(H, span_warning("You are a master in the arts of the sabre. Wielder of Aavnr's sword by excellence, you needn't anything else. Your professionally made sabre facilitates moves from traditional Aavnic fencing treatises."))
 	l_hand = /obj/item/rogueweapon/scabbard/sword
@@ -153,7 +153,7 @@
 	shirt = /obj/item/clothing/suit/roguetown/shirt/freifechter
 	pants = /obj/item/clothing/under/roguetown/heavy_leather_pants/otavan/generic
 	shoes = /obj/item/clothing/shoes/roguetown/boots/leather/reinforced/short
-	gloves = /obj/item/clothing/gloves/roguetown/fingerless_leather
+	gloves = /obj/item/clothing/gloves/roguetown/angle/grenzelgloves/freifechter
 	backr = /obj/item/storage/backpack/rogue/satchel/short
 
 	backpack_contents = list(/obj/item/roguekey/mercenary)	

@@ -285,49 +285,41 @@
 	allowed_races = RACES_ALL_KINDS
 	outfit = /datum/outfit/job/roguetown/adventurer/freishepherd
 	traits_applied = list()
-	cmode_music = 'sound/music/combat_physician.ogg'
+	cmode_music = 'sound/music/frei_shepherd.ogg'
 	subclass_stats = list(
-		STATKEY_INT = 3,
-		STATKEY_LCK = 1,
-		STATKEY_PER = 1
+		STATKEY_WIL = 3,
+		STATKEY_PER = 3
 	)
 
 	subclass_skills = list(
 		/datum/skill/combat/knives = SKILL_LEVEL_JOURNEYMAN,
 		/datum/skill/combat/wrestling = SKILL_LEVEL_APPRENTICE,
-		/datum/skill/craft/crafting = SKILL_LEVEL_APPRENTICE,
+		/datum/skill/combat/axes = SKILL_LEVEL_JOURNEYMAN,
+		/datum/skill/craft/crafting = SKILL_LEVEL_NOVICE,
 		/datum/skill/craft/carpentry = SKILL_LEVEL_APPRENTICE,
 		/datum/skill/labor/lumberjacking = SKILL_LEVEL_NOVICE,
-		/datum/skill/misc/athletics = SKILL_LEVEL_APPRENTICE,
+		/datum/skill/labor/farming = SKILL_LEVEL_JOURNEYMAN,
+		/datum/skill/labor/butchering = SKILL_LEVEL_APPRENTICE,
+		/datum/skill/craft/cooking = SKILL_LEVEL_APPRENTICE,
+		/datum/skill/misc/athletics = SKILL_LEVEL_EXPERT,
 		/datum/skill/misc/reading = SKILL_LEVEL_JOURNEYMAN,
-		/datum/skill/misc/climbing = SKILL_LEVEL_NOVICE,
-		/datum/skill/misc/sneaking = SKILL_LEVEL_NOVICE,
-		/datum/skill/misc/medicine = SKILL_LEVEL_MASTER,
+		/datum/skill/misc/climbing = SKILL_LEVEL_JOURNEYMAN,
 		/datum/skill/craft/sewing = SKILL_LEVEL_JOURNEYMAN,
-		/datum/skill/craft/alchemy = SKILL_LEVEL_APPRENTICE,
 	)
 
-/datum/outfit/job/roguetown/adventurer/doctor/pre_equip(mob/living/carbon/human/H)
+/datum/outfit/job/roguetown/adventurer/freishepherd/pre_equip(mob/living/carbon/human/H)
 	..()
-	mask = /obj/item/clothing/mask/rogue/spectacles
-	head = /obj/item/clothing/head/roguetown/nightman
-	neck = /obj/item/storage/belt/rogue/pouch/coins/mid /// they are a fine dressed doctor. no one else gonna pay em. psycross removed since it was a hold over for secular
-	armor = /obj/item/clothing/suit/roguetown/shirt/robe/physician
-	shirt = /obj/item/clothing/suit/roguetown/shirt/undershirt/puritan
-	belt = /obj/item/storage/belt/rogue/leather
-	beltl = /obj/item/storage/belt/rogue/surgery_bag/full
-	beltr = /obj/item/rogueweapon/huntingknife/cleaver /// proper self defense an tree aquiring
-	pants = /obj/item/clothing/under/roguetown/trou
-	shoes = /obj/item/clothing/shoes/roguetown/simpleshoes
+	mask = /obj/item/clothing/head/roguetown/armingcap
+	head = /obj/item/clothing/head/roguetown/chaperon/greyscale/shepherd
+	neck = /obj/item/clothing/neck/roguetown/psicross/reform
+	armor = /obj/item/clothing/suit/roguetown/armor/leather/heavy/shepherd
+	shirt = /obj/item/clothing/suit/roguetown/shirt/freifechter/shepherd
+	belt = /obj/item/storage/belt/rogue/leather/sash
+	beltl = /obj/item/rogueweapon/stoneaxe/battle/steppesman/chupa
+	beltr = /obj/item/rogueweapon/huntingknife/idagger/navaja/freifechter
+	pants = /obj/item/clothing/under/roguetown/heavy_leather_pants/otavan/shepherd
+	shoes = /obj/item/clothing/shoes/roguetown/boots/leather/reinforced/short
 	backl = /obj/item/storage/backpack/rogue/backpack
 	backpack_contents = list(
-						/obj/item/natural/worms/leech/cheele = 1,
-						/obj/item/natural/cloth = 2,
 						/obj/item/flashlight/flare/torch = 1,
-						/obj/item/rogueweapon/huntingknife/scissors/steel = 1,
-						/obj/item/hair_dye_cream = 3,
-						/obj/item/heart_blood_canister/filled = 2,
-						/obj/item/bait/leech = 4,
-						/obj/item/folding_alchcauldron_stored = 1,
-						/obj/item/recipe_book/alchemy = 1
 						)

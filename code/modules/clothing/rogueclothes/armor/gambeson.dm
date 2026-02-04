@@ -163,6 +163,12 @@
 	max_integrity = ARMOR_INT_CHEST_LIGHT_MASTER + 35
 	prevent_crits = PREVENT_CRITS_MOST
 	sellprice = 25
+	blocksound = SOFTUNDERHIT
+	blade_dulling = DULLING_BASHCHOP
+	break_sound = 'sound/foley/cloth_rip.ogg'
+	drop_sound = 'sound/foley/dropsound/cloth_drop.ogg'
+	sewrepair = TRUE
+	cold_protection = 10
 
 /obj/item/clothing/suit/roguetown/shirt/freifechter/shepherd
 	name = "shepherd's shirt"

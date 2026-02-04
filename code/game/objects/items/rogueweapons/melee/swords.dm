@@ -131,10 +131,10 @@
 	hitsound = list('sound/combat/hits/bladed/genstab (1).ogg', 'sound/combat/hits/bladed/genstab (2).ogg', 'sound/combat/hits/bladed/genstab (3).ogg')
 	penfactor = 80
 	clickcd = 12
-	swingdelay = 8
-	damfactor = 1.15
+	swingdelay = 10
+	damfactor = 0.86
 	blade_class = BCLASS_HALFSWORD
-	max_intent_damage = 34.5
+	max_intent_damage = 30
 
 /datum/intent/effect/daze/longsword
 	name = "durchlauffen"
@@ -1438,7 +1438,7 @@
 	attack_verb = list("masterfully cuts", "deftly slits", "quarts")
 	clickcd = 7
 	damfactor = 1.25
-	penfactor = 54
+	penfactor = 55
 	max_intent_damage = 29.7
 
 /datum/intent/effect/daze/freisabre

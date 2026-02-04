@@ -152,9 +152,9 @@
 		var/armors = list(
 		"Fencing Jacket"	= /obj/item/clothing/suit/roguetown/armor/leather/heavy/freifechter,
 		"Fencing Cuirass"	= /obj/item/clothing/suit/roguetown/armor/plate/cuirass/fencer
-	)
-	var/armorchoice = input(H, "Choose your armor.", "TAKE UP ARMOR") as anything in armors
-	armor = armors[armorchoice]
+		)
+		var/armorchoice = input(H, "Choose your armor.", "TAKE UP ARMOR") as anything in armors
+		armor = armors[armorchoice]
 	l_hand = /obj/item/rogueweapon/scabbard/sword
 	r_hand = /obj/item/rogueweapon/sword/sabre/freifechter
 	beltr = /obj/item/rogueweapon/huntingknife/idagger/navaja/freifechter

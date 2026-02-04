@@ -148,6 +148,13 @@
 /datum/outfit/job/roguetown/mercenary/sabrist/pre_equip(mob/living/carbon/human/H)
 	..()
 	to_chat(H, span_warning("You are a master in the arts of the sabre. Wielder of Aavnr's sword by excellence, you needn't anything else. Your professionally made sabre facilitates moves from traditional Aavnic fencing treatises."))
+	if(H.mind)
+		var/armors = list(
+		"Fencing Jacket"	= /obj/item/clothing/suit/roguetown/armor/leather/heavy/freifechter,
+		"Fencing Cuirass"	= /obj/item/clothing/suit/roguetown/armor/plate/cuirass/fencer
+	)
+	var/armorchoice = input(H, "Choose your armor.", "TAKE UP ARMOR") as anything in armors
+	armor = armors[armorchoice]
 	l_hand = /obj/item/rogueweapon/scabbard/sword
 	r_hand = /obj/item/rogueweapon/sword/sabre/freifechter
 	beltr = /obj/item/rogueweapon/huntingknife/idagger/navaja/freifechter

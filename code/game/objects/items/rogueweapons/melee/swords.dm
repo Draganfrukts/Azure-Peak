@@ -88,16 +88,18 @@
 	name = "fendente"
 	icon_state = "incutmaster"
 	desc = "Strike the opponent from above with the true edge of the sword and penetrate light armour."
-	attack_verb = list("tears", "slits", "hacks")
-	damfactor = 1
+	attack_verb = list("masterfully tears", "artfully slits", "adroitly hacks")
+	damfactor = 1.01
 	penfactor = 50
+	max_intent_damage = 35
 
 /datum/intent/sword/thrust/long/master
 	name = "stoccato"
 	icon_state = "instabmaster"
 	desc = "Enter a long guard and thrust forward with your entire upper body while advancing, maximizing the effectiveness of the thrust."
-	attack_verb =  list("perforates", "punctures", "sticks")
+	attack_verb =  list("skillfully perforates", "artfully punctures", "deftly sticks")
 	damfactor = 1.15
+	max_intent_damage = 40.5
 
 /datum/intent/effect/daze/longsword/clinch
 	name = "clinch & swipe"
@@ -109,8 +111,9 @@
 	blade_class = BCLASS_BLUNT
 	hitsound = list('sound/combat/hits/blunt/metalblunt (1).ogg', 'sound/combat/hits/blunt/metalblunt (2).ogg', 'sound/combat/hits/blunt/metalblunt (3).ogg')
 	damfactor = 0.5
-	penfactor = 88
-	swingdelay = 5
+	max_intent_damage = 17.25
+	penfactor = 86
+	swingdelay = 7
 	clickcd = 12
 	recovery = 15
 	item_d_type = "blunt"
@@ -123,33 +126,35 @@
 	name = "mezza spada"
 	icon_state = "inimpale"
 	desc = "Grip the dull portion of your longsword with either hand and use it as leverage to deliver precise, powerful strikes that can dig into gaps in plate and push past maille."
-	attack_verb = list("skewers", "impales")
+	attack_verb = list("goes into a half-sword stance and skewers", "enters a half-sword stance and impales")
 	hitsound = list('sound/combat/hits/bladed/genstab (1).ogg', 'sound/combat/hits/bladed/genstab (2).ogg', 'sound/combat/hits/bladed/genstab (3).ogg')
 	penfactor = 80
 	clickcd = 12
 	swingdelay = 8
 	damfactor = 1.15
 	blade_class = BCLASS_HALFSWORD
+	max_intent_damage = 34.5
 
 /datum/intent/effect/daze/longsword
 	name = "durchlauffen"
 	desc = "Lock the opponent's arm in place and strike their nose with the pommel of your sword before tossing them, affecting their ability to dodge and feint. Can only be performed one-handed."
-	attack_verb = list("pummels")
+	attack_verb = list("masterfully pummels")
 	intent_effect = /datum/status_effect/debuff/dazed/longsword
 	target_parts = list(BODY_ZONE_PRECISE_NOSE)
 	damfactor = 0.8
 	clickcd = 6
-	swingdelay = 2
+	swingdelay = 3.5
 
 /datum/intent/effect/daze/longsword2h
 	name = "zorn ort"
 	desc = "Block the opponent's weapon with a strike of your own and advance into a thrust towards the eyes, affecting their vision severely. Can only be performed two-handed."
-	attack_verb = list("pokes")
+	attack_verb = list("masterfully pokes")
 	intent_effect = /datum/status_effect/debuff/dazed/longsword2h
 	target_parts = list(BODY_ZONE_PRECISE_R_EYE, BODY_ZONE_PRECISE_L_EYE)
 	blade_class = BCLASS_STAB
 	damfactor = 1.1 //Same as master stab
 	clickcd = 5
+	swingdelay = 2
 
 // A weaker strike for sword with high damage so that it don't end up becoming better than mace
 /datum/intent/sword/strike/bad
@@ -811,6 +816,7 @@
 	desc = "A newly-smithed longsword with a reverse hilt in the shape of a reformist psydonian cross. It has the same kind of hand protection of an Etruscan longsword. The cross is upright when the weapon is sheathed, bronze pommel reflecting sunlight directly - and it becomes inverted when drawn, a symbol of distress. Ad pacem servandam."
 	sheathe_icon = "reform"
 	icon_state = "reformistsword"
+
 /obj/item/rogueweapon/sword/long/zizo
 	name = "avantyne longsword"
 	desc = "A wicked, unconventional, and otherwordly blade that was created by no swordsmith - a manifestation of hate for the state of this world that follows no design principles but spite and anger."
@@ -1427,14 +1433,17 @@
 
 /datum/intent/sword/cut/sabre/master
 	name = "pokrajać"
+	desc = "Perform a masterful wide-arc cut that's strong enough to penetrate light armour."
+	attack_verb = list("masterfully cuts", "deftly slits", "quarts")
 	clickcd = 7
 	damfactor = 1.25
 	penfactor = 54
+	max_intent_damage = 29.7
 
 /datum/intent/effect/daze/freisabre
 	name = "uszkodzić"
 	desc = "After a few misleading strikes, suddenly slash at your opponent's wrist to affect their speed and strength, preventing them from using their weapon effectively. This move can be parried, but not dodged."
-	attack_verb = list("wrist-slits")
+	attack_verb = list("deftly wrist-slits")
 	intent_effect = /datum/status_effect/debuff/dazed/freisabre
 	target_parts = list(BODY_ZONE_PRECISE_L_HAND, BODY_ZONE_PRECISE_R_HAND)
 	blade_class = BCLASS_CUT

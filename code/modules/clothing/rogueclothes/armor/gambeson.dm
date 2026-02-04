@@ -154,6 +154,7 @@
 	desc = "A strong loosely worn quilted shirt that places little weight on the arms, usually worn underneath a flexible leather vest. It won't cover your legs."
 	icon = 'icons/roguetown/clothing/armor.dmi'
 	mob_overlay_icon = 'icons/roguetown/clothing/onmob/armor.dmi'
+	sleeved = 'icons/roguetown/clothing/onmob/helpers/sleeves_armor.dmi'
 	body_parts_covered = COVERAGE_ALL_BUT_LEGS
 	icon_state = "fencingshirt"
 	color = "#FFFFFF"

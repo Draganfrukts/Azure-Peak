@@ -102,14 +102,14 @@
 /datum/intent/effect/daze/longsword/clinch
 	name = "clinch & swipe"
 	desc = "Get up in your opponent's face and force them into a clinch, then swipe their face with the crossguard while they're distracted. Good against baited or exhausted opponents."
-	icon_state = "inpunch"
+	icon_state = "inpunish"
 	attack_verb = list("forcibly clinches and swipes")
 	animname = "strike"
-	target_parts = list(BODY_ZONE_HEAD, BODY_ZONE_PRECISE_SKULL, BODY_ZONE_PRECISE_NOSE, BODY_ZONE_PRECISE_EARS, BODY_ZONE_PRECISE_MOUTH)
+	target_parts = list(BODY_ZONE_HEAD)
 	blade_class = BCLASS_BLUNT
-	hitsound = list('sound/combat/hits/blunt/bluntsmall (1).ogg', 'sound/combat/hits/blunt/bluntsmall (2).ogg', 'sound/combat/hits/kick/kick.ogg')
-	damfactor = 0.7
-	penfactor = 80
+	hitsound = list('sound/combat/hits/blunt/metalblunt (1).ogg', 'sound/combat/hits/blunt/metalblunt (2).ogg', 'sound/combat/hits/blunt/metalblunt (3).ogg')
+	damfactor = 0.5
+	penfactor = 88
 	swingdelay = 5
 	clickcd = 12
 	recovery = 15
@@ -117,6 +117,7 @@
 	intent_intdamage_factor = BLUNT_DEFAULT_INT_DAMAGEFACTOR
 	canparry = FALSE
 	candodge = FALSE
+	intent_effect = /datum/status_effect/debuff/dazed/swipe
 
 /datum/intent/sword/thrust/long/halfsword
 	name = "mezza spada"
@@ -125,9 +126,9 @@
 	attack_verb = list("skewers", "impales")
 	hitsound = list('sound/combat/hits/bladed/genstab (1).ogg', 'sound/combat/hits/bladed/genstab (2).ogg', 'sound/combat/hits/bladed/genstab (3).ogg')
 	penfactor = 80
-	clickcd = 14
+	clickcd = 12
 	swingdelay = 8
-	damfactor = 1.1
+	damfactor = 1.15
 	blade_class = BCLASS_HALFSWORD
 
 /datum/intent/effect/daze/longsword
@@ -138,6 +139,7 @@
 	target_parts = list(BODY_ZONE_PRECISE_NOSE)
 	damfactor = 0.8
 	clickcd = 6
+	swingdelay = 2
 
 /datum/intent/effect/daze/longsword2h
 	name = "zorn ort"

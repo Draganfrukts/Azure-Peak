@@ -450,6 +450,17 @@
 	desc = "How the fuck did they do that!? My wrist!"
 	icon_state = "mstrike"
 
+/datum/status_effect/debuff/dazed/swipe
+	id = "clinch & swipe"
+	alert_type = /atom/movable/screen/alert/status_effect/debuff/dazed/swipe
+	effectedstats = list(STATKEY_WIL = -4)
+	duration = 1.5 SECONDS	//Should last BARELY ENOUGH for someone who's actively grappling and swiping you to get a constant refresh of the dedbuff, otherwise it's useless.
+	status_type = STATUS_EFFECT_REFRESH
+
+/atom/movable/screen/alert/status_effect/debuff/dazed/swipe
+	name = "Clinched and Swiped!"
+	desc = "Urgh! My face! I need to step away!"
+
 /*/atom/movable/screen/alert/status_effect/debuff/dazed/shield
 	name = "Dazed by fencer's wrap"
 	desc = "That stupid piece of cloth is so distracting! It pisses me off!"

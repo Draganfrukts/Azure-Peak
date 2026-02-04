@@ -442,16 +442,17 @@
 	force_wielded = 25
 	icon = 'icons/roguetown/weapons/special/freifechter.dmi'
 	icon_state = "ciupaga"
-	pixel_y = -16
-	pixel_x = -16
+	pixel_y = 0
+	pixel_x = 0
 	inhand_x_dimension = 64
 	inhand_y_dimension = 64
+	demolition_mod = 2
 
 /datum/intent/axe/cut/battle/lunge
 	name = "ćiupaga lunge"
 	desc = "Grip your ćiupaga by the tail-end of the handle and swing in a circular motion to reach further ahead. It will deal extra damage if perfectly positioned, otherwise you'll just hit them with the handle."
 	damfactor = 1.75
-	penfactor = 35
+	penfactor = 42
 	effective_range = 2
 	effective_range_type = EFF_RANGE_EXACT
 	sharpness_penalty = 2

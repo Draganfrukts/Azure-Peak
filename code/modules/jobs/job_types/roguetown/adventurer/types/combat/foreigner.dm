@@ -288,8 +288,9 @@
 	traits_applied = list()
 	cmode_music = 'sound/music/frei_shepherd.ogg'
 	subclass_stats = list(
-		STATKEY_WIL = 3,
-		STATKEY_PER = 3
+		STATKEY_WIL = 2,
+		STATKEY_PER = 2,
+		STATKEY_INT = 2,
 	)
 
 	subclass_skills = list(

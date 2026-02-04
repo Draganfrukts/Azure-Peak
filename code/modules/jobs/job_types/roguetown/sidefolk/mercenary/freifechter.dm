@@ -57,6 +57,7 @@
 	shoes = /obj/item/clothing/shoes/roguetown/boots/leather/reinforced/short
 	gloves = /obj/item/clothing/gloves/roguetown/angle/grenzelgloves/freifechter
 	backr = /obj/item/storage/backpack/rogue/satchel/short
+	neck = /obj/item/clothing/neck/roguetown/psicross/reform
 
 	backpack_contents = list(/obj/item/roguekey/mercenary)	
 	H.merctype = 6
@@ -112,6 +113,7 @@
 	shoes = /obj/item/clothing/shoes/roguetown/boots/leather/reinforced/short
 	gloves = /obj/item/clothing/gloves/roguetown/angle/grenzelgloves/freifechter
 	backr = /obj/item/storage/backpack/rogue/satchel/short
+	neck = /obj/item/clothing/neck/roguetown/psicross/reform
 
 	backpack_contents = list(/obj/item/roguekey/mercenary)
 	H.merctype = 6
@@ -166,6 +168,7 @@
 	gloves = /obj/item/clothing/gloves/roguetown/angle/grenzelgloves/freifechter
 	wrists = /obj/item/clothing/wrists/roguetown/bracers/jackchain	//Obsessed with arms-hands. Keeping them protected on-spawn.
 	backr = /obj/item/storage/backpack/rogue/satchel/short
+	neck = /obj/item/clothing/neck/roguetown/psicross/reform
 
 	backpack_contents = list(/obj/item/roguekey/mercenary)	
 	H.merctype = 6

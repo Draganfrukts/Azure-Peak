@@ -442,7 +442,7 @@
 	force_wielded = 25
 	icon = 'icons/roguetown/weapons/special/freifechter.dmi'
 	icon_state = "ciupaga"
-	pixel_y = 0
+	pixel_y = -10
 	pixel_x = 0
 	inhand_x_dimension = 64
 	inhand_y_dimension = 64

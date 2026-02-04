@@ -14,7 +14,7 @@
 	subclass_stats = list(
 		STATKEY_INT = 3,
 		STATKEY_PER = 3,
-		STATKEY_CON = 3
+		STATKEY_WIL = 3
 	)
 	subclass_skills = list(
 		/datum/skill/combat/swords = SKILL_LEVEL_JOURNEYMAN,
@@ -33,7 +33,7 @@
 	l_hand = /obj/item/rogueweapon/scabbard/sword
 	var/weapons = list("Etruscan Longsword", "Reformist Longsword")
 	if(H.mind)
-		var/weapon_choice = input(H, "Choose your weapon.", "TAKE UP ARMS") as anything in weapons
+		var/weapon_choice = input(H, "Draw a sword.", "As presented to me by Master Oktawiusz...") as anything in weapons
 		switch(weapon_choice)
 			if("Etruscan Longsword")		//A longsword with a compound ricasso. Accompanied by a traditional flip knife.
 				r_hand = /obj/item/rogueweapon/sword/long/etruscan
@@ -47,7 +47,7 @@
 				"Fencing Jacket"	= /obj/item/clothing/suit/roguetown/armor/leather/heavy/freifechter,
 				"Fencing Cuirass"	= /obj/item/clothing/suit/roguetown/armor/plate/cuirass/fencer
 			)
-			var/armorchoice = input(H, "Choose your armor.", "TAKE UP ARMOR") as anything in armors
+			var/armorchoice = input(H, "Don your armour.", "Security or Flexibility?") as anything in armors
 			armor = armors[armorchoice]
 
 	belt = /obj/item/storage/belt/rogue/leather/sash
@@ -93,7 +93,7 @@
 	backl = /obj/item/rogueweapon/scabbard/gwstrap
 	var/weapons = list("Graduate's Spear", "Banner of Szöréndnížina", "Banner of Psydonic Reformism")
 	if(H.mind)
-		var/weapon_choice = input(H, "Choose your weapon.", "TAKE UP ARMS") as anything in weapons
+		var/weapon_choice = input(H, "Push your pike.", "As presented to me by Lance-Master Szörénsław...") as anything in weapons
 		switch(weapon_choice)
 			if("Graduate's Spear")		//A steel spear with a cool-looking stick & a banner sticking out of it.
 				r_hand = /obj/item/rogueweapon/spear/boar/frei
@@ -137,7 +137,7 @@
 	subclass_skills = list(
 		/datum/skill/combat/swords = SKILL_LEVEL_JOURNEYMAN,
 		/datum/skill/misc/athletics = SKILL_LEVEL_EXPERT,
-		/datum/skill/combat/knives = SKILL_LEVEL_JOURNEYMAN,	//For off-hands
+		/datum/skill/combat/knives = SKILL_LEVEL_JOURNEYMAN,
 		/datum/skill/combat/wrestling = SKILL_LEVEL_JOURNEYMAN,
 		/datum/skill/misc/reading = SKILL_LEVEL_MASTER,
 		/datum/skill/misc/climbing = SKILL_LEVEL_APPRENTICE,
@@ -153,7 +153,7 @@
 		"Fencing Jacket"	= /obj/item/clothing/suit/roguetown/armor/leather/heavy/freifechter,
 		"Fencing Cuirass"	= /obj/item/clothing/suit/roguetown/armor/plate/cuirass/fencer
 		)
-		var/armorchoice = input(H, "Choose your armor.", "TAKE UP ARMOR") as anything in armors
+		var/armorchoice = input(H, "Don your armour.", "Security or Flexibility?") as anything in armors
 		armor = armors[armorchoice]
 	l_hand = /obj/item/rogueweapon/scabbard/sword
 	r_hand = /obj/item/rogueweapon/sword/sabre/freifechter
@@ -164,6 +164,7 @@
 	pants = /obj/item/clothing/under/roguetown/heavy_leather_pants/otavan/generic
 	shoes = /obj/item/clothing/shoes/roguetown/boots/leather/reinforced/short
 	gloves = /obj/item/clothing/gloves/roguetown/angle/grenzelgloves/freifechter
+	wrists = /obj/item/clothing/wrists/roguetown/bracers/jackchain	//Obsessed with arms-hands. Keeping them protected on-spawn.
 	backr = /obj/item/storage/backpack/rogue/satchel/short
 
 	backpack_contents = list(/obj/item/roguekey/mercenary)	

@@ -1429,7 +1429,7 @@
 	name = "pokrajać"
 	clickcd = 7
 	damfactor = 1.25
-	penfactor = 40//WIP. NOT FINAL
+	penfactor = 54
 
 /datum/intent/effect/daze/freisabre
 	name = "uszkodzić"

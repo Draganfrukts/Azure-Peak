@@ -894,7 +894,7 @@
 	wdefense = 2
 	sellprice = 50
 
-/obj/item/rogueweapon/huntingknife/idagger/navaja/attack_self(mob/user)
+/obj/item/rogueweapon/huntingknife/idagger/navaja/freifechter/attack_self(mob/user)
 	extended = !extended
 	playsound(src.loc, 'sound/blank.ogg', 50, TRUE)
 	if(extended)

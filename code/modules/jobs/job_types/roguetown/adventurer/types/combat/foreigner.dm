@@ -367,7 +367,7 @@
 				r_hand = /obj/item/rogueweapon/huntingknife/combat
 				backr = /obj/item/rogueweapon/scabbard/sword
 			if("Spear & Punch Dagger")
-				H.adjust_skillrank_up_to(/datum/skill/combat/swords, SKILL_LEVEL_EXPERT, TRUE)
+				H.adjust_skillrank_up_to(/datum/skill/combat/polearms, SKILL_LEVEL_EXPERT, TRUE)
 				H.adjust_skillrank_up_to(/datum/skill/combat/unarmed, SKILL_LEVEL_JOURNEYMAN, TRUE)
 				l_hand = /obj/item/rogueweapon/spear/boar
 				r_hand = /obj/item/rogueweapon/katar/punchdagger

@@ -350,7 +350,8 @@
 		/datum/skill/combat/wrestling = SKILL_LEVEL_JOURNEYMAN,
 		/datum/skill/misc/reading = SKILL_LEVEL_JOURNEYMAN,
 		/datum/skill/misc/climbing = SKILL_LEVEL_APPRENTICE,
-		/datum/skill/craft/sewing = SKILL_LEVEL_APPRENTICE
+		/datum/skill/craft/sewing = SKILL_LEVEL_APPRENTICE,
+		/datum/skill/misc/medicine = SKILL_LEVEL_APPRENTICE
 	)
 
 /datum/outfit/job/roguetown/adventurer/fencerguy/pre_equip(mob/living/carbon/human/H)
@@ -390,4 +391,5 @@
 		/obj/item/flashlight/flare/torch = 1,
 		/obj/item/recipe_book/survival = 1,
 		/obj/item/storage/belt/rogue/pouch/coins/poor = 1,
+		/obj/item/natural/bundle/cloth/bandage/full = 1,
 		)

@@ -23,7 +23,8 @@
 		/datum/skill/combat/wrestling = SKILL_LEVEL_JOURNEYMAN,
 		/datum/skill/misc/reading = SKILL_LEVEL_MASTER,
 		/datum/skill/misc/climbing = SKILL_LEVEL_APPRENTICE,
-		/datum/skill/craft/sewing = SKILL_LEVEL_APPRENTICE
+		/datum/skill/craft/sewing = SKILL_LEVEL_APPRENTICE,
+		/datum/skill/misc/medicine = SKILL_LEVEL_APPRENTICE
 	)
 	adv_stat_ceiling = list(STAT_STRENGTH = 12, STAT_SPEED = 12)
 
@@ -59,7 +60,10 @@
 	backr = /obj/item/storage/backpack/rogue/satchel/short
 	neck = /obj/item/clothing/neck/roguetown/psicross/reform
 
-	backpack_contents = list(/obj/item/roguekey/mercenary)	
+	backpack_contents = list(
+		/obj/item/roguekey/mercenary = 1,
+		/obj/item/natural/bundle/cloth/bandage/full = 1
+		)	
 	H.merctype = 6
 
 /datum/advclass/mercenary/freelancer/lancer
@@ -84,6 +88,7 @@
 		/datum/skill/combat/wrestling = SKILL_LEVEL_NOVICE,	//Wrestling is a swordsman's luxury.
 		/datum/skill/misc/reading = SKILL_LEVEL_APPRENTICE,
 		/datum/skill/misc/climbing = SKILL_LEVEL_APPRENTICE,	//I got told that having zero climbing is a PITA. Bare minimum for a combat class.
+		/datum/skill/misc/medicine = SKILL_LEVEL_APPRENTICE,
 	)
 	adv_stat_ceiling = list(STAT_STRENGTH = 13, STAT_SPEED = 12, STAT_WILLPOWER = 14)	//Prevent climbing to 14 by picking a +1 STR race.
 
@@ -115,7 +120,10 @@
 	backr = /obj/item/storage/backpack/rogue/satchel/short
 	neck = /obj/item/clothing/neck/roguetown/psicross/reform
 
-	backpack_contents = list(/obj/item/roguekey/mercenary)
+	backpack_contents = list(
+		/obj/item/roguekey/mercenary = 1,
+		/obj/item/natural/bundle/cloth/bandage/full = 1
+		)
 	H.merctype = 6
 
 /datum/advclass/mercenary/freelancer/sabrist
@@ -143,7 +151,8 @@
 		/datum/skill/combat/wrestling = SKILL_LEVEL_JOURNEYMAN,
 		/datum/skill/misc/reading = SKILL_LEVEL_MASTER,
 		/datum/skill/misc/climbing = SKILL_LEVEL_APPRENTICE,
-		/datum/skill/craft/sewing = SKILL_LEVEL_APPRENTICE
+		/datum/skill/craft/sewing = SKILL_LEVEL_APPRENTICE,
+		/datum/skill/misc/medicine = SKILL_LEVEL_APPRENTICE
 	)
 	adv_stat_ceiling = list(STAT_STRENGTH = 12)
 
@@ -170,5 +179,8 @@
 	backr = /obj/item/storage/backpack/rogue/satchel/short
 	neck = /obj/item/clothing/neck/roguetown/psicross/reform
 
-	backpack_contents = list(/obj/item/roguekey/mercenary)	
+	backpack_contents = list(
+		/obj/item/roguekey/mercenary = 1,
+		/obj/item/natural/bundle/cloth/bandage/full = 1
+		)	
 	H.merctype = 6

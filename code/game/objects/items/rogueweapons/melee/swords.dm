@@ -136,6 +136,11 @@
 	blade_class = BCLASS_HALFSWORD
 	max_intent_damage = 30
 
+/datum/intent/sword/thrust/long/halfsword/lesser
+	name = "halbschwert"
+	clickcd = 16
+	swingdelay = 12
+
 /datum/intent/effect/daze/longsword
 	name = "durchlauffen"
 	desc = "Lock the opponent's arm in place and strike their nose with the pommel of your sword before tossing them, affecting their ability to dodge and feint. Can only be performed one-handed."
@@ -143,7 +148,7 @@
 	intent_effect = /datum/status_effect/debuff/dazed/longsword
 	target_parts = list(BODY_ZONE_PRECISE_NOSE)
 	damfactor = 0.8
-	clickcd = 6
+	clickcd = 14
 	swingdelay = 3.5
 
 /datum/intent/effect/daze/longsword2h
@@ -154,7 +159,7 @@
 	target_parts = list(BODY_ZONE_PRECISE_R_EYE, BODY_ZONE_PRECISE_L_EYE)
 	blade_class = BCLASS_STAB
 	damfactor = 1.1 //Same as master stab
-	clickcd = 5
+	clickcd = 14
 	swingdelay = 2
 
 // A weaker strike for sword with high damage so that it don't end up becoming better than mace
@@ -817,6 +822,14 @@
 	desc = "A newly-smithed longsword with a reverse hilt in the shape of a reformist psydonian cross. It has the same kind of hand protection of an Etruscan longsword. The cross is upright when the weapon is sheathed, bronze pommel reflecting sunlight directly - and it becomes inverted when drawn, a symbol of distress. Ad pacem servandam."
 	sheathe_icon = "reform"
 	icon_state = "reformistsword"
+
+/obj/item/rogueweapon/sword/long/fencerguy
+	name = "grenzelhoftian longsword"
+	desc = "A masterfully smithed, perfectly-balanced longsword that makes it easy for even a beginner to perform basic fencing maneuvers."
+	icon_state = "germanlong"
+	max_blade_int = 275
+	possible_item_intents = list(/datum/intent/sword/cut, /datum/intent/sword/thrust/long, /datum/intent/dagger/sucker_punch, /datum/intent/sword/bash)
+	gripped_intents = list(/datum/intent/sword/cut, /datum/intent/sword/thrust/long, /datum/intent/sword/thrust/long/halfsword/lesser, /datum/intent/sword/chop)
 
 /obj/item/rogueweapon/sword/long/zizo
 	name = "avantyne longsword"

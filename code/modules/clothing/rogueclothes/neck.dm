@@ -348,6 +348,10 @@
 	. = ..()
 	update_icon()
 
+/obj/item/clothing/neck/roguetown/fencerguard/generic
+	color = "#503630"
+	detail_color = "#503630"
+
 /obj/item/clothing/neck/roguetown/gorget/forlorncollar
 	name = "forlorn collar"
 	desc = "A old reminder."

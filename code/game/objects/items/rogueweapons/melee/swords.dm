@@ -139,7 +139,6 @@
 /datum/intent/sword/thrust/long/halfsword/lesser
 	name = "halbschwert"
 	clickcd = 16
-	swingdelay = 12
 
 /datum/intent/effect/daze/longsword
 	name = "durchlauffen"

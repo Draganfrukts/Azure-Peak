@@ -105,10 +105,10 @@
 				r_hand = /obj/item/rogueweapon/spear/boar/frei
 				l_hand = /obj/item/rogueweapon/katar/punchdagger/frei
 			if("Banner of Szöréndnížina")
-				r_hand = /obj/item/rogueweapon/spear/boar/frei/city
+				r_hand = /obj/item/rogueweapon/spear/boar/frei/pike
 				wrists = /obj/item/rogueweapon/katar/punchdagger/frei
 			if("Banner of Psydonic Reformism")
-				r_hand = /obj/item/rogueweapon/spear/boar/frei/reformist
+				r_hand = /obj/item/rogueweapon/spear/boar/frei/pike/reformist
 				wrists = /obj/item/rogueweapon/katar/punchdagger/frei
 
 	belt = /obj/item/storage/belt/rogue/leather/sash

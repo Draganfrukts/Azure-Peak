@@ -111,11 +111,10 @@
 	target_parts = list(BODY_ZONE_HEAD)
 	blade_class = BCLASS_BLUNT
 	hitsound = list('sound/combat/hits/blunt/metalblunt (1).ogg', 'sound/combat/hits/blunt/metalblunt (2).ogg', 'sound/combat/hits/blunt/metalblunt (3).ogg')
-	damfactor = 0.5
-	max_intent_damage = 17.25
-	penfactor = 86
-	swingdelay = 7
-	clickcd = 12
+	damfactor = 0.8
+	max_intent_damage = 24
+	swingdelay = 3.5
+	clickcd = 10
 	recovery = 15
 	item_d_type = "blunt"
 	intent_intdamage_factor = BLUNT_DEFAULT_INT_DAMAGEFACTOR

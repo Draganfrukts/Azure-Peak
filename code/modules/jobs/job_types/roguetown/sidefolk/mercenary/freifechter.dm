@@ -99,7 +99,7 @@
 	backl = /obj/item/rogueweapon/scabbard/gwstrap
 	var/weapons = list("Graduate's Spear", "Banner of Szöréndnížina", "Banner of Psydonic Reformism")
 	if(H.mind)
-		var/weapon_choice = input(H, "Push your pike.", "As presented to me by Lance-Master Szörénsław...") as anything in weapons
+		var/weapon_choice = input(H, "Spear or Pike-Banner?", "As presented to me by Lance-Master Szörénsław...") as anything in weapons
 		switch(weapon_choice)
 			if("Graduate's Spear")		//A steel spear with a cool-looking stick & a banner sticking out of it.
 				r_hand = /obj/item/rogueweapon/spear/boar/frei

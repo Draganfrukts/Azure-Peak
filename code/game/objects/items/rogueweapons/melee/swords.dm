@@ -113,7 +113,7 @@
 	hitsound = list('sound/combat/hits/blunt/metalblunt (1).ogg', 'sound/combat/hits/blunt/metalblunt (2).ogg', 'sound/combat/hits/blunt/metalblunt (3).ogg')
 	damfactor = 0.8
 	max_intent_damage = 24
-	swingdelay = 5
+	swingdelay = 8
 	clickcd = 10
 	recovery = 15
 	item_d_type = "blunt"
@@ -147,7 +147,7 @@
 	target_parts = list(BODY_ZONE_PRECISE_NOSE)
 	damfactor = 0.8
 	clickcd = 14
-	swingdelay = 4
+	swingdelay = 6
 
 /datum/intent/effect/daze/longsword2h
 	name = "zorn ort"
@@ -158,7 +158,7 @@
 	blade_class = BCLASS_STAB
 	damfactor = 1.1 //Same as master stab
 	clickcd = 14
-	swingdelay = 2
+	swingdelay = 5
 
 // A weaker strike for sword with high damage so that it don't end up becoming better than mace
 /datum/intent/sword/strike/bad

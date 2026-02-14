@@ -1,6 +1,6 @@
 /datum/advclass/mercenary/forlorn
-	name = "Array of the Black Book"	//Possible temporary name until I come up with something cooler or better.
-	tutorial = "The Array of the Black Book is an ever-growing mercenary company formed off the back of a Ranesheni slave revolt. Drawing from all walks of life, their ranks come from both purchased and liberated slaves. Everyone in the Slaver's Black Book is marked for death. Coin is power, and power is the path to freedom."
+	name = "Forlorn Hope"
+	tutorial = "The Forlorn Hope - not to be confused with their extremist cousins - are an ever-growing mercenary company formed off the back of a Ranesheni slave revolt. Drawing from all walks of life, their ranks come from both purchased and liberated slaves. Coin is power, and power is the path to freedom."
 	allowed_sexes = list(MALE, FEMALE)
 	allowed_races = RACES_ALL_KINDS
 	outfit = /datum/outfit/job/roguetown/mercenary/forlorn
@@ -103,8 +103,8 @@
 
 
 /datum/advclass/mercenary/forlorn/real
-	name = "The Forlorn Hope"	//Possible temporary name until I come up with something cooler or better.
-	tutorial = "The Holy Order of the Forlorn Hope was founded in the name of Noc and the banishment of the rot, it's riddled with the wounded, the veterans and the landless of the civil war and subsequent deadite horde that felled Pack Vakran. Take up the banner and reclaim your lyfe, fight in the name of the Ten, or use the pretense of faith and zealotry to make ends meet by any means necessary."
+	name = "Holy Order of the Forlorn Hope"	//Possible temporary name until I come up with something cooler or better.
+	tutorial = "The Holy Order of the Forlorn Hope - not to be confused with their less extremist cousins - was founded in the name of Noc and the banishment of the rot, it's riddled with the wounded, the veterans and the landless of the civil war and subsequent deadite horde that felled Pack Vakran. Take up the banner and reclaim your lyfe, fight in the name of the Ten, or use the pretense of faith and zealotry to make ends meet by any means necessary."
 	allowed_sexes = list(MALE, FEMALE)
 	allowed_races = list(
 		/datum/species/lupian, 
@@ -151,7 +151,6 @@
 	armor = /obj/item/clothing/suit/roguetown/armor/brigandine/light
 	backr = /obj/item/storage/backpack/rogue/satchel
 	backpack_contents = list(
-		/obj/item/rogueweapon/huntingknife,
 		/obj/item/roguekey/mercenary,
 		/obj/item/rogueweapon/scabbard/sheath,
 		/obj/item/storage/belt/rogue/pouch/coins/poor
@@ -163,41 +162,27 @@
 
 /datum/outfit/job/roguetown/mercenary/forlorn/choose_loadout(mob/living/carbon/human/H)
 	. = ..()
-	var/weapons = list("Revolt Veteran (Warhammer)",
-	"Slave Miner (Steel War Pick)", // Militia / Peasant weapons to slay the oppressors
-	"Captured Rider (Peasant Falchions & Dual Wielding)",
-	"Levyman (Pitchfork Spear)",
-	"Gravedigger (War Axe)",
-	"Flax Farmer (Thresher)",
-	"William's Company (Spiked War Club)") // Any that scales off labor skill isn't included
-	var/weapon_choice = input(H, "Choose your weapon.", "ARMS TO SLAY THE OPPRESSORS") as anything in weapons
+	var/weapons = list(
+	"The Volf (Noccite Warhammer & Shield)",
+	"The Jackal (Forlorner Longsword & Hand Mace)",
+	"The Venard (Hand Mace & Crossbow)",
+	"The Coyote (Falchion & Bow)")
+	var/weapon_choice = input(H, "Choose your expertise.", "UNITED THROUGH SUFFERING.") as anything in weapons
 	switch(weapon_choice)
-		if("Revolt Veteran (Warhammer)")
-			H.equip_to_slot_or_del(new /obj/item/rogueweapon/mace/warhammer/steel, SLOT_BELT_L)
+		if("The Volf (Noccite Warhammer & Shield)")
+			H.equip_to_slot_or_del(new /obj/item/rogueweapon/mace/warhammer/steel/forlorn, SLOT_BELT_L)
 			H.equip_to_slot_or_del(new /obj/item/rogueweapon/shield/heater, SLOT_BACK_L)
 			H.adjust_skillrank_up_to(/datum/skill/combat/maces, SKILL_LEVEL_EXPERT)
 			H.adjust_skillrank_up_to(/datum/skill/combat/shields = SKILL_LEVEL_EXPERT)
-		if("Slave Miner (Steel War Pick)")
+		if("The Jackal (Forlorner Longsword)")
 			H.equip_to_slot_or_del(new /obj/item/rogueweapon/pick/militia/steel, SLOT_BELT_L) // The steel war pick is genuinely such an incredible weapon that you don't deserve a shield on principle. You have two pick intents and a two-handed 50 AP stab.
-			H.adjust_skillrank_up_to(/datum/skill/combat/axes, SKILL_LEVEL_EXPERT)
-		if("Captured Rider (Peasant Falchions & Dual Wielding)")
+			H.adjust_skillrank_up_to(/datum/skill/combat/swords, SKILL_LEVEL_EXPERT)
+		if("The Venard (Hand Mace & Crossbow)")
 			H.equip_to_slot_or_del(new /obj/item/rogueweapon/sword/falchion/militia, SLOT_BELT_L)
 			H.equip_to_slot_or_del(new /obj/item/rogueweapon/sword/falchion/militia, SLOT_BELT_R)
 			H.adjust_skillrank_up_to(/datum/skill/combat/swords, SKILL_LEVEL_EXPERT)
 			ADD_TRAIT(H, TRAIT_DUALWIELDER, TRAIT_GENERIC)
-		if("Levyman (Pitchfork Spear)")
+		if("The Coyote (Noccite Dagger & Bow)")
 			H.put_in_hands(new /obj/item/rogueweapon/spear/militia)
 			H.equip_to_slot_or_del(new /obj/item/rogueweapon/scabbard/gwstrap, SLOT_BACK_L)
-			H.adjust_skillrank_up_to(/datum/skill/combat/polearms, SKILL_LEVEL_EXPERT)
-		if("Gravedigger (War Axe)")
-			H.put_in_hands(new /obj/item/rogueweapon/greataxe/militia)
-			H.equip_to_slot_or_del(new /obj/item/rogueweapon/scabbard/gwstrap, SLOT_BACK_L)
-			H.adjust_skillrank_up_to(/datum/skill/combat/axes, SKILL_LEVEL_EXPERT)
-		if("Flax Farmer (Thresher)")
-			H.put_in_hands(new /obj/item/rogueweapon/flail/peasantwarflail)
-			H.equip_to_slot_or_del(new /obj/item/rogueweapon/scabbard/gwstrap, SLOT_BACK_L)
-			H.adjust_skillrank_up_to(/datum/skill/combat/polearms, SKILL_LEVEL_EXPERT)
-		if("William's Company (Spiked War Club)")						//Let reason rank where rage might reign.
-			H.put_in_hands(new /obj/item/rogueweapon/woodstaff/militia)
-			H.equip_to_slot_or_del(new /obj/item/rogueweapon/woodstaff/militia, SLOT_BACK_L)
 			H.adjust_skillrank_up_to(/datum/skill/combat/polearms, SKILL_LEVEL_EXPERT)

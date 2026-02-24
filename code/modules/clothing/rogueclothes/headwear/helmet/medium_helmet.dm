@@ -28,6 +28,7 @@
 /obj/item/clothing/head/roguetown/helmet/MiddleClick(mob/user)
 	if(!ishuman(user))
 		return
+	to_chat(user, span_info("I [overarmor ? "wear \the [src] under my hair" : "wear \the [src] over my hair"]."))
 	if(flags_inv & HIDE_HEADTOP)
 		flags_inv &= ~HIDE_HEADTOP
 	else
@@ -44,6 +45,11 @@
 
 /obj/item/clothing/suit/roguetown/head/helmet/ComponentInitialize()
 	AddComponent(/datum/component/armour_filtering/negative, TRAIT_HONORBOUND)
+
+/obj/item/clothing/head/roguetown/helmet/get_mechanics_examine(mob/user)
+	. = ..()
+	. += span_info("Visored helmets can be articulated by right-clicking them. Lifted visors offer a wider field of view, but expose your face to precise strikes.")
+	. += span_info("Certain helmets can be further decorated by left-clicking them with a feather, cloth, or both.")
 
 /obj/item/clothing/head/roguetown/helmet/skullcap
 	name = "skull cap"
@@ -435,7 +441,6 @@
 /obj/item/clothing/head/roguetown/helmet/bascinet/pigface/hounskull/ComponentInitialize()
 	AddComponent(/datum/component/adjustable_clothing, (HEAD|EARS|HAIR), (HIDEEARS|HIDEHAIR), null, 'sound/items/visor.ogg', null, UPD_HEAD)	//Standard helmet
 
-
 /obj/item/clothing/head/roguetown/helmet/bascinet/pigface/hounskull/attackby(obj/item/W, mob/living/user, params)
 	..()
 	if(istype(W, /obj/item/natural/feather) && !detail_tag)
@@ -460,7 +465,6 @@
 		if(loc == user && ishuman(user))
 			var/mob/living/carbon/H = user
 			H.update_inv_head()
-
 
 /obj/item/clothing/head/roguetown/helmet/bascinet/pigface/hounskull/update_icon()
 	cut_overlays()
@@ -538,7 +542,7 @@
 
 // Warden Helmets
 /obj/item/clothing/head/roguetown/helmet/bascinet/antler
-	name = "wardens's helmet"
+	name = "warden's helmet"
 	desc = "A beastly snouted armet with the large horns of an elder saiga protruding from it. Residents of Azure Peak know not to fear such a sight in the wilds, for they are exclusively associated with the Azurian wardens."
 	icon = 'icons/roguetown/clothing/special/warden.dmi'
 	mob_overlay_icon = 'icons/roguetown/clothing/special/onmob/warden64.dmi'
@@ -553,8 +557,6 @@
 	block2add = FOV_BEHIND
 	smeltresult = /obj/item/ingot/steel
 	smelt_bar_num = 2
-	experimental_inhand = FALSE
-	experimental_onhip = FALSE
 
 /obj/item/clothing/head/roguetown/helmet/bascinet/antler/ComponentInitialize()
 	AddComponent(/datum/component/adjustable_clothing, (HEAD|EARS|HAIR), (HIDEEARS|HIDEHAIR), null, 'sound/items/visor.ogg', null, UPD_HEAD)	//Standard helmet

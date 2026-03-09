@@ -94,10 +94,10 @@
 	icon_state = "incutmaster"
 	desc = "Strike the opponent from above with the true edge of the sword and penetrate light armour."
 	attack_verb = list("masterfully tears", "artfully slits", "adroitly hacks")
-	damfactor = 1.01
+	damfactor = 1.1
 	penfactor = 50
-	max_intent_damage = 35
-	min_intent_damage = 31
+	max_intent_damage = 31
+	swingdelay = 1
 
 /datum/intent/sword/thrust/long/master
 	name = "stoccato"
@@ -135,14 +135,14 @@
 	hitsound = list('sound/combat/hits/bladed/genstab (1).ogg', 'sound/combat/hits/bladed/genstab (2).ogg', 'sound/combat/hits/bladed/genstab (3).ogg')
 	penfactor = 80
 	clickcd = 12
-	swingdelay = 10
+	swingdelay = 16
 	damfactor = 0.86
 	blade_class = BCLASS_HALFSWORD
 	max_intent_damage = 30
 
 /datum/intent/sword/thrust/long/halfsword/lesser
 	name = "halbschwert"
-	clickcd = 16
+	clickcd = 20
 
 /datum/intent/effect/daze/longsword
 	name = "durchlauffen"
@@ -152,7 +152,7 @@
 	target_parts = list(BODY_ZONE_PRECISE_NOSE)
 	damfactor = 0.8
 	clickcd = 14
-	swingdelay = 6
+	swingdelay = 8
 
 /datum/intent/effect/daze/longsword2h
 	name = "zorn ort"
@@ -163,7 +163,7 @@
 	blade_class = BCLASS_STAB
 	damfactor = 1.1 //Same as master stab
 	clickcd = 14
-	swingdelay = 5
+	swingdelay = 7
 
 // A weaker strike for sword with high damage so that it don't end up becoming better than mace
 /datum/intent/sword/strike/bad
@@ -675,9 +675,11 @@
 	icon = 'icons/roguetown/weapons/special/freifechter.dmi'
 	possible_item_intents = list(/datum/intent/sword/cut, /datum/intent/sword/thrust/long, /datum/intent/effect/daze/longsword/clinch, /datum/intent/effect/daze/longsword)
 	gripped_intents = list(/datum/intent/sword/cut/master, /datum/intent/sword/thrust/long/master, /datum/intent/sword/thrust/long/halfsword, /datum/intent/effect/daze/longsword2h)
-	alt_intents = list(/datum/intent/sword/strike, /datum/intent/sword/bash, /datum/intent/effect/daze)
+	wlength = WLENGTH_NORMAL
+	mordhau = FALSE		//Why would you ruin such an intricately ornamented sword?
 	max_blade_int = 300
 	max_integrity = 225
+	
 
 /obj/item/rogueweapon/sword/long/etruscan/freifechter
 	name = "psydonic reformist longsword"
@@ -692,6 +694,8 @@
 	max_blade_int = 275
 	possible_item_intents = list(/datum/intent/sword/cut, /datum/intent/sword/thrust/long, /datum/intent/dagger/sucker_punch, /datum/intent/sword/bash)
 	gripped_intents = list(/datum/intent/sword/cut, /datum/intent/sword/thrust/long, /datum/intent/sword/thrust/long/halfsword/lesser, /datum/intent/sword/chop)
+	wlength = WLENGTH_NORMAL
+	mordhau = FALSE
 
 /obj/item/rogueweapon/sword/long/zizo
 	name = "avantyne longsword"

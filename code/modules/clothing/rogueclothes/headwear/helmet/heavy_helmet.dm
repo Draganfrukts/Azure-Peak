@@ -1280,3 +1280,38 @@
 
 /obj/item/clothing/head/roguetown/helmet/heavy/banneret/ComponentInitialize()
 	AddComponent(/datum/component/adjustable_clothing, (HEAD|EARS|HAIR), (HIDEEARS|HIDEHAIR), null, 'sound/items/visor.ogg', null, UPD_HEAD)	//Standard helmet
+
+
+//					BASCINETS WITH AVENTAILS.						  //
+//HEAVY AC INTENDED WHERE IT IS. DO NOT EVER MAKE VISORED AVENTAILS NOT HEAVY AC.//
+
+/obj/item/clothing/head/roguetown/helmet/bascinet/aventail
+	name = "bascinet w/aventail"
+	desc = "A steel bascinet helmet, and the basis for many-a-visored greathelm. A maille aventail has been fastened to it with leather, covering the face and neck."
+	icon_state = "bascinet_novisor"
+	item_state = "bascinet_novisor"
+	emote_environment = 3
+	body_parts_covered = HEAD|HAIR|EARS|NOSE|MOUTH|NECK
+	flags_cover = HEADCOVERSMOUTH
+	flags_inv = HIDEEARS|HIDEHAIR
+	armor_class = ARMOR_CLASS_MEDIUM
+	max_integrity = ARMOR_INT_HELMET_STEEL + 28
+	block2add = FOV_BEHIND
+
+/obj/item/clothing/head/roguetown/helmet/bascinet/aventail/iron
+	name = "iron bascinet w/aventail"
+	desc = "An iron bascinet helmet, and the basis for many-a-visored greathelm. A maille aventail has been fastened to it with leather, covering the face and neck."
+	max_integrity = ARMOR_INT_HELMET_IRON + 28
+
+/obj/item/clothing/head/roguetown/helmet/bascinet/aventail/visored
+	name = "hounskull w/aventail"
+	desc = "A steel bascinet fitted with a modern conical visor that somewhat resembles a dog's skull, hence the name. A maille aventail has been fastened to it with leather, covering the face and neck. It's incredibly heavy and limits your field of view severely."
+	armor_class = ARMOR_CLASS_HEAVY
+	max_integrity = ARMOR_INT_HELMET_HEAVY_STEEL
+	body_parts_covered = FULL_HEAD|NECK
+	flags_cover = HEADCOVERSMOUTH
+	flags_inv = HIDEEARS|HIDEHAIR
+
+/obj/item/clothing/head/roguetown/helmet/bascinet/aventail/visored/ComponentInitialize()
+	..()
+	AddComponent(/datum/component/adjustable_clothing, (HEAD|EARS|HAIR|NOSE|MOUTH|NECK), (HIDEEARS|HIDEHAIR), null, 'sound/items/visor.ogg', null, UPD_HEAD)

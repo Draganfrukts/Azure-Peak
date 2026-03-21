@@ -137,7 +137,7 @@
 				"Knight Helmet"			= /obj/item/clothing/head/roguetown/helmet/heavy/knight,
 				"Armet"					= /obj/item/clothing/head/roguetown/helmet/heavy/knight/armet,
 				"Visored Sallet"		= /obj/item/clothing/head/roguetown/helmet/sallet/visored,
-				"Klappvisier Bascinet"	= /obj/item/clothing/head/roguetown/helmet/bascinet/etruscan,
+				"Etruscan Bascinet"	= /obj/item/clothing/head/roguetown/helmet/bascinet/etruscan,
 				"Hounskull Bascinet"	= /obj/item/clothing/head/roguetown/helmet/bascinet/pigface/hounskull,
 				"Slitted Kettle"		= /obj/item/clothing/head/roguetown/helmet/heavy/knight/skettle,
 				"None"

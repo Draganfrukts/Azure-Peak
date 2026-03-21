@@ -381,6 +381,34 @@
 			pic.color = get_detail_color()
 		add_overlay(pic)
 
+/obj/item/clothing/head/roguetown/helmet/bascinet/iron
+	name = "iron bascinet"
+	desc = "A common bascinet helmet, and the basis for many-a-visored greathelm. Though it lacks a visor, it still protects the head and ears."
+	max_integrity = ARMOR_INT_HELMET_IRON
+	smeltresult = /obj/item/ingot/iron
+
+/obj/item/clothing/head/roguetown/helmet/bascinet/iron/attackby(obj/item/W, mob/living/user, params)
+	..()
+	if(istype(W, /obj/item/natural/cloth) && !detail_tag)
+		var/choice = input(user, "Choose a color.", "Orle") as anything in COLOR_MAP + pridelist
+		detail_color = COLOR_MAP[choice]
+		detail_tag = "_detail"
+		user.visible_message(span_warning("[user] adds [W] to [src]."))
+		user.transferItemToLoc(W, src, FALSE, FALSE)
+		update_icon()
+		if(loc == user && ishuman(user))
+			var/mob/living/carbon/H = user
+			H.update_inv_head()
+
+/obj/item/clothing/head/roguetown/helmet/bascinet/iron/update_icon()
+	cut_overlays()
+	if(get_detail_tag())
+		var/mutable_appearance/pic = mutable_appearance(icon(icon, "[icon_state][detail_tag]"))
+		pic.appearance_flags = RESET_COLOR
+		if(get_detail_color())
+			pic.color = get_detail_color()
+		add_overlay(pic)
+
 /obj/item/clothing/head/roguetown/helmet/bascinet/pigface
 	name = "pigface bascinet"
 	desc = "A steel bascinet helmet with a pigface visor that protects the entire head and face. Add a feather to show the colors of your family or allegiance."
@@ -442,7 +470,7 @@
 
 /obj/item/clothing/head/roguetown/helmet/bascinet/pigface/hounskull
 	name = "hounskull bascinet"
-	desc = "A bascinet with a conical visor, favored by those with snouts and whiskers. Nestle a feather onto the rim to display your allegiance."
+	desc = "A steel bascinet fitted with a modern conical visor that somewhat resembles a dog's skull, hence the name. It's easier to breathe in than older flat-visored helmets."
 	icon_state = "hounskull"
 	item_state = "hounskull"
 
@@ -451,8 +479,8 @@
 	AddComponent(/datum/component/adjustable_clothing, (HEAD|EARS|HAIR), (HIDEEARS|HIDEHAIR), null, 'sound/items/visor.ogg', null, UPD_HEAD)	//Standard helmet
 
 /obj/item/clothing/head/roguetown/helmet/bascinet/etruscan
-	name = "klappvisier bascinet"
-	desc = "A steel bascinet helmet with a straight visor, or \"klappvisier\", which can greatly reduce visibility. Though it was first developed in Etrusca, it is also widely used in Grenzelhoft."
+	name = "etruscan bascinet"	//Do not change this again. It's a reference. It was always a reference.
+	desc = "A steel bascinet helmet with a straight visor, or \"klappvisier\". It adds protection for the combatant's face. However, it severely limits their field of view. Though it was first developed in Etrusca, it is also widely used in Grenzelhoft."
 	icon_state = "klappvisier"
 	item_state = "klappvisier"
 	adjustable = CAN_CADJUST

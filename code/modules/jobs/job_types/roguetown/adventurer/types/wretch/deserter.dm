@@ -230,7 +230,7 @@
 		var/helmets = list(
 			"Pigface Bascinet" 		= /obj/item/clothing/head/roguetown/helmet/bascinet/pigface,
 			"Hounskull Bascinet"	= /obj/item/clothing/head/roguetown/helmet/bascinet/pigface/hounskull,
-			"Klappvisier Bascinet" 	= /obj/item/clothing/head/roguetown/helmet/bascinet/etruscan,
+			"Etruscan Bascinet" 	= /obj/item/clothing/head/roguetown/helmet/bascinet/etruscan,
 			"Visored Sallet"		= /obj/item/clothing/head/roguetown/helmet/sallet/visored,
 			"Sugarloaf Helmet"		= /obj/item/clothing/head/roguetown/helmet/heavy/bucket/crusader,
 			"Knight's Armet"	= /obj/item/clothing/head/roguetown/helmet/heavy/knight,

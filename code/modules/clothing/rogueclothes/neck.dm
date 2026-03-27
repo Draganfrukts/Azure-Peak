@@ -235,6 +235,13 @@
 /obj/item/clothing/neck/roguetown/chaincoif/full/black
 	color = "#323232"
 
+/obj/item/clothing/neck/roguetown/chaincoif/full/iron
+	name = "iron chain hood"
+	desc = "A tight maille hood made of iron, with a leather strap for adjusting. It covers the entire face save for two cut-outs for the eyes, a truly menacing sight. They're either worn by truly evil murderers or two-bit thugs."
+	anvilrepair = /datum/skill/craft/armorsmithing
+	smeltresult = /obj/item/ingot/iron
+	max_integrity = ARMOR_INT_SIDE_IRON
+
 /obj/item/clothing/neck/roguetown/bevor
 	name = "bevor"
 	desc = "A steel neckguard, traditionally mounted to the collar of a cuirass. It restricts the head's motion, but ensures the absence of abuseable gaps."

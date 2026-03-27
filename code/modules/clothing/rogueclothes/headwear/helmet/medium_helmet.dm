@@ -385,6 +385,8 @@
 	desc = "A common bascinet helmet, and the basis for many-a-visored greathelm. Though it lacks a visor, it still protects the head and ears."
 	max_integrity = ARMOR_INT_HELMET_IRON
 	smeltresult = /obj/item/ingot/iron
+	icon_state = "ibascinet"
+	item_state = "ibascinet"
 
 /obj/item/clothing/head/roguetown/helmet/bascinet/iron/attackby(obj/item/W, mob/living/user, params)
 	..()
@@ -618,7 +620,7 @@
 
 /obj/item/clothing/head/roguetown/roguehood/warden/antler
 	name = "warden's antlered hood"
-	desc = "A hunter's leather hood with two linen layers, sewn larger than usual tooo accommodate a helmet, and fitted with the large horns of an elder saiga."
+	desc = "A hunter's leather hood with two linen layers, sewn larger than usual to accommodate a helmet, and fitted with the large horns of an elder saiga."
 	icon_state = "wardenhoodalt"
 	item_state = "wardenhoodalt"
 	icon = 'icons/roguetown/clothing/special/warden.dmi'

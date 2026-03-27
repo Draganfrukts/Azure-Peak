@@ -413,6 +413,11 @@
 	created_item = /obj/item/clothing/neck/roguetown/chaincoif/iron
 	createditem_num = 1
 
+/datum/anvil_recipe/armor/iron/fullchaincoif
+	name = "Full Chain Coif, Iron"
+	req_bar = /obj/item/ingot/iron
+	created_item = /obj/item/clothing/neck/roguetown/chaincoif/full/iron
+
 /datum/anvil_recipe/armor/iron/gorget
 	name = "Gorget, Iron"
 	req_bar = /obj/item/ingot/iron
@@ -520,6 +525,11 @@
 	name = "Skullcap, Iron"
 	req_bar = /obj/item/ingot/iron
 	created_item = /obj/item/clothing/head/roguetown/helmet/skullcap
+
+/datum/anvil_recipe/armor/iron/bascinet
+	name = "Bascinet, Iron"
+	req_bar = /obj/item/ingot/iron
+	created_item = /obj/item/clothing/head/roguetown/helmet/bascinet/iron
 
 /datum/anvil_recipe/armor/iron/kettle
 	name = "Kettle Helmet, Iron"

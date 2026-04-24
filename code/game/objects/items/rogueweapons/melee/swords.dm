@@ -169,7 +169,7 @@
 
 /obj/item/rogueweapon/sword/long/Initialize()
 	. = ..()
-	AddComponent(/datum/component/skill_blessed, TRAIT_LONGSWORDSMAN, /datum/skill/combat/swords, SKILL_LEVEL_MASTER)
+	AddComponent(/datum/component/skill_blessed, TRAIT_LONGSWORDSMAN, /datum/skill/combat/swords, SKILL_LEVEL_EXPERT)
 
 /obj/item/rogueweapon/sword/long/ap
 	name = "stecher"
@@ -321,18 +321,17 @@
 
 /obj/item/rogueweapon/sword/long/etruscan
 	name = "basket-hilted longsword"
-	desc = "An uncommon and elaborate type of longsword with a compound hilt like those seen on rapiers and smallswords. It has a marked unsharpened section for safe unarmoured half-swording. The quality of the steel speaks for itself; this is a weapon made by masters, for masters."
+	desc = "An uncommon and elaborate type of longsword with a compound hilt like those seen on rapiers and smallswords. It has a marked unsharpened section for safe unarmoured half-swording. The quality of the steel speaks for itself; this is a weapon made by masters."
 	icon_state = "elongsword"
 	sheathe_icon = "elongsword"
 	icon = 'icons/roguetown/weapons/special/freifechter.dmi'
 	possible_item_intents = list(/datum/intent/sword/cut, /datum/intent/sword/thrust/long, /datum/intent/effect/daze/longsword/clinch)
 	gripped_intents = list(/datum/intent/sword/cut/master, /datum/intent/sword/thrust/long/master)
 	alt_grips = list( /datum/alt_grip/roof_guard, /datum/alt_grip/halfsword/frei)
-	//wlength = WLENGTH_NORMAL //they're all about exploiting weaknesses, given their damage nerfs i think feet are okay
 	wdefense = 5
 	wdefense_wbonus = 3
-	max_blade_int = 300
-	max_integrity = 225
+	max_blade_int = 275
+	max_integrity = 180
 
 /obj/item/rogueweapon/sword/long/etruscan/freifechter
 	name = "psydonic reformist longsword"
@@ -345,9 +344,6 @@
 	desc = "A masterfully smithed, perfectly-balanced longsword that makes it easy for even a beginner to perform basic fencing maneuvers."
 	icon_state = "germanlong"
 	max_blade_int = 275
-	possible_item_intents = list(/datum/intent/sword/cut, /datum/intent/sword/thrust/long, /datum/intent/dagger/sucker_punch, SWORD_STRIKE)
-	gripped_intents = list(/datum/intent/sword/cut, /datum/intent/sword/thrust/long, /datum/intent/sword/thrust/long/halfsword/lesser, /datum/intent/sword/chop)
-	wlength = WLENGTH_NORMAL
 
 /obj/item/rogueweapon/sword/long/zizo
 	name = "avantyne longsword"
@@ -1038,6 +1034,10 @@
 	wbalance = WBALANCE_SWIFT
 	special = /datum/special_intent/shin_swipe
 
+/obj/item/rogueweapon/sword/sabre/Initialize()
+	. = ..()
+	AddComponent(/datum/component/skill_blessed, TRAIT_SABRIST, /datum/skill/combat/swords, SKILL_LEVEL_EXPERT, TRUE)
+
 /datum/intent/sword/cut/sabre
 	clickcd = 8		//Faster than sword by 4
 	damfactor = 1.25	//Better than rapier (Base is 1.1 for swords)
@@ -1081,15 +1081,12 @@
 	minstr = 6
 	icon_state = "shashka"
 	sheathe_icon = "shashka"
+	max_integrity = 140
+	max_blade_int = 200
 
-/datum/intent/sword/cut/sabre/master
-	name = "pokrajać"
-	desc = "Perform a masterful wide-arc cut that's strong enough to penetrate gambesons and light leathers."
-	attack_verb = list("masterfully cuts", "deftly slits", "quarts")
-	clickcd = 7
-	damfactor = 1.25
-	penfactor = PEN_MEDIUM
-	max_intent_damage = 25
+/obj/item/rogueweapon/sword/sabre/steppesman/Initialize()
+	. = ..()
+	AddComponent(/datum/component/skill_blessed, TRAIT_SABRIST, /datum/skill/combat/swords, SKILL_LEVEL_EXPERT, TRUE)
 
 /datum/intent/effect/daze/freisabre
 	name = "uszkodzić"
@@ -1109,20 +1106,19 @@
 	name = "szöréndnížine sabre"
 	desc = "A rare, specialty-made sabre domestic to Szöréndnížina, made similarly to those of the Potentate's Hussars. It has a large, open hilt with a cross-shaped guard formed from quillons and langets and a heavy curved blade. A chain is attached to the crossguard and into the pommel, protecting the hand. Unlike shorter and ligther sabres, it's large enough to reach the feet."
 	icon = 'icons/roguetown/weapons/special/freifechter.dmi'
-	possible_item_intents = list(/datum/intent/sword/cut/sabre/master, /datum/intent/sword/thrust/sabre, /datum/intent/effect/daze/freisabre, /datum/intent/rend)
-	wdefense = 7
-	minstr = 8
+	possible_item_intents = list(/datum/intent/sword/cut/sabre, /datum/intent/sword/thrust/sabre, /datum/intent/effect/daze/freisabre, /datum/intent/dagger/sucker_punch)
+	wdefense = 6
 	icon_state = "szabla"
 	sheathe_icon = "szabla"
 	bigboy = 1
-	max_integrity = 215
-	max_blade_int = 275		//Similarly statted to the longswords
+	max_integrity = 140
+	max_blade_int = 200		//Similarly statted to the longswords
 	inhand_x_dimension = 64
 	inhand_y_dimension = 64
 
 /obj/item/rogueweapon/sword/sabre/freifechter/Initialize()
 	. = ..()
-	AddComponent(/datum/component/skill_blessed, TRAIT_SABRIST, /datum/skill/combat/swords, SKILL_LEVEL_MASTER, TRUE)
+	AddComponent(/datum/component/skill_blessed, TRAIT_SABRIST, /datum/skill/combat/swords, SKILL_LEVEL_EXPERT, TRUE)
 
 //Unique church sword - slightly better than regular sabre due to falx chop.
 /obj/item/rogueweapon/sword/sabre/nockhopesh

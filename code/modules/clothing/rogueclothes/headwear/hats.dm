@@ -137,6 +137,10 @@
 	armor = ARMOR_LEATHER
 	max_integrity = ARMOR_INT_HELMET_IRON - 25
 
+/obj/item/clothing/head/roguetown/chaperon/greyscale/shepherd/generic
+	name = "armoured chaperon"
+	desc = "A fashionable citygoer's chaperon worn around an insconspicuous iron skullcap."
+
 /obj/item/clothing/head/roguetown/chaperon/noble
 	name = "noble's chaperon"
 	desc = "A decorated chaperon worn by the more influential members of society."

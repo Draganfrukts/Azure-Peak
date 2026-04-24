@@ -1,3 +1,5 @@
+//This single mercenary class has caused an insurmountable amount of bullshit from start to finish. The file remains to avoid porting issues and stay as a record of the original class. They're now situated in the foreign fencer adventurer class.
+/*
 /datum/advclass/mercenary/freelancer
 	name = "Freifechter Fencer"
 	tutorial = "You are a graduate of the Aavnic Freifechters - \"Freelancers\" - part of a prestigious fighting guild localized in the independent City-state of Szöréndnížina. It has formed an odd thirty yils ago, but its visitors come from all over Western Psydonia. You have swung one weapon ten-thousand times, and not the other way around. Your faith is stalwart in the teachings of the Psydonic Reformation, and you've become a warrior poet of sorts - educating the peasantry in the ways of the New Word and angering the Orthodoxy in turn. You've left your cradle in search of riches to fund your people's armies."
@@ -183,3 +185,4 @@
 		/obj/item/natural/bundle/cloth/bandage/full = 1
 		)	
 	H.merctype = 6
+*/

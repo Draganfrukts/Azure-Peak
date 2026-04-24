@@ -120,3 +120,25 @@
 	else
 		user.visible_message(span_warning("[user] stops reshaping [src]."))
 		return
+
+/obj/item/clothing/head/roguetown/helmet/blacksteel/psythorns/freifechter
+	name = "penitent crown of thorns"
+	desc = "Thorns fashioned from dark meteoric iron - woven and interlinked. In Psydonic Reformist tradition, it's meant to represent the remorseful act of killing another Psydonite. They dig into the forehead painfully and leave scars long after being removed."
+	smeltresult = /obj/item/ingot/iron
+	armor = ARMOR_PLATE
+	max_integrity = ARMOR_INT_HELMET_IRON
+
+/obj/item/clothing/head/roguetown/helmet/blacksteel/psythorns/freifechter/attack_self(mob/living/user)
+	. = ..()
+	user.visible_message(span_warning("[user] starts to reshape the [src]."))
+	if(do_after(user, 4 SECONDS))
+		var/obj/item/clothing/wrists/roguetown/bracers/psythorns/P = new /obj/item/clothing/wrists/roguetown/bracers/psythorns(get_turf(src.loc))
+		if(user.is_holding(src))
+			user.dropItemToGround(src)
+			user.put_in_hands(P)
+		P.obj_integrity = src.obj_integrity
+		user.adjustBruteLoss(25)
+		qdel(src)
+	else
+		user.visible_message(span_warning("[user] stops reshaping [src]."))
+		return

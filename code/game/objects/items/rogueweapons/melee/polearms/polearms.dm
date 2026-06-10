@@ -244,7 +244,6 @@
 	bigboy = TRUE
 	gripsprite = TRUE
 	associated_skill = /datum/skill/combat/staves
-	implement_multiplier = 1
 	anvilrepair = /datum/skill/craft/carpentry
 	resistance_flags = FLAMMABLE
 
@@ -612,6 +611,19 @@
 	minstr = 8
 	wdefense = 6
 	throwforce = 15
+
+/obj/item/rogueweapon/spear/billhook/avantyne
+	name = "avantyne-threaded billhook"
+	desc = "A twisted implement of harvest, it's hooked edge festering with crystalline malice. It is a weapon of pure upheaval, designed to drag the Psydonia's false idols into the dirt."
+	icon_state = "zizobillhook"
+	force = 30
+	force_wielded = 35
+	max_blade_int = 300
+	max_integrity = 400
+	equip_delay_self = 0
+	unequip_delay_self = 0
+	slot_flags = ITEM_SLOT_BACK
+	smeltresult = /obj/item/ingot/avantyne
 
 /obj/item/rogueweapon/spear/improvisedbillhook
 	force = 12
@@ -1080,6 +1092,7 @@
 	icon_state = "quarterstaff"
 	associated_skill = /datum/skill/combat/staves
 	max_integrity = 150
+	smeltresult = /obj/item/ash
 
 /obj/item/rogueweapon/woodstaff/quarterstaff/iron
 	name = "iron quarterstaff"
@@ -1090,6 +1103,7 @@
 	icon_state = "quarterstaff_iron"
 	associated_skill = /datum/skill/combat/staves
 	max_integrity = 200
+	smeltresult = /obj/item/ingot/iron
 
 /obj/item/rogueweapon/woodstaff/quarterstaff/steel
 	name = "steel quarterstaff"
@@ -1100,6 +1114,7 @@
 	icon_state = "quarterstaff_steel"
 	associated_skill = /datum/skill/combat/staves
 	max_integrity = 200
+	smeltresult = /obj/item/ingot/steel
 
 /obj/item/rogueweapon/woodstaff/quarterstaff/silver
 	name = "silver quarterstaff"
@@ -1111,6 +1126,7 @@
 	associated_skill = /datum/skill/combat/staves
 	max_integrity = 250
 	is_silver = TRUE
+	smeltresult = /obj/item/ingot/silver
 
 /obj/item/rogueweapon/woodstaff/quarterstaff/silver/ComponentInitialize()
 	AddComponent(\

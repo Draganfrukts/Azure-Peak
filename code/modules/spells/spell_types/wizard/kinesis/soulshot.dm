@@ -28,7 +28,6 @@
 	charge_slowdown = CHARGING_SLOWDOWN_SMALL
 	charge_sound = 'sound/magic/charging.ogg'
 	cooldown_time = 8 SECONDS
-	is_implement_scaled_spell = TRUE
 	attunement_school = ASPECT_NAME_KINESIS
 
 	associated_skill = /datum/skill/magic/arcane
@@ -42,7 +41,7 @@
 	hitscan = TRUE
 	movement_type = UNSTOPPABLE
 	guard_deflectable = TRUE
-	damage = 80
+	damage = 95
 	damage_type = BRUTE
 	woundclass = BCLASS_STAB
 	npc_simple_damage_mult = 1.5
@@ -80,3 +79,18 @@
 		qdel(src)
 		return . || BULLET_ACT_HIT
 	return BULLET_ACT_FORCE_PIERCE
+
+/datum/action/cooldown/spell/projectile/soulshot/lesser
+	name = "Lesser Soulshot"
+	desc = "Fire a devastating beam of kinetic force that pierces through up to 2 targets. Stopped by solid objects. \
+	Damage is halved after the first target. \
+	Deals 50% increased damage to simple-minded creechurs. \
+	Basic offensive magic, refined for over a millenium since the first Magi expelled mana from their body with pure malice and determination to destroy another."
+	invocations = list("Animus Ictus!")
+	projectile_type = /obj/projectile/magic/soulshot/lesser
+	attunement_school = null
+	spell_tier = 0
+	point_cost = 0
+
+/obj/projectile/magic/soulshot/lesser
+	max_hits = 2

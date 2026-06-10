@@ -41,6 +41,8 @@
 	var/active_icon_state
 	/// Timer for retriggering the spell
 	var/retrigger_timer
+	/// This will make it so spells that are of the "same type" cannot be obtained. This is mostly for "Lesser" variants to not stack with the normal ones.
+	var/exclusive_group = null
 
 /datum/action/cooldown/New(Target)
 	. = ..()
@@ -225,8 +227,8 @@
 
 	// If our cooldown action is not a click_to_activate action:
 	// We can just continue on and use the action
-	// the target is the user of the action (often, the owner)
-	return PreActivate(user)
+	// the target is the user of the action (often, the owner) unless explicitly passed
+	return PreActivate(target || user)
 
 /// Intercepts client owner clicks to activate the ability
 /datum/action/cooldown/proc/InterceptClickOn(mob/living/clicker, list/modifiers, atom/target)

@@ -1649,6 +1649,13 @@
 	max_integrity = 333
 	smeltresult = /obj/item/ingot/avantyne
 
+/obj/item/rogueweapon/sword/rapier/fencerguy
+	name = "otavan rapier"
+	desc = "A special type of rapier used by Otavan nobility and their lessers for the express purpose of fencing. This kind of blade is most commonly commissioned by the Fencing Cabinet of Otava."
+	icon_state = "esgrime"
+	wdefense = 8
+	max_integrity = 215
+
 /obj/item/rogueweapon/sword/cutlass
 	name = "cutlass"
 	desc = "The mariner's special: A short, broad sabre with a slightly curved blade optimized for slashing."

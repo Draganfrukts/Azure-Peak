@@ -327,7 +327,7 @@
 	allowed_sexes = list(MALE, FEMALE)
 	
 	outfit = /datum/outfit/job/roguetown/adventurer/fencerguy
-	subclass_languages = list(/datum/language/grenzelhoftian)
+	subclass_languages = list(/datum/language/grenzelhoftian, /datum/language/etruscan)
 	forbidden_races = list()
 	cmode_music = 'sound/music/cmode/adventurer/combat_outlander2.ogg'
 	traits_applied = list(TRAIT_INTELLECTUAL, TRAIT_FENCERDEXTERITY)
@@ -381,10 +381,25 @@
 				head = /obj/item/clothing/head/roguetown/chaperon/greyscale/shepherd/generic
 				armor = /obj/item/clothing/suit/roguetown/armor/gambeson/lord/heavy
 				shirt = /obj/item/clothing/suit/roguetown/shirt/freifechter
-				gloves = /obj/item/clothing/gloves/roguetown/angle/grenzelgloves/freifechter
+				gloves = /obj/item/clothing/gloves/roguetown/angle/freifechter
 				neck = /obj/item/clothing/neck/roguetown/fencerguard/generic
 				wrists = /obj/item/clothing/wrists/roguetown/bracers/leather
 				pants = /obj/item/clothing/under/roguetown/heavy_leather_pants
+				shoes = /obj/item/clothing/shoes/roguetown/grenzelhoft/freifechter
+			if("Szöréndnížine Freelancers (Ref. Longsword + Navaja)")
+				ADD_TRAIT(H, TRAIT_LONGSWORDSMAN, TRAIT_GENERIC)
+				H.change_stat(STATKEY_INT, 1)
+				l_hand = /obj/item/rogueweapon/sword/long/etruscan/freifechter
+				r_hand = /obj/item/rogueweapon/huntingknife/idagger/navaja/freifechter
+				backr = /obj/item/rogueweapon/scabbard/sword
+				beltr = /obj/item/rogueweapon/scabbard/sheath
+				head = /obj/item/clothing/head/roguetown/helmet/blacksteel/psythorns/freifechter
+				armor = /obj/item/clothing/suit/roguetown/armor/leather/heavy/freifechter
+				shirt = /obj/item/clothing/suit/roguetown/shirt/freifechter
+				gloves = /obj/item/clothing/gloves/roguetown/angle/freifechter
+				neck = /obj/item/clothing/neck/roguetown/fencerguard/generic
+				wrists = /obj/item/clothing/wrists/roguetown/bracers/leather
+				pants = /obj/item/clothing/under/roguetown/heavy_leather_pants/otavan/generic
 				shoes = /obj/item/clothing/shoes/roguetown/grenzelhoft/freifechter
 			if("Sabre")
 				H.adjust_skillrank_up_to(/datum/skill/combat/swords, SKILL_LEVEL_EXPERT, TRUE)

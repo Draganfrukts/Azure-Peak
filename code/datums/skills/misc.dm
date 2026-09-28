@@ -5,7 +5,7 @@
 
 /datum/skill/misc/athletics
 	name = "Athletics"
-	desc = "Increases your maximum stamina by 5 per point. Decreases chance of consuming nutrition when exerted by 16% per level."
+	desc = "Increases your maximum energy by 100 per 2 levels."
 	dreams = list(
 		"...your lungs burn and you can no longer feel your breath as the pale volf's howling grows distant. You should have collapsed three times over, but the urge to survive pushes you past your bodily limits...",
 		"...the incline before you is steep, and the barrel weighs heavy in your hands but you press on. This is no longer a hill. This is your mountain and with every strained breath, you inch closer to its summit, determined to conquer it..."
@@ -36,7 +36,7 @@
 	dreams = list(
 		"...there is no light in the suffocating dark. You choose a direction and your arms and legs tear at the thick, oily waters in a desperate attempt to reach the surface. Your heart pounds, and your body yearns for another breath...",
 		"...a wave rocks to the side of the boat, and you tumble into the yawning abyss. Lightning splits the sky as the old captain hurls a buoy into the churning sea. Salt water burns your lungs as you thrash and claw, struggling towards your lifeline...",
-		"...the current  the beach draws you out further into the ocean, relentless and fast. Your muscles burn as you struggle, every stroke a battle. 'Across, not against!' a voice from your past chides, guiding you as you break free of the riptide's grasp..."
+		"...the current	the beach draws you out further into the ocean, relentless and fast. Your muscles burn as you struggle, every stroke a battle. 'Across, not against!' a voice from your past chides, guiding you as you break free of the riptide's grasp..."
 
 	)
 	expert_name = "Swimmer"
@@ -109,7 +109,7 @@
 
 /datum/skill/misc/tracking
 	name = "Tracking"
-	desc = "Increases your chance to find tracks. Increases the information you gain from them, alongside your perception stats. \n \
+	desc = "Increases your chance to find humanoid tracks. Increases the information you gain from them, alongside your perception stats. \n \
 	At Expert level or above, you can mark the target of a track to find them. \n \
 	At Master level or above, you can find invisible creatures. \n \ You can track by right-clicking on your eye icon."
 	dreams = list(
@@ -118,3 +118,20 @@
 		"... the blood may have gotten lost in the rain, but the wounded man's boots are as fresh as jackberries, perfectly marked in the sand. You raise your bow, nock an arrow, and carefully trace them towards a cave..."
 	)
 	expert_name = "Tracker"
+	max_untraited_level = SKILL_LEVEL_EXPERT
+	trait_uncap = list(TRAIT_PERFECT_TRACKER = SKILL_LEVEL_LEGENDARY)
+
+// Shouldn't be given to adventurers/mercs etc willy nilly, only locals are really experienced hunters, as hunting is very region dependent.
+/datum/skill/misc/hunting
+	name = "Hunting"
+	desc = "Increases how fast you can catch up to animals you track. Provides more information about the possible animals you can find whilst tracking them. Makes rare animals easier to find."
+	dreams = list(
+		"... Ghostly antlers flash like ivory splinters through the moonlit timber, The white stag doesn't just flee. It dances, radiating a silent, cold arrogance that feels like a physical goad. 'Come catch me if you can,' it stares back into your soul, 'I know you can't.' You don't just want the kill. You want the ruin of it. You long to feel its porcelain grace shatter under your weight, to tear into the hind with a starved ferocity...",
+		"... Another cabbit. You feel the disappointed gaze of your elders. This won't impress the lady. Step up, get out there, and try again. There's a raucous boar nearby, a hide like satin, tusks discordant. Guided by longing your spear will strike true, a dance of hearts, the beast's and your own, until yours finds the courage to impale his...",
+		"... Teach a man how to fish, and they'll never go hungry. Teach a man how to hunt? They'll never forget the thrill. But an empty stomach always beats the spine that shudders under the hungering gaze of the dead. You see them everywhere, unblinking dead eyes in the bushes, if only you had been able to tell apart the gait of the deadite in its tracks. Teeth snap, and so does your spine...",
+		"... Volf? Venard? Lynx? The paw before you seems like a blend of all three creatures. Maybe you've been threading after it for too long now, perhaps it is time to return home. Yet as you crane your head down the rolling horizon, there's naught but the smoky plumes of evil over your hearth. Perhaps not. Perhaps the hunt should carry on forever..."
+	)
+	expert_name = "Tracker"
+	max_untraited_level = SKILL_LEVEL_APPRENTICE
+	trait_uncap = list(TRAIT_MASTERFUL_HUNTER = SKILL_LEVEL_LEGENDARY,
+						TRAIT_EXPERT_HUNTER = SKILL_LEVEL_EXPERT)

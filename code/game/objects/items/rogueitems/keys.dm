@@ -15,12 +15,19 @@
 	drop_sound = 'sound/items/gems (1).ogg'
 	anvilrepair = /datum/skill/craft/blacksmithing
 	resistance_flags = FIRE_PROOF
-	experimental_inhand = FALSE
+	experimental_inhand = TRUE
+	is_important = TRUE
 
 	grid_height = 32
 	grid_width = 32
 
-/obj/item/roguekey/Initialize()
+/obj/item/roguekey/get_mechanics_examine(mob/user)
+	. = ..()
+	. += span_info("Left-click an locked door to unlock it.")
+	. += span_info("Right-click an unlocked door to lock it.")
+	. += span_info("Most keys can only open a specific type of door.")
+
+/obj/item/roguekey/Initialize(mapload)
 	. = ..()
 	if(lockid)
 		if(GLOB.lockids[lockid])
@@ -50,6 +57,11 @@
 
 	grid_width = 32
 	grid_height = 64
+
+/obj/item/lockpick/get_mechanics_examine(mob/user)
+	. = ..()
+	. += span_info("Left-click a locked door to attempt unlocking it. If the door is already unlocked, left-clicking it will instead attempt to relock it.")
+	. += span_info("The chance to successfully lockpick a door scales with your Lockpicking skill, the lockpick's integrity, and the door's tier. The locks of more important doors are usually harder to manipulate.")
 
 /obj/item/lockpick/goldpin
 	name = "gold hairpin"
@@ -106,7 +118,7 @@
 	lockid = "lord"
 	visual_replacement = /obj/item/roguekey/royal
 
-/obj/item/roguekey/lord/Initialize()
+/obj/item/roguekey/lord/Initialize(mapload)
 	. = ..()
 	if(SSroguemachine.key)
 		qdel(src)
@@ -163,6 +175,11 @@
 	icon_state = "mazekey"
 	lockid = "manor"
 
+/obj/item/roguekey/noblegate
+	name = "gate key"
+	icon_state = "brownkey"
+	lockid = "noblehome1gate"
+
 /obj/item/roguekey/heir
 	name = "heir room key"
 	desc = "A highly coveted key belonging to the doors of the heirs of this realm."
@@ -206,6 +223,13 @@
 	desc = "This is the court wizard's key. It watches you..."
 	icon_state = "eyekey"
 	lockid = "mage"
+
+/obj/item/roguekey/seneschal
+	name = "seneschal's key"
+	desc = "Dusted, oiled, and well-maintained!"
+	icon_state = "sidefolk"
+	lockid = "seneschal"
+
 
 /obj/item/roguekey/manor/knight
 	name = "retinue bedroom I key"
@@ -251,6 +275,14 @@
 	name = "guest bedroom IV key"
 	lockid = "guest_knight_four"
 
+/obj/item/roguekey/manor/guestvip
+	name = "VIP guest bedroom I key"
+	lockid = "guest_VIP_one"
+
+/obj/item/roguekey/manor/guestvip/two
+	name = "VIP guest bedroom II key"
+	lockid = "guest_VIP_two"
+
 /obj/item/roguekey/manor/squire
 	name = "squire bedroom I key"
 	lockid = "squire_room_one"
@@ -295,9 +327,33 @@
 // RETINUE / GARRISON //
 ////////////////////////
 
-/obj/item/roguekey/justiciary
-	name = "justiciary key"
-	desc = "This key opens the justiciary."
+/obj/item/roguekey/manor/manatarms
+	name = "Man at Arms Bunk I key"
+	lockid = "manatarms_one"
+
+/obj/item/roguekey/manor/manatarms/two
+	name = "Man at Arms Bunk II key"
+	lockid = "manatarms_two"
+
+/obj/item/roguekey/manor/manatarms/three
+	name = "Man at Arms Bunk III key"
+	lockid = "manatarms_three"
+
+/obj/item/roguekey/manor/manatarms/four
+	name = "Man at Arms Bunk IV key"
+	lockid = "manatarms_four"
+
+/obj/item/roguekey/manor/manatarms/five
+	name = "Man at Arms Bunk V key"
+	lockid = "manatarms_five"
+
+/obj/item/roguekey/manor/manatarms/six
+	name = "Man at Arms Bunk VI key"
+	lockid = "manatarms_six"
+
+/obj/item/roguekey/marshal
+	name = "marshal's key"
+	desc = "This key opens the quarters of the Marshal."
 	icon_state = "cheesekey"
 	lockid = "sheriff"
 
@@ -319,12 +375,6 @@
 	icon_state = "spikekey"
 	lockid = "garrison"
 
-/obj/item/roguekey/warden
-	name = "watchtower key"
-	desc = "This key opens the warden's watchtower."
-	icon_state = "spikekey"
-	lockid = "warden"
-
 /obj/item/roguekey/dungeon
 	name = "dungeon key"
 	desc = "This key opens the dungeons."
@@ -343,6 +393,12 @@
 	icon_state = "hornkey"
 	lockid = "armory"
 
+/obj/item/roguekey/warden
+	name = "watchtower key"
+	desc = "This key opens the warden's watchtower."
+	icon_state = "spikekey"
+	lockid = "warden"
+
 /////////////////////
 // PANTHEON CHURCH //
 /////////////////////
@@ -355,13 +411,15 @@
 
 /obj/item/roguekey/keeper
 	name = "beast sanctum key"
-	desc = "This key should open and close the heart beast's sanctum."
+	desc = "This key should open and close the heartbeast's sanctum, permitting entrance to its \
+	outermost areas - and to the creature itself, should the interior be left unlocked."
 	icon_state = "beastkey"
 	lockid = "keeper"
 
 /obj/item/roguekey/keeper_inner
 	name = "beast inner sanctum key"
-	desc = "This key should open and close the iron gates within the beast's sanctum."
+	desc = "This key should open and close the inner gates of the heartbeast's sanctum within the \
+	Sanctum of Pestra, permitting or frustrating access to the creature housed within."
 	icon_state = "beastkey2"
 	lockid = "keeper2"
 
@@ -372,8 +430,8 @@
 	lockid = "church"
 
 /obj/item/roguekey/graveyard
-	name = "crypt key"
-	desc = "This rusty key opens the crypt."
+	name = "graveyard key"
+	desc = "This rusty key opens the graveyard a little outside town."
 	icon_state = "rustkey"
 	lockid = "graveyard"
 
@@ -437,39 +495,33 @@
 	icon_state = "brownkey"
 	lockid = "church_bedroom_up_10"
 
-/obj/item/roguekey/church/roomxi
-	name = "church bedroom XI key"
-	desc = "The key to the fifth room."
+/obj/item/roguekey/church/archdruid
+	name = "Arch Druid's Key"
+	desc = "An adorned, hardwood key with an Acorn engraved."
 	icon_state = "brownkey"
-	lockid = "church_bedroom_up_11"
-	
-/obj/item/roguekey/church/roomxii
-	name = "church bedroom XII key"
-	desc = "The key to the fifth room."
-	icon_state = "brownkey"
-	lockid = "church_bedroom_up_12"
+	lockid = "druidtreebig"
 
-/obj/item/roguekey/church/roomxiii
-	name = "church bedroom XIII key"
-	desc = "The key to the fifth room."
+/obj/item/roguekey/church/druidmaster
+	name = "The Tree Key"
+	desc = "An adorned, hardwood key with a Wisp engraved."
 	icon_state = "brownkey"
-	lockid = "church_bedroom_up_13"
+	lockid = "druidtree"
 
-/obj/item/roguekey/church/roomxiv
-	name = "church bedroom XIV key"
-	desc = "The key to the fifth room."
+/obj/item/roguekey/church/druid
+	name = "Branch Key I"
+	desc = "An adorned, hardwood key with a Wolf engraved."
 	icon_state = "brownkey"
-	lockid = "church_bedroom_up_14"
+	lockid = "druidtree2"
+
+/obj/item/roguekey/church/druid/two
+	name = "Branch Key II"
+	desc = "An adorned, hardwood key with a Flower engraved."
+	icon_state = "brownkey"
+	lockid = "druidtree3"
 
 //////////////
 // BURGHERS //
 //////////////
-
-/obj/item/roguekey/crier
-	name = "crier's key"
-	desc = "This key should open and close the crier's office."
-	icon_state = "cheesekey"
-	lockid = "crier"
 
 /obj/item/roguekey/crafterguild
 	name = "guild's key"
@@ -494,6 +546,61 @@
 	desc = "The key smells of herbs, feeling soothing to the touch."
 	icon_state = "greenkey"
 	lockid = "physician"
+
+/obj/item/roguekey/apothecary
+	name = "clinic key"
+	desc = "An elegant key which should permit access to secure areas in the city clinic. Its surface is \
+	covered by a very thin patina of corrosion."
+	icon_state = "ekey"
+	lockid = "apothecary"
+
+/obj/item/roguekey/apothecary/roomone
+	name = "Apothecary room I key"
+	desc = "Apothecary dorm one's key, keep it close."
+	icon_state = "brownkey"
+	lockid = "apothecary_room_one"
+
+/obj/item/roguekey/apothecary/roomtwo
+	name = "Apothecary room II key"
+	desc = "Apothecary dorm two's key, keep it close."
+	icon_state = "brownkey"
+	lockid = "apothecary_room_two"
+
+/obj/item/roguekey/associate
+	name = "Associate room I key"
+	desc = "This key opens dormitory room one within the college of Azuria."
+	icon_state = "greenkey"
+	lockid = "associate_one"
+
+/obj/item/roguekey/associate/two
+	name = "Associate room II key"
+	desc = "This key opens dormitory room two within the college of Azuria."
+	icon_state = "greenkey"
+	lockid = "associate_two"
+
+/obj/item/roguekey/associate/three
+	name = "Associate room III key"
+	desc = "This key opens dormitory room three within the college of Azuria."
+	icon_state = "greenkey"
+	lockid = "associate_three"
+
+/obj/item/roguekey/associate/four
+	name = "Associate room IV key"
+	desc = "This key opens dormitory room four within the college of Azuria."
+	icon_state = "greenkey"
+	lockid = "associate_four"
+
+/obj/item/roguekey/apprentice
+	name = "Apprentice's room key"
+	desc = "This key opens the apprentice's dormitory room within the college of Azuria."
+	icon_state = "brownkey"
+	lockid = "wizapprentice"
+
+/obj/item/roguekey/apprentice/two
+	name = "Apprentice's spare room key"
+	desc = "This spare key opens the apprentice's dormitory room within the college of Azuria."
+	icon_state = "brownkey"
+	lockid = "wizapprentice"
 
 ///////////////////////
 // MERCHANT / STALLS //
@@ -571,9 +678,9 @@
 	icon_state = "brownkey"
 	lockid = "stablemaster"
 
-//////////////////////////
-// INN / TAVERN / BATHS //
-//////////////////////////
+/////////////////////////////////
+// INN / TAVERN / BATHS / MERCS//
+/////////////////////////////////
 
 /obj/item/roguekey/tavern
 	name = "tavern key"
@@ -586,6 +693,31 @@
 	desc = "This key opens and closes the innkeep's bedroom."
 	icon_state = "greenkey"
 	lockid = "innkeep"
+
+/obj/item/roguekey/tavernstaff
+	name = "Staff bedroom key I"
+	icon_state = "greenkey"
+	lockid = "tavernstaff_one"
+
+/obj/item/roguekey/tavernstaff/two
+	name = "Staff bedroom key II"
+	icon_state = "greenkey"
+	lockid = "tavernstaff_two"
+
+/obj/item/roguekey/tavernstaff/three
+	name = "Staff bedroom key III"
+	icon_state = "greenkey"
+	lockid = "tavernstaff_three"
+
+/obj/item/roguekey/tavernstaff/four
+	name = "Staff bedroom key IV"
+	icon_state = "greenkey"
+	lockid = "tavernstaff_four"
+
+/obj/item/roguekey/tavernstaff/five
+	name = "Staff bedroom key V"
+	icon_state = "greenkey"
+	lockid = "tavernstaff_five"
 
 /obj/item/roguekey/bath // For use in round-start available bathhouse quarters. Do not use default lockID.
 	name = "bathhouse quarter key"
@@ -685,7 +817,6 @@
 
 /obj/item/roguekey/mercenary/bedrooms
 	name = "mercenary bunk i key"
-	desc = "Why, a mercenary would not kick doors down."
 	icon_state = "greenkey"
 	lockid = "merc_bunk_i"
 
@@ -717,6 +848,10 @@
 	name = "mercenary bunk viii key"
 	lockid = "merc_bunk_viii"
 
+/obj/item/roguekey/mercenary/cell
+	name = "mercenary cell key"
+	lockid = "merc_bunk_cell"
+
 //////////////////////
 // PEASANTS / SERFS //
 //////////////////////
@@ -735,15 +870,27 @@
 
 /obj/item/roguekey/university
 	name = "university key"
-	desc = "This key should open anything within the university."
+	desc = "This key should open all but the most secure areas of the University of Azuria."
 	icon_state = "greenkey"
 	lockid = "university"
+
+/obj/item/roguekey/university_secure
+	name = "university tower key"
+	desc = "This key should open the tower in the University of Azuria, where dangerous magic is contained."
+	icon_state = "brownkey"
+	lockid = "university_secure"
 
 /obj/item/roguekey/townie_smith_extras
 	name = "town smith key"
 	desc = "The key to the basement and bedroom of the towner smiths house."
 	icon_state = "brownkey"
 	lockid = "townie_smith_extra"
+
+/obj/item/roguekey/brewerfence
+	name = "brewery fence key"
+	desc = "The key to the fence gates around the brewery."
+	icon_state = "brownkey"
+	lockid = "brewerfence"
 
 /////////////////
 // INQUISITION //
@@ -760,6 +907,30 @@
 	desc = "This key opens the doors to the inquisition manor."
 	icon_state = "brownkey"
 	lockid = "inquisition"
+
+/obj/item/roguekey/absolverskey
+	name = "Psydonic Chapel key"
+	desc = "This key opens the doors to the Psydonic Chapel."
+	icon_state = "brownkey"
+	lockid = "Absolvers"
+
+/obj/item/roguekey/ortho_one
+	name = "Otavan Embassy Bedroom I key"
+	desc = "This key opens the doors to bedroom one."
+	icon_state = "brownkey"
+	lockid = "OEB1"
+
+/obj/item/roguekey/ortho_two
+	name = "Otavan Embassy Bedroom II key"
+	desc = "This key opens the doors to bedroom one."
+	icon_state = "brownkey"
+	lockid = "OEB2"
+
+/obj/item/roguekey/ortho_three
+	name = "Otavan Embassy Bedroom III key"
+	desc = "This key opens the doors to bedroom one."
+	icon_state = "brownkey"
+	lockid = "OEB3"
 
 //////////////////////////
 // VAMPIRE / ANTAGONIST //
@@ -786,6 +957,18 @@
 	desc = "This is a rusty key."
 	icon_state = "rustkey"
 	lockid = "bandit"
+
+/obj/item/roguekey/hag
+	name = "mossy key"
+	desc = "A strange mossy key."
+	icon_state = "mosskey"
+	lockid = "hag"
+
+/obj/item/roguekey/fort
+	name = "fort key"
+	desc = "The key to the fort, caked in a layer of rust from a time long left unused."
+	icon_state = "rustkey"
+	lockid = "skellydungeon1"
 
 //Zurch
 
@@ -897,6 +1080,12 @@
 	icon_state = "rustkey"
 	lockid = "admin_event_door"
 
+/obj/item/roguekey/zhurch/onmap
+	name = "brass key"
+	desc = "A key made of brass."
+	icon_state = "rustkey"
+	lockid = "zhurch"
+
 //////////////
 // SIDEFOLK //
 //////////////
@@ -907,6 +1096,54 @@
 	icon_state = "greenkey"
 	lockid = "veteran"
 
+/obj/item/roguekey/olddorms
+	name = "old dormitory key"
+	desc = "A key to the old dormitory building, in the abandoned college section of town west of the church."
+	icon_state = "greenkey"
+	lockid = "oldorms"
+
+/obj/item/roguekey/oldcollege
+	name = "old college key"
+	desc = "A key to the old college building, west of the church."
+	icon_state = "greenkey"
+	lockid = "oldcollege"
+
+/obj/item/roguekey/sewer
+	name = "sewer key"
+	desc = "An old and rusty key, it smells a little.. sewery."
+	icon_state = "brownkey"
+	lockid = "sewer"
+
+/obj/item/roguekey/pizzard
+	name = "smelly key"
+	desc = "This key is worryingly yellow."
+	color = "#E3D015"
+	icon_state = "brownkey"
+	lockid = "pizzard"
+
+/obj/item/roguekey/hamtunnels
+	name = "tunnels key"
+	desc = "A key seemingly made to fit the doors underneath the Hamlet."
+	icon_state = "brownkey"
+	lockid = "hamtunnels"
+
+/obj/item/roguekey/hamguards
+	name = "hamlet guard key"
+	desc = "A key to the guardhouse and similar in the Hamlet."
+	icon_state = "brownkey"
+	lockid = "hamguards"
+
+/obj/item/roguekey/hamguardevidence
+	name = "hamlet lockup key"
+	desc = "A key to the guard's lockup in the Hamlet."
+	icon_state = "brownkey"
+	lockid = "hamguardsevidence"
+
+/obj/item/roguekey/hamvendor
+	name = "hamlet peddler key"
+	desc = "A key to the peddler within the shop, in the Hamlet."
+	icon_state = "brownkey"
+	lockid = "hamvendor"
 
 ///////////////////////////////////////
 // ABSOLUTELY ZERO CLUE WHAT THIS IS //
@@ -927,7 +1164,7 @@
 
 /obj/item/roguekey/custom/attackby(obj/item/I, mob/user, params)
 	if(istype(I, /obj/item/rogueweapon/hammer))
-		var/input = (input(user, "What would you name this key?", "", "") as text)
+		var/input = sanitize(input(user, "What would you name this key?", "", "") as text)
 		if(input)
 			name = input + " key"
 			to_chat(user, span_notice("You rename the key to [name]."))
@@ -941,6 +1178,8 @@
 	w_class = WEIGHT_CLASS_TINY
 	dropshrink = 0.75
 	var/lockhash = 0
+	grid_height = 32
+	grid_width = 32
 
 /obj/item/customblank/attackby(obj/item/I, mob/user, params)
 	if(istype(I, /obj/item/rogueweapon/hammer))
@@ -974,6 +1213,8 @@
 	w_class = WEIGHT_CLASS_SMALL
 	dropshrink = 0.75
 	var/lockhash = 0
+	grid_height = 32
+	grid_width = 32
 
 /obj/item/customlock/attackby(obj/item/I, mob/user, params)
 	if(istype(I, /obj/item/rogueweapon/hammer))
@@ -1060,4 +1301,4 @@
 			if(src.holdname)
 				KE.name = src.holdname
 			to_chat(user, span_notice("You add [src] to [K]."))
-			qdel(src)	
+			qdel(src)

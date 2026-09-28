@@ -136,7 +136,7 @@ GLOBAL_LIST_INIT(stone_personality_descs, list(
 	slot_flags = ITEM_SLOT_MOUTH
 	obj_flags = null
 	w_class = WEIGHT_CLASS_TINY
-	experimental_inhand = FALSE
+	experimental_inhand = TRUE
 	associated_skill = /datum/skill/combat/unarmed
 	mill_result = /obj/item/reagent_containers/powder/mineral
 	/// If our stone is magical, this lets us know -how- magical. Maximum is 15.
@@ -144,7 +144,16 @@ GLOBAL_LIST_INIT(stone_personality_descs, list(
 	sharpening_factor = 12
 	spark_chance = 35
 
-/obj/item/natural/stone/Initialize()
+/obj/item/natural/stone/get_mechanics_examine(mob/user)
+	. = ..()
+	. += span_info("Left-click a bladed weapon to begin sharpening it. Sharpening automatically stops once you move, or once the bladed weapon has been completely resharpened.")
+	. += span_info("Left-clicking a bladed weapon, another stone, or a rock has a chance to spawn sparks. Sparks can be used to reignite extinguished torches, lampterns, hearths, and other igniteable structures.")
+	. += span_info("Sharpening a bladed weapon will permenantly remove a very small amount of its maximum sharpness, with each pass. This can be avoided by sharpening it at a blacksmith's grindstone.")
+	. += span_info("Left-clicking a stone with a chisel will turn it into a stone block, which can be used for masonry and construction.")
+	. += span_info("Stones can be 'slapcrafted' into new items by left-clicking them with certain tools and materials. 'Slapcrafted' items don't require a Crafting skill to make.")
+	. += span_info("'Slapcrafts' for stones include tools and pots.")
+
+/obj/item/natural/stone/Initialize(mapload)
 	. = ..()
 	stone_lore()
 	update_force_dynamic() // Else it will not display the force properly.
@@ -182,7 +191,15 @@ GLOBAL_LIST_INIT(stone_personality_descs, list(
 	sharpening_factor = 21
 	spark_chance = 80
 
-/obj/item/natural/whetstone/Initialize()
+/obj/item/natural/whetstone/get_mechanics_examine(mob/user)
+	. = ..()
+	. += span_info("Left-click a bladed weapon to begin sharpening it. Sharpening automatically stops once you move, or once the bladed weapon has been completely resharpened.")
+	. += span_info("Left-clicking a bladed weapon, another stone, or a rock has a chance to spawn sparks. Sparks can be used to reignite extinguished torches, lampterns, hearths, and other igniteable structures.")
+	. += span_info("Sharpening a bladed weapon will permenantly remove a very small amount of its maximum sharpness, with each pass. This can be avoided by sharpening it at a blacksmith's grindstone.")
+	. += span_info("Whetstones can be 'slapcrafted' into new items by left-clicking them with certain tools and materials. 'Slapcrafted' items don't require a Crafting skill to make.")
+	. += span_info("'Slapcrafts' for whestones include tools, and - if used with hunting knives and farming tools - unique weapons.")
+
+/obj/item/natural/whetstone/Initialize(mapload)
 	. = ..()
 	var/static/list/slapcraft_recipe_list = list(
 		/datum/crafting_recipe/roguetown/survival/peasantry/thresher/whetstone,
@@ -312,7 +329,7 @@ GLOBAL_LIST_INIT(stone_personality_descs, list(
 	var/skill_level = user.get_skill_level(/datum/skill/craft/masonry)
 	var/work_time = (35 - (skill_level * 5))
 	if(istype(W, /obj/item/natural/stone))
-		playsound(src.loc, pick('sound/items/stonestone.ogg'), 100)
+		playsound(loc, pick('sound/items/stonestone.ogg'), 100)
 		user.visible_message(span_info("[user] strikes the stones together."))
 		if(prob(10))
 			var/datum/effect_system/spark_spread/S = new()
@@ -320,33 +337,30 @@ GLOBAL_LIST_INIT(stone_personality_descs, list(
 			S.set_up(1, 1, front)
 			S.start()
 	if( user.used_intent.type == /datum/intent/chisel )
-		playsound(src.loc, pick('sound/combat/hits/onrock/onrock (1).ogg', 'sound/combat/hits/onrock/onrock (2).ogg', 'sound/combat/hits/onrock/onrock (3).ogg', 'sound/combat/hits/onrock/onrock (4).ogg'), 100)
-		user.visible_message("<span class='info'>[user] chisels the stone into a block.</span>")
-		if(do_after(user, work_time))
-			new /obj/item/natural/stoneblock(get_turf(src.loc))
-			if(HAS_TRAIT(user, TRAIT_MASTER_MASON)) //double the amount for any in a stone worker role
-				new /obj/item/natural/stoneblock(get_turf(src.loc))
-			new /obj/effect/decal/cleanable/debris/stony(get_turf(src))
-			playsound(src.loc, pick('sound/combat/hits/onrock/onrock (1).ogg', 'sound/combat/hits/onrock/onrock (2).ogg', 'sound/combat/hits/onrock/onrock (3).ogg', 'sound/combat/hits/onrock/onrock (4).ogg'), 100)
-			qdel(src)
-			user.mind.add_sleep_experience(/datum/skill/craft/masonry, (user.STAINT*0.2))
+		var/location = loc
+		for(var/obj/item/natural/stone/S in get_turf(src))
+			user.visible_message("<span class='info'>[user] chisels the stone into a block.</span>")
+			if(do_after(user, work_time))
+				new /obj/item/natural/stoneblock(get_turf(location))
+				if(HAS_TRAIT(user, TRAIT_MASTER_MASON)) //double the amount for any in a stone worker role
+					new /obj/item/natural/stoneblock(get_turf(location))
+				new /obj/effect/decal/cleanable/debris/stony(get_turf(location))
+				playsound(location, pick('sound/combat/hits/onrock/onrock (1).ogg', 'sound/combat/hits/onrock/onrock (2).ogg', 'sound/combat/hits/onrock/onrock (3).ogg', 'sound/combat/hits/onrock/onrock (4).ogg'), 100)
+				qdel(S)
+				user.mind.add_sleep_experience(/datum/skill/craft/masonry, (user.STAINT*0.2))
+			else
+				return
 		return
 	else if(istype(W, /obj/item/rogueweapon/chisel/assembly))
 		to_chat(user, span_warning("You most use both hands to chisel blocks."))
 	else
 		..()
+
 //rock munching
 /obj/item/natural/stone/attack(mob/living/M, mob/user)
-
 	if(!user.cmode)
-		if(M.construct)
-			var/healydoodle = magic_power+1
-			M.apply_status_effect(/datum/status_effect/buff/rockmuncher, healydoodle)
-			qdel(src)
-			if(M == user)
-				user.visible_message(span_notice("[user] presses the stone to [user]'s body, and it is absorbed."), span_notice("I absorb the stone."))
-			else
-				user.visible_message(span_notice("[user] presses the stone to [M]'s body, and it is absorbed."), span_notice("I press the stone to [M], and it is absorbed."))
+		if(try_construct_consume(src, M, user))
+			return
 		else // if theyre not a construct, but we're not in cmode, beat them 2 death with rocks.
 			return ..()
 	else // if we're in cmode, beat them to death with rocks.
@@ -354,7 +368,7 @@ GLOBAL_LIST_INIT(stone_personality_descs, list(
 
 /obj/item/natural/rock
 	name = "boulder"
-	desc = "A rock protudes from the ground."
+	desc = "They're not 'rocks', they're minerals!"
 	icon_state = "stonebig1"
 	dropshrink = 0
 	throwforce = 25
@@ -377,18 +391,39 @@ GLOBAL_LIST_INIT(stone_personality_descs, list(
 	attacked_sound = 'sound/foley/hit_rock.ogg'
 
 
-/obj/item/natural/rock/Initialize()
-	icon_state = "stonebig[rand(1,2)]"
-	..()
+/obj/item/natural/rock/get_mechanics_examine(mob/user)
+	. = ..()
+	. += span_info("Rocks can be destroyed by left-clicking them with an item that has the 'PICK' intent selected. Hidden inside can be anything from stones and salt to ores and gems.")
+	. += span_info("Left-clicking a rock with a stone has a chance to spawn sparks. Sparks can be used to reignite extinguished torches, lampterns, hearths, and other igniteable structures.")
+	. += span_info("Left-clicking a rock with a chisel will turn it into a stone block, which can be used for masonry and construction.")
 
+/obj/item/natural/rock/Initialize(mapload, autodeconstruct, hp_override)
+	icon_state = "stonebig[rand(1,2)]"
+	if(autodeconstruct)
+		deconstruct()
+		return
+	if(hp_override)
+		obj_integrity = hp_override
+	..()
 
 /obj/item/natural/rock/Crossed(mob/living/L)
 	if(istype(L) && !L.throwing)
 		if(L.m_intent == MOVE_INTENT_RUN)
 			L.visible_message(span_warning("[L] trips over the boulder!"),span_warning("I trip over the boulder!"))
 			L.Knockdown(10)
+			L.drop_all_held_items()
 			L.consider_ambush(always = TRUE)
 	..()
+
+//le rocke CRUSHER
+/obj/item/natural/rock/attack(mob/living/M, mob/user)
+	if(!user.cmode)
+		if(try_construct_consume(src, M, user))
+			return
+		else // if theyre not a construct, but we're not in cmode, beat them 2 death with rocks.
+			return ..()
+	else // if we're in cmode, beat them to death with rocks.
+		return ..()
 
 /obj/item/natural/rock/attacked_by(obj/item/I, mob/living/user)
 	var/was_destroyed = obj_destroyed
@@ -402,9 +437,9 @@ GLOBAL_LIST_INIT(stone_personality_descs, list(
 		if(mineralType && mineralAmt)
 			if(has_world_trait(/datum/world_trait/malum_diligence))
 				mineralAmt += rand(1,2)
-			new mineralType(src.loc, mineralAmt)
+			new mineralType(loc, mineralAmt)
 		for(var/i in 1 to rand(1,4))
-			var/obj/item/S = new /obj/item/natural/stone(src.loc)
+			var/obj/item/S = new /obj/item/natural/stone(loc)
 			S.pixel_x = rand(25,-25)
 			S.pixel_y = rand(25,-25)
 		record_round_statistic(STATS_ROCKS_MINED)
@@ -426,7 +461,7 @@ GLOBAL_LIST_INIT(stone_personality_descs, list(
 	var/work_time = (120 - (skill_level * 15))
 	if(istype(W, /obj/item/natural/stone))
 		user.visible_message(span_info("[user] strikes the stone against the boulder."))
-		playsound(src.loc, 'sound/items/stonestone.ogg', 100)
+		playsound(loc, 'sound/items/stonestone.ogg', 100)
 		if(prob(35))
 			var/datum/effect_system/spark_spread/S = new()
 			var/turf/front = get_turf(src)
@@ -434,7 +469,7 @@ GLOBAL_LIST_INIT(stone_personality_descs, list(
 			S.start()
 		return
 	if(istype(W, /obj/item/natural/rock))
-		playsound(src.loc, pick('sound/items/stonestone.ogg'), 100)
+		playsound(loc, pick('sound/items/stonestone.ogg'), 100)
 		user.visible_message(span_info("[user] strikes the boulders together."))
 		if(prob(10))
 			var/datum/effect_system/spark_spread/S = new()
@@ -442,19 +477,35 @@ GLOBAL_LIST_INIT(stone_personality_descs, list(
 			S.set_up(1, 1, front)
 			S.start()
 		return
+	if(istype(W, /obj/item/rogueweapon/contraption/pick/drill) && user.used_intent.type == /datum/intent/drill)
+		var/obj/item/rogueweapon/contraption/pick/drill/drillitem = W
+		if(drillitem.current_charge < 10)
+			to_chat(user, span_warning("Not enough fuel."))
+			return
+		playsound(loc, 'sound/items/stonestone.ogg', 100)
+		if(prob(35))
+			var/datum/effect_system/spark_spread/S = new()
+			var/turf/front = get_turf(src)
+			S.set_up(1, 1, front)
+			S.start()
+		src.take_damage(500) //smashs through boulders with ease
+		drillitem.current_charge -= 10
+		if (drillitem.current_charge < 1)
+			ungrip(user, "it runs out of fuel")
+		return
 	if( user.used_intent.type == /datum/intent/chisel )
-		playsound(src.loc, pick('sound/combat/hits/onrock/onrock (1).ogg', 'sound/combat/hits/onrock/onrock (2).ogg', 'sound/combat/hits/onrock/onrock (3).ogg', 'sound/combat/hits/onrock/onrock (4).ogg'), 100)
+		playsound(loc, pick('sound/combat/hits/onrock/onrock (1).ogg', 'sound/combat/hits/onrock/onrock (2).ogg', 'sound/combat/hits/onrock/onrock (3).ogg', 'sound/combat/hits/onrock/onrock (4).ogg'), 100)
 		user.visible_message("<span class='info'>[user] chisels the boulder into blocks.</span>")
 		if(do_after(user, work_time))
-			new /obj/item/natural/stoneblock(get_turf(src.loc))
-			new /obj/item/natural/stoneblock(get_turf(src.loc))
-			new /obj/item/natural/stoneblock(get_turf(src.loc))
+			new /obj/item/natural/stoneblock(get_turf(loc))
+			new /obj/item/natural/stoneblock(get_turf(loc))
+			new /obj/item/natural/stoneblock(get_turf(loc))
 			if(HAS_TRAIT(user, TRAIT_MASTER_MASON)) //double the amount for any in a stone worker role
-				new /obj/item/natural/stoneblock(get_turf(src.loc))
-				new /obj/item/natural/stoneblock(get_turf(src.loc))
-				new /obj/item/natural/stoneblock(get_turf(src.loc))
-			new /obj/effect/decal/cleanable/debris/stony(get_turf(src))
-			playsound(src.loc, pick('sound/combat/hits/onrock/onrock (1).ogg', 'sound/combat/hits/onrock/onrock (2).ogg', 'sound/combat/hits/onrock/onrock (3).ogg', 'sound/combat/hits/onrock/onrock (4).ogg'), 100)
+				new /obj/item/natural/stoneblock(get_turf(loc))
+				new /obj/item/natural/stoneblock(get_turf(loc))
+				new /obj/item/natural/stoneblock(get_turf(loc))
+			new /obj/effect/decal/cleanable/debris/stony(get_turf(loc))
+			playsound(loc, pick('sound/combat/hits/onrock/onrock (1).ogg', 'sound/combat/hits/onrock/onrock (2).ogg', 'sound/combat/hits/onrock/onrock (3).ogg', 'sound/combat/hits/onrock/onrock (4).ogg'), 100)
 			user.mind.add_sleep_experience(/datum/skill/craft/masonry, (user.STAINT*0.5))
 			qdel(src)
 		return
@@ -496,15 +547,17 @@ GLOBAL_LIST_INIT(stone_personality_descs, list(
 /obj/item/natural/rock/random_ore
 	name = "rock?"
 	desc = "Wait, this shouldn't be here?"
-	icon_state = "stonerandom"
+	icon = 'icons/roguetown/helpers/spawnerhelpers.dmi'
+	icon_state = "random_rock"
 
 /obj/item/natural/rock/dungeon
 	name = "rock?"
 	desc = "Wait, this shouldn't be here? Tell Mumblemancer he's a shit coder!"
-	icon_state = "stonerandom"
+	icon = 'icons/roguetown/helpers/spawnerhelpers.dmi'
+	icon_state = "dungeon_rock"
 
 // actually random
-/obj/item/natural/rock/random_ore/Initialize()
+/obj/item/natural/rock/random_ore/Initialize(mapload)
 	. = ..()
 	var/obj/item/natural/rock/theboi = pick(list(
 		/obj/item/natural/rock/copper,
@@ -523,7 +576,7 @@ GLOBAL_LIST_INIT(stone_personality_descs, list(
 BECAUSE this is a dungeon reward, and you're SUPPOSED to get SOMETHING, they've got a pretty high chance for good stuff.
 - MUMBLEMANCER
 */
-/obj/item/natural/rock/dungeon/Initialize()
+/obj/item/natural/rock/dungeon/Initialize(mapload)
 	. = ..()
 	// The amounts are going to be weird BC I wanted a % out of 100 and it's a 7 layer list.
 	// I am considering gems to be less problematic than gold BC gold can be melted into way more
@@ -560,30 +613,6 @@ BECAUSE this is a dungeon reward, and you're SUPPOSED to get SOMETHING, they've 
 		return
 	. = ..()
 
-/obj/item/natural/stoneblock/attack_right(mob/user)
-	. = ..()
-	if(user.get_active_held_item())
-		return
-	to_chat(user, span_warning("I start to collect [src]..."))
-	if(move_after(user, bundling_time, target = src))
-		var/stackcount = 0
-		for(var/obj/item/natural/stoneblock/F in get_turf(src))
-			stackcount++
-		while(stackcount > 0)
-			if(stackcount == 1)
-				var/obj/item/natural/stoneblock/S = new(get_turf(user))
-				user.put_in_hands(S)
-				stackcount--
-			else if(stackcount >= 2)
-				var/obj/item/natural/bundle/stoneblock/B = new(get_turf(user))
-				B.amount = clamp(stackcount, 2, 4)
-				B.update_bundle()
-				stackcount -= clamp(stackcount, 2, 4)
-				user.put_in_hands(B)
-		for(var/obj/item/natural/stoneblock/F in get_turf(src))
-			playsound(get_turf(user.loc), 'sound/foley/stone_scrape.ogg', 100)
-			qdel(F)
-
 //................ Stone block stack	............... //
 /obj/item/natural/bundle/stoneblock
 	name = "stack of stone blocks"
@@ -591,7 +620,7 @@ BECAUSE this is a dungeon reward, and you're SUPPOSED to get SOMETHING, they've 
 	icon_state = "stoneblockbundle1"
 	icon = 'icons/roguetown/items/crafting.dmi'
 	item_state = "block"
-	experimental_inhand = FALSE
+	experimental_inhand = TRUE
 	grid_width = 64
 	grid_height = 64
 	base_width = 64

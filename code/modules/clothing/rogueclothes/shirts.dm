@@ -5,7 +5,7 @@
 	mob_overlay_icon = 'icons/roguetown/clothing/onmob/shirts.dmi'
 	equip_sound = 'sound/blank.ogg'
 	drop_sound = 'sound/blank.ogg'
-	pickup_sound =  'sound/blank.ogg'
+	pickup_sound =	'sound/blank.ogg'
 	sleeved = 'icons/roguetown/clothing/onmob/helpers/sleeves_shirts.dmi'
 	sleevetype = "shirt"
 	edelay_type = 1
@@ -14,9 +14,8 @@
 	boobed = TRUE
 	sewrepair = TRUE
 	flags_inv = HIDEBOOB
-	experimental_inhand = FALSE
+	experimental_inhand = TRUE
 	salvage_amount = 2
-
 	grid_width = 64
 	grid_height = 64
 
@@ -28,6 +27,7 @@
 		flags_inv &= ~HIDEWINGS
 	else
 		flags_inv |= HIDEWINGS
+	persist_inv_flags(HIDEWINGS)
 	H.update_inv_armor()
 
 /obj/item/clothing/suit/roguetown/shirt/undershirt
@@ -49,10 +49,41 @@
 	r_sleeve_status = SLEEVE_NORMAL
 	l_sleeve_status = SLEEVE_NORMAL
 	allowed_sex = list(MALE, FEMALE)
-	allowed_race = NON_DWARVEN_RACE_TYPES
 	boobed = TRUE
 	flags_inv= HIDEBOOB|HIDECROTCH
 	body_parts_covered = CHEST|GROIN|ARMS|VITALS
+	adjustable = CAN_CADJUST
+
+/obj/item/clothing/suit/roguetown/shirt/undershirt/priest/ComponentInitialize()
+	..()
+	AddComponent(/datum/component/adjustable_clothing, CHEST|GROIN|ARMS|VITALS, null, null, 'sound/foley/cloth_wipe (1).ogg', null, UPD_CHEST)
+
+/obj/item/clothing/suit/roguetown/armor/vestments_padded
+	name = "padded undervestments"
+	desc = "A soft garment designed to prevent chafing from wearing heavy robes all dae and night. This one has extra layers of thick fabric on the inside, preventing harm to the faithful."
+	icon_state = "priestunder"
+	item_state = "priestunder"
+	sleeved = 'icons/roguetown/clothing/onmob/helpers/sleeves_shirts.dmi'
+	slot_flags = ITEM_SLOT_SHIRT|ITEM_SLOT_ARMOR
+	r_sleeve_status = SLEEVE_NORMAL
+	l_sleeve_status = SLEEVE_NORMAL
+	allowed_sex = list(MALE, FEMALE)
+	boobed = TRUE
+	flags_inv = HIDEBOOB|HIDECROTCH
+	body_parts_covered = CHEST|GROIN|ARMS|VITALS
+	max_integrity = ARMOR_INT_CHEST_LIGHT_BASE
+	armor = ARMOR_PADDED_BAD
+	icon = 'icons/roguetown/clothing/shirts.dmi'
+	mob_overlay_icon = 'icons/roguetown/clothing/onmob/shirts.dmi'
+	break_sound = 'sound/foley/cloth_rip.ogg'
+	drop_sound = 'sound/foley/dropsound/cloth_drop.ogg'
+	material_category = ARMOR_MAT_LEATHER //So it doesn't make plate armor noises taking damage
+	sewrepair = TRUE
+	adjustable = CAN_CADJUST
+
+/obj/item/clothing/suit/roguetown/armor/vestments_padded/ComponentInitialize()
+	..()
+	AddComponent(/datum/component/adjustable_clothing, CHEST|GROIN|ARMS|VITALS, null, null, 'sound/foley/cloth_wipe (1).ogg', null, UPD_CHEST)
 
 /obj/item/clothing/suit/roguetown/shirt/undershirt/black
 	color = CLOTHING_BLACK
@@ -76,7 +107,7 @@
 /obj/item/clothing/suit/roguetown/shirt/undershirt/guard
 	color = CLOTHING_AZURE
 
-/obj/item/clothing/suit/roguetown/shirt/undershirt/guard/Initialize()
+/obj/item/clothing/suit/roguetown/shirt/undershirt/guard/Initialize(mapload)
 	. = ..()
 	if(GLOB.lordprimary)
 		lordcolor(GLOB.lordprimary,GLOB.lordsecondary)
@@ -90,7 +121,7 @@
 /obj/item/clothing/suit/roguetown/shirt/undershirt/guardsecond
 	color = CLOTHING_PURPLE
 
-/obj/item/clothing/suit/roguetown/shirt/undershirt/guardsecond/Initialize()
+/obj/item/clothing/suit/roguetown/shirt/undershirt/guardsecond/Initialize(mapload)
 	. = ..()
 	if(GLOB.lordprimary)
 		lordcolor(GLOB.lordprimary,GLOB.lordsecondary)
@@ -104,7 +135,7 @@
 	GLOB.lordcolor -= src
 	return ..()
 
-/obj/item/clothing/suit/roguetown/shirt/undershirt/random/Initialize()
+/obj/item/clothing/suit/roguetown/shirt/undershirt/random/Initialize(mapload)
 	color = pick("#6b5445", "#435436", "#704542", "#79763f")
 	..()
 
@@ -147,6 +178,19 @@
 	max_integrity = ARMOR_INT_CHEST_LIGHT_BASE
 	armor = ARMOR_PADDED
 
+/obj/item/clothing/suit/roguetown/shirt/shadowshirt/elflock/drowraider
+	desc = "custom-fit silk shirt"
+	desc = "A sleeveless shirt woven from glossy material. Custom-fit for its (now deceased) wearer."
+	allowed_race = list(/datum/species/elf/dark/raider)
+	sellprice = 10
+
+/obj/item/clothing/suit/roguetown/shirt/shadowshirt/elflock/loadout
+	name = "aesthetic custom-fit silk shirt"
+
+/obj/item/clothing/suit/roguetown/shirt/shadowshirt/elflock/loadout/Initialize(mapload)
+	. = ..()
+	loadoutize()
+
 /obj/item/clothing/suit/roguetown/shirt/apothshirt
 	name = "apothecary shirt"
 	desc = "When trudging through late-autumn forests, one needs to keep warm."
@@ -180,7 +224,7 @@
 	icon = 'icons/roguetown/clothing/shirts_royalty.dmi'
 	mob_overlay_icon = 'icons/roguetown/clothing/onmob/shirts_royalty.dmi'
 	name = "royal gown"
-	desc = "An elaborate ball gown, a favoured fashion of queens and elevated nobility in Enigma."
+	desc = "An elaborate ball gown, a favoured fashion of queens and elevated nobility throughout Psydonia." //Enigma references still exist in code, those are gonna need the chop.
 	body_parts_covered = CHEST|GROIN|ARMS|VITALS
 	icon_state = "royaldress"
 	sleeved = 'icons/roguetown/clothing/onmob/helpers/sleeves_shirts_royalty.dmi'
@@ -208,7 +252,7 @@
 		var/mob/living/carbon/human/H = loc
 		H.update_inv_armor()
 
-/obj/item/clothing/suit/roguetown/shirt/dress/royal/Initialize()
+/obj/item/clothing/suit/roguetown/shirt/dress/royal/Initialize(mapload)
 	. = ..()
 	GLOB.lordcolor += src
 	if(GLOB.lordprimary)
@@ -227,7 +271,7 @@
 	boobed = TRUE
 	detail_color = CLOTHING_BLUE
 
-//................ Prince Shirt   ............... //
+//................ Prince Shirt	............... //
 /obj/item/clothing/suit/roguetown/shirt/dress/royal/prince
 	slot_flags = ITEM_SLOT_SHIRT|ITEM_SLOT_ARMOR
 	name = "gilded dress shirt"
@@ -267,7 +311,7 @@
 	sleeved = null
 	flags_inv = HIDECROTCH|HIDEBOOB
 
-/obj/item/clothing/suit/roguetown/shirt/dress/silkydress/random/Initialize()
+/obj/item/clothing/suit/roguetown/shirt/dress/silkydress/random/Initialize(mapload)
 	color = pick("#e6e5e5", "#249589", "#a32121", "#428138", "#8747b1", "#007fff")
 	..()
 
@@ -315,6 +359,10 @@
 	salvage_result = /obj/item/natural/silk
 	salvage_amount = 2
 
+/obj/item/clothing/suit/roguetown/shirt/dress/gown/wintergown/aristocratotava
+	detail_color = "#1f1818ff"
+	color = "#ffffffff"
+
 /obj/item/clothing/suit/roguetown/shirt/undershirt/sailor
 	icon_state = "sailorblues"
 
@@ -330,7 +378,7 @@
 	l_sleeve_status = SLEEVE_TORN
 	body_parts_covered = CHEST|ARM_RIGHT|VITALS
 
-/obj/item/clothing/suit/roguetown/shirt/undershirt/vagrant/Initialize()
+/obj/item/clothing/suit/roguetown/shirt/undershirt/vagrant/Initialize(mapload)
 	color = pick("#6b5445", "#435436", "#704542", "#79763f")
 	..()
 
@@ -342,7 +390,7 @@
 	r_sleeve_status = SLEEVE_NORMAL
 	l_sleeve_status = SLEEVE_NORMAL
 
-/obj/item/clothing/suit/roguetown/shirt/shortshirt/random/Initialize()
+/obj/item/clothing/suit/roguetown/shirt/shortshirt/random/Initialize(mapload)
 	color = pick("#6b5445", "#435436", "#704542", "#79763f")
 	..()
 
@@ -383,6 +431,11 @@
 	flags_inv = HIDECROTCH|HIDEBOOB
 	salvage_result = /obj/item/natural/hide
 	salvage_amount = 1
+
+/obj/item/clothing/suit/roguetown/shirt/tribalrag/gladiator
+	slot_flags = ITEM_SLOT_ARMOR|ITEM_SLOT_SHIRT
+	name = "gladiator's rags"
+	desc = "What we do in life, echoes in eternity."
 
 /obj/item/clothing/suit/roguetown/shirt/robe/archivist
 	name = "archivist's robe"
@@ -439,6 +492,21 @@
 	l_sleeve_status = SLEEVE_NORMAL
 	flags_inv = HIDECROTCH|HIDEBOOB
 
+/obj/item/clothing/suit/roguetown/shirt/tunic/update_icon()
+	cut_overlays()
+	if(get_detail_tag())
+		var/mutable_appearance/pic = mutable_appearance(icon(icon, "[get_detail_state(icon_state)][detail_tag]"))
+		pic.appearance_flags = RESET_COLOR
+		if(get_detail_color())
+			pic.color = get_detail_color()
+		add_overlay(pic)
+	if(get_altdetail_tag())
+		var/mutable_appearance/pic2 = mutable_appearance(icon(icon, "[get_detail_state(icon_state)][altdetail_tag]"))
+		pic2.appearance_flags = RESET_COLOR
+		if(get_altdetail_color())
+			pic2.color = get_altdetail_color()
+		add_overlay(pic2)
+
 /obj/item/clothing/suit/roguetown/shirt/tunic/green
 	color = CLOTHING_GREEN
 
@@ -460,7 +528,7 @@
 /obj/item/clothing/suit/roguetown/shirt/tunic/ucolored
 	color = COLOR_GRAY
 
-/obj/item/clothing/suit/roguetown/shirt/tunic/random/Initialize()
+/obj/item/clothing/suit/roguetown/shirt/tunic/random/Initialize(mapload)
 	color = pick(CLOTHING_PURPLE, CLOTHING_RED, CLOTHING_BLUE, CLOTHING_GREEN, CLOTHING_BLACK, CLOTHING_WHITE, COLOR_GRAY)
 	..()
 /obj/item/clothing/suit/roguetown/shirt/dress
@@ -474,6 +542,21 @@
 	r_sleeve_status = SLEEVE_NORMAL
 	l_sleeve_status = SLEEVE_NORMAL
 	flags_inv = HIDECROTCH|HIDEBOOB
+
+/obj/item/clothing/suit/roguetown/shirt/dress/update_icon()
+	cut_overlays()
+	if(get_detail_tag())
+		var/mutable_appearance/pic = mutable_appearance(icon(icon, "[get_detail_state(icon_state)][detail_tag]"))
+		pic.appearance_flags = RESET_COLOR
+		if(get_detail_color())
+			pic.color = get_detail_color()
+		add_overlay(pic)
+	if(get_altdetail_tag())
+		var/mutable_appearance/pic2 = mutable_appearance(icon(icon, "[get_detail_state(icon_state)][altdetail_tag]"))
+		pic2.appearance_flags = RESET_COLOR
+		if(get_altdetail_color())
+			pic2.color = get_altdetail_color()
+		add_overlay(pic2)
 
 /obj/item/clothing/suit/roguetown/shirt/dress/gen
 	slot_flags = ITEM_SLOT_ARMOR|ITEM_SLOT_SHIRT
@@ -493,7 +576,7 @@
 /obj/item/clothing/suit/roguetown/shirt/dress/gen/purple
 	color = CLOTHING_PURPLE
 
-/obj/item/clothing/suit/roguetown/shirt/dress/gen/random/Initialize()
+/obj/item/clothing/suit/roguetown/shirt/dress/gen/random/Initialize(mapload)
 	color = pick("#6b5445", "#435436", "#704542", "#79763f", CLOTHING_BLUE)
 	..()
 
@@ -511,7 +594,7 @@
 /obj/item/clothing/suit/roguetown/shirt/dress/silkdress/princess
 	color = CLOTHING_WHITE
 
-/obj/item/clothing/suit/roguetown/shirt/dress/silkdress/princess/Initialize()
+/obj/item/clothing/suit/roguetown/shirt/dress/silkdress/princess/Initialize(mapload)
 	. = ..()
 	if(GLOB.lordprimary)
 		lordcolor(GLOB.lordprimary,GLOB.lordsecondary)
@@ -527,7 +610,7 @@
 /obj/item/clothing/suit/roguetown/shirt/dress/silkdress/green
 	color = CLOTHING_DARK_GREEN
 
-/obj/item/clothing/suit/roguetown/shirt/dress/silkdress/random/Initialize()
+/obj/item/clothing/suit/roguetown/shirt/dress/silkdress/random/Initialize(mapload)
 	. = ..()
 	color = pick("#e6e5e5", "#52BE80", "#C39BD3", "#EC7063","#5DADE2")
 
@@ -541,12 +624,22 @@
 	sleeved = null
 	flags_inv = HIDECROTCH|HIDEBOOB
 
-/obj/item/clothing/suit/roguetown/shirt/dress/gen/sexy/random/Initialize()
+/obj/item/clothing/suit/roguetown/shirt/dress/gen/sexy/random/Initialize(mapload)
 	. = ..()
 	color = pick(CLOTHING_WHITE, CLOTHING_RED, CLOTHING_PURPLE, CLOTHING_MAGENTA, CLOTHING_TEAL, CLOTHING_BLACK)
 
-/obj/item/clothing/suit/roguetown/shirt/dress/gen/sexy/black/Initialize()
+/obj/item/clothing/suit/roguetown/shirt/dress/gen/sexy/black/Initialize(mapload)
 	. = ..()
+	color = CLOTHING_BLACK
+
+/obj/item/clothing/suit/roguetown/shirt/dress/slit
+	slot_flags = ITEM_SLOT_ARMOR|ITEM_SLOT_SHIRT
+	name = "slitted dress"
+	desc = "A finely sewn dress with a slit to expose the thigh, how scandalous!"
+	icon_state = "slitdress"
+	item_state = "slitdress"
+	r_sleeve_status = SLEEVE_NOMOD
+	l_sleeve_status = SLEEVE_NOMOD
 	color = CLOTHING_BLACK
 
 /obj/item/clothing/suit/roguetown/shirt/undershirt/webs
@@ -595,7 +688,7 @@
 	color = primary
 	update_icon()
 
-/obj/item/clothing/suit/roguetown/shirt/jester/Initialize()
+/obj/item/clothing/suit/roguetown/shirt/jester/Initialize(mapload)
 	. = ..()
 	if(GLOB.lordprimary)
 		lordcolor(GLOB.lordprimary,GLOB.lordsecondary)
@@ -633,16 +726,17 @@
 	icon_state = "weddingdress"
 	item_state = "weddingdress"
 
-/obj/item/clothing/suit/roguetown/shirt/exoticsilkbra
-	name = "exotic silk bra"
+/obj/item/clothing/suit/roguetown/shirt/silkbra
+	name = "giltsilk bra"
 	desc = "An exquisite bra crafted from the finest silk and adorned with gold rings. It leaves little to the imagination."
-	icon_state = "exoticsilkbra"
-	item_state = "exoticsilkbra"
+	icon_state = "silkbra"
+	item_state = "silkbra"
 	body_parts_covered = CHEST
 	boobed = TRUE
 	sewrepair = TRUE
 	flags_inv = null
 	slot_flags = ITEM_SLOT_SHIRT
+	color = CLOTHING_BLACK
 	salvage_result = /obj/item/natural/silk
 	salvage_amount = 2
 
@@ -652,7 +746,8 @@
 	icon_state = "desertbra"
 	item_state = "desertbra"
 	body_parts_covered = CHEST
-	boobed = FALSE
+	boobed = TRUE
+	sleeved = null
 	sewrepair = TRUE
 	flags_inv = null
 	slot_flags = ITEM_SLOT_SHIRT
@@ -688,44 +783,17 @@
 	l_sleeve_status = SLEEVE_NORMAL
 	flags_inv = HIDECROTCH|HIDEBOOB
 
-//tattoo code
-/obj/item/clothing/suit/roguetown/armor/regenerating/easttats
-	name = "bouhoi bujeog tattoos"
-	desc = "A mystic style of tattoos adopted by the Ruma Clan, emulating a practice performed by warrior monks of the Xinyi Dynasty. They are your way of identifying fellow clan members, an sign of companionship and secretive brotherhood. These are styled into the shape of clouds, created by a mystical ink which shifts and moves in ripples like a pond to harden where your skin is struck. It's movement causes you to shudder."
-	resistance_flags = FIRE_PROOF
-	icon_state = "easttats"
+/obj/item/clothing/suit/roguetown/shirt/dress/captainrobe
 	slot_flags = ITEM_SLOT_SHIRT|ITEM_SLOT_ARMOR
-	prevent_crits = PREVENT_CRITS_NONE
-	armor = ARMOR_RUMACLAN
-	body_parts_covered = COVERAGE_ALL_BUT_HANDFEET
-	body_parts_inherent = COVERAGE_ALL_BUT_HANDFEET
-	icon = 'icons/roguetown/clothing/shirts.dmi'
-	mob_overlay_icon = 'icons/roguetown/clothing/onmob/shirts.dmi'
-	sleeved = 'icons/roguetown/clothing/onmob/helpers/sleeves_shirts.dmi'
-	r_sleeve_status = SLEEVE_NORMAL
-	l_sleeve_status = SLEEVE_NORMAL
+	name = "foreign robes"
+	desc = "Flower-styled robes. The Azurian Trading Company's factor swears they came up the harbor from the southern Kazeungese region."
+	icon = 'icons/roguetown/clothing/armor.dmi'
+	mob_overlay_icon = 'icons/roguetown/clothing/onmob/armor.dmi'
+	icon_state = "eastsuit4"
+	item_state = "eastsuit4"
+	sleeved = 'icons/roguetown/clothing/onmob/helpers/sleeves_armor.dmi'
 	allowed_race = NON_DWARVEN_RACE_TYPES
-	max_integrity = 270
-	flags_inv = null //free the breast
-	surgery_cover = FALSE // cauterize and surgery through it.
-
-	repairmsg_begin = "The tattoos begin to slowly mend its abuse.."
-	repairmsg_continue = "The tattoos mend some of its abuse.."
-	repairmsg_stop = "The tattoos stops mending from the onslaught!"
-	repairmsg_end = "The tattoos flow more calmly, as they finish resting and regain their strength."
-
-	interrupt_damount = 25
-	repair_time = 35 SECONDS
-
-/obj/item/clothing/suit/roguetown/armor/regenerating/easttats/Initialize(mapload)
-	. = ..()
-	ADD_TRAIT(src, TRAIT_NODROP, CURSED_ITEM_TRAIT)
-
-/obj/item/clothing/suit/roguetown/armor/regenerating/easttats/dropped(mob/living/carbon/human/user)
-	. = ..()
-	if(QDELETED(src))
-		return
-	qdel(src)
+	sellprice = 25
 
 /obj/item/clothing/suit/roguetown/shirt/dress/maid
 	slot_flags = ITEM_SLOT_ARMOR|ITEM_SLOT_SHIRT
@@ -755,9 +823,11 @@
 			flags_inv = HIDEBOOB|HIDECROTCH
 			to_chat(usr, span_warning("Now wearing normally!"))
 	update_icon()
-	if(ismob(loc))
-		var/mob/L = loc
-		L.update_inv_armor()
+	if(user)
+		if(ishuman(user))
+			var/mob/living/carbon/H = user
+			H.update_inv_cloak()
+			H.update_inv_armor()
 
 /obj/item/clothing/suit/roguetown/shirt/courtphysician
 	name = "sanguine vest"
@@ -772,7 +842,7 @@
 	detail_color = CLOTHING_RED
 	salvage_result = /obj/item/natural/silk
 
-/obj/item/clothing/suit/roguetown/shirt/courtphysician/Initialize()
+/obj/item/clothing/suit/roguetown/shirt/courtphysician/Initialize(mapload)
 	. = ..()
 	update_icon()
 
@@ -798,7 +868,7 @@
 	detail_color = CLOTHING_RED
 	salvage_result = /obj/item/natural/silk
 
-/obj/item/clothing/suit/roguetown/shirt/courtphysician/female/Initialize()
+/obj/item/clothing/suit/roguetown/shirt/courtphysician/female/Initialize(mapload)
 	. = ..()
 	update_icon()
 
@@ -810,3 +880,243 @@
 		if(get_detail_color())
 			pic.color = get_detail_color()
 		add_overlay(pic)
+
+/obj/item/clothing/suit/roguetown/shirt/dress/maidfancy
+	name = "valorian maid dress"
+	desc = "A dress befitting the housekeeper of a lord's staff. While not as intricate as a royal's, it is indicative of the house's status."
+	slot_flags = ITEM_SLOT_ARMOR|ITEM_SLOT_SHIRT
+	body_parts_covered = CHEST|GROIN|ARMS|VITALS
+	sleeved = 'icons/roguetown/clothing/special/onmob/sleeves_maids.dmi'
+	r_sleeve_status = SLEEVE_NORMAL
+	l_sleeve_status = SLEEVE_NORMAL
+	boobed = TRUE
+	icon_state = "maiddressfancy"
+	item_state = "maiddressfancy"
+	detail_tag = "_detail"
+	detail_color = CLOTHING_DARK_GREY
+	salvage_amount = 1
+
+/obj/item/clothing/suit/roguetown/shirt/dress/maidservant
+	name = "maid gown"
+	sleeved = 'icons/roguetown/clothing/special/onmob/sleeves_maids.dmi'
+	desc = "A dress worn by those of manors and noble staff. Commonly black, though some estates dye them to their house colors."
+	icon_state = "maidgown"
+	item_state = "maidgown"
+	detail_color = CLOTHING_DARK_GREY
+
+/obj/item/clothing/suit/roguetown/shirt/undershirt/formal
+	name = "formal shirt"
+	desc = "A comfortable yet functional dress shirt often worn by the staff of a noble household."
+	icon_state = "butlershirt"
+	item_state = "butlershirt"
+	sleeved = 'icons/roguetown/clothing/special/onmob/sleeves_maids.dmi'
+
+/obj/item/clothing/suit/roguetown/shirt/dress/velvetdress
+	name = "velvet dress"
+	desc = "A garment made with embroidered velvet, both elegant and warm. Poetry made manifest in swaying fabric."
+	icon_state = "velvetdress"
+	item_state = "velvetdress"
+	sleeved = 'icons/roguetown/clothing/onmob/helpers/sleeves_shirts.dmi'
+
+/obj/item/clothing/suit/roguetown/shirt/dress/nobledress
+	name = "noble's pinafore"
+	desc = "A comfortable dress adapted from simpler garments often worn by working-class women."
+	icon_state = "nobledress"
+	item_state = "nobledress"
+	sleeved = 'icons/roguetown/clothing/onmob/helpers/sleeves_shirts.dmi'
+	detail_tag = "_detail"
+	detail_color = CLOTHING_WHITE
+
+/obj/item/clothing/suit/roguetown/shirt/dress/nobledress/Initialize(mapload)
+	. = ..()
+	update_icon()
+
+/obj/item/clothing/suit/roguetown/shirt/dress/nobledress/update_icon()
+	cut_overlays()
+	if(get_detail_tag())
+		var/mutable_appearance/pic = mutable_appearance(icon(icon, "[icon_state][detail_tag]"))
+		pic.appearance_flags = RESET_COLOR
+		if(get_detail_color())
+			pic.color = get_detail_color()
+		add_overlay(pic)
+
+/obj/item/clothing/suit/roguetown/shirt/dress/saree
+	name = "saree"
+	slot_flags = ITEM_SLOT_SHIRT|ITEM_SLOT_ARMOR|ITEM_SLOT_CLOAK
+	desc	= "A delicate, unstitched garment that can be draped across the body. It is commonly worn amongst Ranesheni women."
+	icon_state = "saree"
+	item_state = "saree"
+	sleeved = 'icons/roguetown/clothing/onmob/helpers/sleeves_shirts.dmi'
+	detail_tag = "_detail"
+	detail_color = CLOTHING_WHITE
+
+
+/obj/item/clothing/suit/roguetown/shirt/dress/green
+	slot_flags = ITEM_SLOT_ARMOR|ITEM_SLOT_SHIRT
+	name = "light green dress"
+	desc = "A simple light green dress, tailored to flatter the figure."
+	icon_state = "greendress"
+	item_state = "greendress"
+	sleevetype = null
+	sleeved = null
+	r_sleeve_status = SLEEVE_NOMOD
+	l_sleeve_status = SLEEVE_NOMOD
+	boobed = TRUE
+	detail_tag = "_detail"
+	altdetail_tag = "_detailalt"
+	color = "#BEF686"
+	detail_color = CLOTHING_WHITE
+	altdetail_color = "#996633"
+
+/obj/item/clothing/suit/roguetown/shirt/dress/blue
+	slot_flags = ITEM_SLOT_ARMOR|ITEM_SLOT_SHIRT
+	name = "light blue dress"
+	desc = "A simple light blue dress, tailored to flatter the figure."
+	icon_state = "bluedress"
+	item_state = "bluedress"
+	sleevetype = null
+	sleeved = null
+	r_sleeve_status = SLEEVE_NOMOD
+	l_sleeve_status = SLEEVE_NOMOD
+	boobed = TRUE
+	detail_tag = "_detail"
+	color = "#ADD8E6"
+	detail_color = "#996633"
+
+/obj/item/clothing/suit/roguetown/shirt/dress/tavern
+	slot_flags = ITEM_SLOT_ARMOR|ITEM_SLOT_SHIRT
+	name = "tavern dress"
+	desc = "A simple green dress with a corset, its skirt has slits for easy movement."
+	icon_state = "taverndress"
+	item_state = "taverndress"
+	sleevetype = null
+	sleeved = null
+	r_sleeve_status = SLEEVE_NOMOD
+	l_sleeve_status = SLEEVE_NOMOD
+	boobed = TRUE
+	detail_tag = "_detail"
+	color = "#BEF686"
+	detail_color = "#996633"
+
+/obj/item/clothing/suit/roguetown/shirt/dress/courtesan
+	slot_flags = ITEM_SLOT_ARMOR|ITEM_SLOT_SHIRT
+	name = "courtesan dress"
+	desc = "A luxurious dress designed to attract attention, often worn by courtesans."
+	icon_state = "courtesandress"
+	item_state = "courtesandress"
+	boobed = TRUE
+	detail_tag = "_detail"
+	color = "#FFFF00"
+	detail_color = "#FFFFFF"
+
+/obj/item/clothing/suit/roguetown/shirt/dress/nightgown
+	slot_flags = ITEM_SLOT_SHIRT|ITEM_SLOT_ARMOR
+	name = "nightgown"
+	desc = "An elegant and enticing nightgown, made for comfort and allure."
+	icon_state = "nightgown"
+	item_state = "nightgown"
+	sleevetype = null
+	sleeved = null
+	r_sleeve_status = SLEEVE_NOMOD
+	l_sleeve_status = SLEEVE_NOMOD
+	boobed = TRUE
+	color = "#FF0000"
+
+/obj/item/clothing/suit/roguetown/shirt/undershirt/blouse
+	slot_flags = ITEM_SLOT_ARMOR|ITEM_SLOT_SHIRT
+	name = "blouse"
+	desc = "A finely tailored blouse made from soft, lightweight fabric, with delicate buttons and subtly decorated cuffs."
+	icon_state = "blouse"
+	item_state = "blouse"
+	color = "#FFFFFF"
+
+/obj/item/clothing/suit/roguetown/shirt/tunic/winter
+	slot_flags = ITEM_SLOT_SHIRT|ITEM_SLOT_ARMOR|ITEM_SLOT_CLOAK
+	name = "winter coat"
+	desc = "A thick, well-crafted winter coat designed to retain heat and protect against harsh cold while remaining comfortable for daily wear."
+	icon_state = "wintercoat"
+	item_state = "wintercoat"
+	boobed = FALSE
+	detail_tag = "_detail"
+	color = "#99CCFF"
+	detail_color = "#FFFFFF"
+
+/obj/item/clothing/suit/roguetown/shirt/tunic/thinwinterdress
+	name = "thin winter dress"
+	icon = 'icons/roguetown/clothing/shirts_royalty.dmi'
+	mob_overlay_icon = 'icons/roguetown/clothing/onmob/shirts_royalty.dmi'
+	desc = "A thin and light version of a comfortable dress popular amongst nobility during winter."
+	body_parts_covered = COVERAGE_ALL_BUT_HANDFEET
+	icon_state = "winterdress"
+	sleeved = 'icons/roguetown/clothing/onmob/helpers/sleeves_shirts_royalty.dmi'
+	boobed = TRUE
+	detail_tag = "_detail"
+	detail_color = CLOTHING_BLACK
+	r_sleeve_status = SLEEVE_NORMAL
+	l_sleeve_status = SLEEVE_NORMAL
+	slot_flags = ITEM_SLOT_ARMOR|ITEM_SLOT_SHIRT
+	salvage_result = /obj/item/natural/silk
+	salvage_amount = 2
+
+/obj/item/clothing/suit/roguetown/shirt/tunic/thinwinterdress/triumph
+	detail_color = CLOTHING_BLACK
+	color = CLOTHING_BLACK
+
+/obj/item/clothing/suit/roguetown/shirt/tunic/thinwinterdress/azure
+	detail_color = CLOTHING_WHITE
+	color = CLOTHING_AZURE
+
+/obj/item/clothing/suit/roguetown/shirt/tunic/thinwinterdress/raneshen
+	detail_color = CLOTHING_WHITE
+	color = CLOTHING_RED
+
+/obj/item/clothing/suit/roguetown/shirt/tunic/rosa
+	name = "ivory dress"
+	desc = "A finely crafted dress adorned with rosas. A common sight among less silver inclined Otavan nobility."
+	icon_state = "rosadress1"
+	icon = 'icons/roguetown/clothing/special/rosewood.dmi'
+	mob_overlay_icon = 'icons/roguetown/clothing/special/onmob/rosewood.dmi'
+	sleeved = 'icons/roguetown/clothing/special/onmob/rosewood.dmi'
+	boobed = FALSE
+
+/obj/item/clothing/suit/roguetown/shirt/tunic/rosa/two
+	name = "scarlet dress"
+	icon_state = "rosadress2"
+
+/obj/item/clothing/suit/roguetown/shirt/tunic/rosa/three
+	name = "velvet dress"
+	icon_state = "rosadress3"
+
+/obj/item/clothing/suit/roguetown/shirt/tunic/rosa/four
+	name = "obsidian dress"
+	icon_state = "rosadress4"
+
+/obj/item/clothing/suit/roguetown/shirt/tunic/rosa/five
+	name = "sable dress"
+	icon_state = "rosadress5"
+
+/obj/item/clothing/suit/roguetown/shirt/tunic/rosa/six
+	name = "maroon dress"
+	icon_state = "rosadress6"
+
+/obj/item/clothing/suit/roguetown/shirt/tunic/rosacoat
+	name = "regal coat"
+	desc = "A finely crafted leather coat adorned with rosas. A favorite among the more modest of Otavan nobility, who choose not to clad themselves in silver."
+	icon_state = "rosacoat7"
+	icon = 'icons/roguetown/clothing/special/rosewood.dmi'
+	mob_overlay_icon = 'icons/roguetown/clothing/special/onmob/rosewood.dmi'
+	sleeved = 'icons/roguetown/clothing/special/onmob/rosewood.dmi'
+	salvage_result = /obj/item/natural/hide/cured
+	boobed = FALSE
+
+/obj/item/clothing/suit/roguetown/shirt/tunic/rosacoat/two
+	name = "courtly coat"
+	icon_state = "rosacoat8"
+
+/obj/item/clothing/suit/roguetown/shirt/tunic/rosacoat/three
+	name = "royal coat"
+	icon_state = "rosacoat9"
+
+/obj/item/clothing/suit/roguetown/shirt/tunic/rosacoat/four
+	name = "stately coat"
+	icon_state = "rosacoat10"

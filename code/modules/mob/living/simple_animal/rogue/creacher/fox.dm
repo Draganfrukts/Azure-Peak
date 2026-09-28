@@ -1,8 +1,10 @@
 //Subtype of wolf, but non-hostile until attacked instead of default hostile.
 /mob/living/simple_animal/hostile/retaliate/rogue/fox
+	attack_aim = MOB_AIM_LOW
 	icon = 'icons/roguetown/mob/monster/fox.dmi'
 	name = "venard"
 	desc = "A majestic beast of Dendor's realm, hopping through the local fauna."
+	anatomy_type = /datum/anatomy/quadruped/trash
 	icon_state = "fox"
 	icon_living = "fox"
 	icon_dead = "fox_dead"
@@ -15,6 +17,8 @@
 	move_to_delay = 3
 	base_intents = list(/datum/intent/simple/bite/volf)	//Same as volf, simplicity is key
 	aggressive = 1
+	threat_point = THREAT_TRASH
+	ambush_faction = "wildlife"
 	botched_butcher_results = list(/obj/item/reagent_containers/food/snacks/rogue/meat/steak = 1, /obj/item/alch/viscera = 1, /obj/item/natural/bone = 3)
 	butcher_results = list(/obj/item/reagent_containers/food/snacks/rogue/meat/steak = 2,
 						/obj/item/natural/hide = 1,
@@ -31,11 +35,11 @@
 						/obj/item/natural/fur/fox = 2,
 						/obj/item/natural/bone = 4)
 	head_butcher = /obj/item/natural/head/fox
-	faction = list("wolfs", "zombie")
+	faction = list(FACTION_WOLFS, FACTION_ZOMBIE)
 	mob_biotypes = MOB_ORGANIC|MOB_BEAST
 	remains_type = /obj/effect/decal/remains/fox
-	health = 100
-	maxHealth = 100				//Wolf is 120
+	health = FOX_HEALTH
+	maxHealth = FOX_HEALTH		//Wolf is 120
 	melee_damage_lower = 10		//Wolf is 19
 	melee_damage_upper = 20		//Wolf is 29
 	vision_range = 7
@@ -57,7 +61,6 @@
 	ai_controller = null
 	simple_detect_bonus = 20
 	deaggroprob = 0
-	defprob = 40
 	del_on_deaggro = 44 SECONDS
 	retreat_health = 0.3
 	food = 0
@@ -70,7 +73,12 @@
 	AIStatus = AI_OFF
 	can_have_ai = FALSE
 	ai_controller = /datum/ai_controller/volf
+	move_base_delay = MOVEMENT_DELAY_SPD_3
 	melee_cooldown = WOLF_ATTACK_SPEED
+
+/mob/living/simple_animal/hostile/retaliate/rogue/fox/Initialize(mapload)
+	. = ..()
+	AddComponent(/datum/component/ai_aggro_system)
 
 /obj/effect/decal/remains/fox
 	name = "remains"
@@ -111,47 +119,6 @@
 			GiveTarget(pulledby)
 
 
-/mob/living/simple_animal/hostile/retaliate/rogue/fox/simple_limb_hit(zone)
-	if(!zone)
-		return ""
-	switch(zone)
-		if(BODY_ZONE_PRECISE_R_EYE)
-			return "head"
-		if(BODY_ZONE_PRECISE_L_EYE)
-			return "head"
-		if(BODY_ZONE_PRECISE_NOSE)
-			return "nose"
-		if(BODY_ZONE_PRECISE_MOUTH)
-			return "mouth"
-		if(BODY_ZONE_PRECISE_SKULL)
-			return "head"
-		if(BODY_ZONE_PRECISE_EARS)
-			return "head"
-		if(BODY_ZONE_PRECISE_NECK)
-			return "neck"
-		if(BODY_ZONE_PRECISE_L_HAND)
-			return "foreleg"
-		if(BODY_ZONE_PRECISE_R_HAND)
-			return "foreleg"
-		if(BODY_ZONE_PRECISE_L_FOOT)
-			return "leg"
-		if(BODY_ZONE_PRECISE_R_FOOT)
-			return "leg"
-		if(BODY_ZONE_PRECISE_STOMACH)
-			return "stomach"
-		if(BODY_ZONE_PRECISE_GROIN)
-			return "tail"
-		if(BODY_ZONE_HEAD)
-			return "head"
-		if(BODY_ZONE_R_LEG)
-			return "leg"
-		if(BODY_ZONE_L_LEG)
-			return "leg"
-		if(BODY_ZONE_R_ARM)
-			return "foreleg"
-		if(BODY_ZONE_L_ARM)
-			return "foreleg"
-	return ..()
 
 /mob/living/simple_animal/hostile/retaliate/rogue/fox/guildpet
 	name = "Mimi the Fox"
@@ -159,6 +126,7 @@
 	density = 0 // You can walk through them
 	aggressive = FALSE
 	ai_controller = /datum/ai_controller/generic
+	move_base_delay = MOVEMENT_DELAY_SLOW
 
 /mob/living/simple_animal/hostile/retaliate/rogue/fox/guildpet/get_sound(input)
 	switch(input)
@@ -172,3 +140,8 @@
 			return pick('sound/vo/mobs/venard/fox1.ogg','sound/vo/mobs/venard/fox2.ogg','sound/vo/mobs/venard/fox3.ogg','sound/vo/mobs/venard/fox4.ogg','sound/vo/mobs/venard/fox5.ogg','sound/vo/mobs/venard/fox6.ogg','sound/vo/mobs/venard/fox7.ogg','sound/vo/mobs/venard/fox8.ogg','sound/vo/mobs/venard/fox9.ogg','sound/vo/mobs/venard/fox10.ogg','sound/vo/mobs/venard/fox11.ogg','sound/vo/mobs/venard/fox12.ogg','sound/vo/mobs/venard/fox13.ogg')
 		if("cidle")
 			return pick('sound/vo/mobs/vw/bark (1).ogg','sound/vo/mobs/vw/bark (2).ogg','sound/vo/mobs/vw/bark (3).ogg','sound/vo/mobs/vw/bark (4).ogg','sound/vo/mobs/vw/bark (5).ogg','sound/vo/mobs/vw/bark (6).ogg','sound/vo/mobs/vw/bark (7).ogg')
+
+/mob/living/simple_animal/hostile/retaliate/rogue/fox/death(gibbed)
+	. = ..()
+	if(!QDELETED(src) && !gibbed)
+		src.AddComponent(/datum/component/deadite_animal_reanimation)

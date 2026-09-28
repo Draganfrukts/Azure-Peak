@@ -7,7 +7,7 @@
 	spawn_positions = 1
 
 	allowed_sexes = list(MALE, FEMALE) //same as town guard
-	allowed_races = RACES_NO_CONSTRUCT //Constructs are too new to even exist long enough to be veterans, plus noble title.
+	forbidden_races = list(RACES_CONSTRUCT RACES_DESPISED RACES_OOZE) //Constructs are too new to even exist long enough to be veterans, plus noble title.
 	tutorial = "You've known combat your entire life. There isn't a way to kill a man you havent practiced in the tapestries of war itself. You wouldn't call yourself a hero--those belong to the men left rotting in the fields where you honed your ancient trade. You don't sleep well at night anymore, you don't like remembering what you've had to do to survive. Trading adventure for stable pay was the only logical solution, and maybe someday you'll get to lay down the blade and rest your weary body..."
 	allowed_ages = list(AGE_OLD) //VETERANS!! ARE!!! OLD!!!
 	advclass_cat_rolls = list(CTAG_VETERAN = 20)
@@ -28,8 +28,8 @@
 		/datum/advclass/veteran/spy
 	)
 
-/datum/outfit/job/roguetown/captain
-	job_bitflag = BITFLAG_ROYALTY | BITFLAG_GARRISON	//Not a noble per-say but not really garrison either. So both, you are a courtier of sorts afterall + combat
+/datum/outfit/job/roguetown/veteran
+	job_bitflag = BITFLAG_GARRISON	//Counts towards overall combat roles
 
 /datum/job/roguetown/veteran/after_spawn(mob/living/L, mob/M, latejoin = TRUE)
 	. = ..()
@@ -101,7 +101,7 @@
 		/obj/item/rogueweapon/huntingknife/idagger/steel/special = 1,
 		/obj/item/rogueweapon/scabbard/sheath = 1
 		)
-	H.verbs |= /mob/proc/haltyell
+	add_verb(H, /mob/proc/haltyell)
 	if(H.mind)
 		SStreasury.give_money_account(ECONOMIC_RICH, H, "Retirement.")
 
@@ -110,7 +110,7 @@
 
 	H.adjust_blindness(-3)
 	if(H.mind)
-		var/weapons = list("Longsword","Sabre")
+		var/weapons = list("Longsword","Sabre", "Mace")
 		var/weapon_choice = input(H, "Choose your weapon.", "TAKE UP ARMS") as anything in weapons
 		H.set_blindness(0)
 		switch(weapon_choice)
@@ -120,6 +120,8 @@
 			if("Sabre")
 				H.put_in_hands(new /obj/item/rogueweapon/sword/sabre)
 				H.equip_to_slot_or_del(new /obj/item/rogueweapon/scabbard/sword, SLOT_BELT_L)
+			if("Mace")
+				H.put_in_hands(new /obj/item/rogueweapon/mace)
 		var/retirement = list("Pursue Homesteading", "Dabble in Artisan Smithing", "Write an autobiography", "Keep up with your old regimen")
 		var/retirement_choice = input(H, "During your retirement, you decided to...", "PICK A HOBBY.") as anything in retirement
 		switch(retirement_choice)
@@ -200,7 +202,7 @@
 	neck = /obj/item/clothing/neck/roguetown/gorget
 	armor = /obj/item/clothing/suit/roguetown/armor/plate/cuirass // Meant to be better than man-at-arms, but worse than knight. No heavy armor!! This is a cuirass, not half-plate.
 	shirt = /obj/item/clothing/suit/roguetown/armor/gambeson/heavy
-	head = /obj/item/clothing/head/roguetown/helmet/sallet/visored
+	head = snouthelm_pick(H, /obj/item/clothing/head/roguetown/helmet/sallet/visored, /obj/item/clothing/head/roguetown/helmet/sallet/visored/snouted)
 	pants = /obj/item/clothing/under/roguetown/chainlegs
 	gloves = /obj/item/clothing/gloves/roguetown/plate
 	wrists = /obj/item/clothing/wrists/roguetown/bracers
@@ -219,7 +221,7 @@
 		/obj/item/rope/chain = 1,
 		/obj/item/rogueweapon/scabbard/sheath = 1
 		)
-	H.verbs |= /mob/proc/haltyell
+	add_verb(H, /mob/proc/haltyell)
 	if(H.mind)
 		SStreasury.give_money_account(ECONOMIC_RICH, H, "Retirement.")
 	H.adjust_blindness(-3)
@@ -271,6 +273,7 @@
 
 	category_tags = list(CTAG_VETERAN)
 	traits_applied = list(TRAIT_HEAVYARMOR, TRAIT_MEDIUMARMOR, TRAIT_STEELHEARTED, TRAIT_NOBLE)
+	noble_income = 15
 	subclass_stats = list(
 		STATKEY_CON = 2,
 		STATKEY_WIL = 2,
@@ -297,7 +300,10 @@
 		/datum/skill/misc/athletics = SKILL_LEVEL_APPRENTICE,
 		/datum/skill/misc/reading = SKILL_LEVEL_NOVICE,
 		/datum/skill/misc/medicine = SKILL_LEVEL_JOURNEYMAN,
-		/datum/skill/misc/riding = SKILL_LEVEL_EXPERT,
+		/datum/skill/misc/riding = SKILL_LEVEL_JOURNEYMAN,
+	)
+	subclass_virtues = list(
+		/datum/virtue/utility/riding
 	)
 
 // You get a SAIGA. Saigas are pretty good, you lose out on your legendary weapon skills and you suck more on foot though.
@@ -320,26 +326,26 @@
 		/obj/item/rogueweapon/scabbard/sheath = 1,
 		/obj/item/roguekey/veteran = 1
 		)
-	H.verbs |= /mob/proc/haltyell
+	add_verb(H, /mob/proc/haltyell)
 	if(H.mind)
 		SStreasury.give_money_account(ECONOMIC_RICH, H, "Retirement.")
 
 	H.adjust_blindness(-3)
 	if(H.mind)
-		var/weapons = list("Sword + Recurve Bow","Axe + Crossbow","Spear + Shield")
+		var/weapons = list("Sword + Bow","Axe + Crossbow","Spear + Shield")
 		var/weapon_choice = input(H, "Choose your weapon.", "TAKE UP ARMS") as anything in weapons
 		H.set_blindness(0)
 		switch(weapon_choice)
-			if("Sword + Recurve Bow")
+			if("Sword + Bow")
 				r_hand = /obj/item/rogueweapon/sword/long
 				beltl = /obj/item/quiver/arrows
 				beltr = /obj/item/rogueweapon/scabbard/sword
-				backl = /obj/item/gun/ballistic/revolver/grenadelauncher/bow/recurve
+				backl = /obj/item/gun/ballistic/revolver/grenadelauncher/bow
 
 			if("Axe + Crossbow")
 				r_hand = /obj/item/rogueweapon/stoneaxe/woodcut/steel
 				backl = /obj/item/gun/ballistic/revolver/grenadelauncher/crossbow
-				beltl = /obj/item/quiver/bolts
+				beltl = /obj/item/quiver/bolt/standard
 
 			if ("Spear + Shield")
 				r_hand = /obj/item/rogueweapon/spear
@@ -435,7 +441,7 @@
 	saiga_shoes = /obj/item/clothing/shoes/roguetown/horseshoes/steel
 	gloves = /obj/item/clothing/gloves/roguetown/angle/grenzelgloves
 	beltl = /obj/item/rogueweapon/sword/short
-	beltr = /obj/item/roguekey/veteran //So they can get into their house. 
+	beltr = /obj/item/roguekey/veteran //So they can get into their house.
 	backr = /obj/item/storage/backpack/rogue/satchel/black
 	belt = /obj/item/storage/belt/rogue/leather/black
 	cloak = /obj/item/clothing/cloak/half/vet
@@ -443,7 +449,7 @@
 		/obj/item/rogueweapon/huntingknife/idagger/steel/special = 1,
 		/obj/item/rogueweapon/scabbard/sheath = 1
 		)
-	H.verbs |= /mob/proc/haltyell
+	add_verb(H, /mob/proc/haltyell)
 	if(H.mind)
 		SStreasury.give_money_account(ECONOMIC_RICH, H, "Retirement.")
 
@@ -550,8 +556,19 @@
 	wrists = /obj/item/clothing/wrists/roguetown/bracers/leather
 	shoes = /obj/item/clothing/shoes/roguetown/boots/leather
 	saiga_shoes = /obj/item/clothing/shoes/roguetown/horseshoes
-	beltl = /obj/item/quiver/arrows
-	beltr = /obj/item/gun/ballistic/revolver/grenadelauncher/bow/recurve
+	var/weapons = list("Long Bow", "Slurbow", "Crossbow")
+	var/weapon_choice = input(H, "Choose your weapon.", "TAKE UP ARMS") as anything in weapons
+	H.set_blindness(0)
+	switch(weapon_choice)
+		if("Long Bow")
+			beltl = /obj/item/quiver/arrows
+			beltr = /obj/item/gun/ballistic/revolver/grenadelauncher/bow/longbow
+		if("Slurbow")
+			beltr = /obj/item/gun/ballistic/revolver/grenadelauncher/crossbow/slurbow
+			beltl = /obj/item/quiver/bolt/light
+		if("Crossbow")
+			H.put_in_hands(new /obj/item/gun/ballistic/revolver/grenadelauncher/crossbow)
+			beltl = /obj/item/quiver/bolt/standard
 	backr = /obj/item/storage/backpack/rogue/satchel/black
 	backl = /obj/item/rogueweapon/stoneaxe/woodcut/pick
 	belt = /obj/item/storage/belt/rogue/leather/black
@@ -561,7 +578,7 @@
 		/obj/item/roguekey/veteran = 1,
 		/obj/item/rogueweapon/scabbard/sheath = 1
 		)
-	H.verbs |= /mob/proc/haltyell
+	add_verb(H, /mob/proc/haltyell)
 	H.cmode_music = 'sound/music/cmode/antag/combat_deadlyshadows.ogg' // so apparently this works for veteran, but not for advents. i dont know why.
 	if(H.mind)
 		SStreasury.give_money_account(ECONOMIC_RICH, H, "Retirement.")
@@ -614,6 +631,7 @@
 	subclass_languages = list(/datum/language/thievescant)
 	cmode_music = 'sound/music/cmode/nobility/combat_spymaster.ogg'
 	category_tags = list(CTAG_VETERAN)
+	vice_limits = list(/datum/charflaw/silverweakness)
 	traits_applied = list(TRAIT_DODGEEXPERT, TRAIT_CICERONE, TRAIT_STEELHEARTED)
 	subclass_stats = list(
 		STATKEY_INT = 3,// you are int-maxxing, especially if you go old.
@@ -669,7 +687,7 @@
 		/obj/item/reagent_containers/glass/bottle/rogue/poison = 1,
 		/obj/item/lockpickring/mundane,
 		)
-	H.verbs |= /mob/proc/haltyell
+	add_verb(H, /mob/proc/haltyell)
 	if(H.mind)
 		SStreasury.give_money_account(ECONOMIC_RICH, H, "Retirement.")
 	H.adjust_blindness(-3)

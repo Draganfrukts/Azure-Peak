@@ -5,13 +5,12 @@
 	hud_possible = list(ANTAG_HUD)
 	has_limbs = 1
 	held_items = list(null, null)
-
-	///visible organs caching
-	var/list/visible_organs = list()
 	///List of /obj/item/organ in the mob. They don't go in the contents for some reason I don't want to know.
 	var/list/internal_organs = list()
 	///Same as above, but stores "slot ID" - "organ" pairs for easy access.
 	var/list/internal_organs_slot= list()
+	/// Organs that have visible overlays (eyes, ears, etc.) - tracked separately to avoid iterating all internal organs
+	var/list/visible_organs = list()
 	///Can't talk. Value goes down every life proc. //NOTE TO FUTURE CODERS: DO NOT INITIALIZE NUMERICAL VARS AS NULL OR I WILL MURDER YOU.
 	var/silent = FALSE
 	///How many dream images we have left to send
@@ -85,6 +84,9 @@
 
 	///Overall drunkenness - check handle_alcohol() in life.dm for effects
 	var/drunkenness = 0
+	///Overall sunder stacks from critical sunder hits - check for //WE HANDLE SUNDERSTACKS HERE codenote in life.dm for effects
+	///Vamps take 60 sunderstacks, regular silverweak takes 40
+	var/sunder_stacks = 0
 	///used to halt stamina regen temporarily
 	var/stam_regen_start_time = 0
 	///knocks you down
@@ -92,9 +94,8 @@
 
 	var/next_smell = 0
 
-	/// Bitflags for pending icon updates - batched at end of tick
-	var/pending_icon_updates = NONE
-	/// Cached key for damage overlay state - invalidated when damage state changes
-	var/damage_overlay_cache_key
-	/// Cached key for body overlay state (facial features, etc) - invalidated when body state changes
-	var/body_overlay_cache_key
+	var/lightning_flashing = FALSE
+	var/nausea = 0
+	var/bleeding_tier = 0
+
+	var/tempo_faction_flag = null

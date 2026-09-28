@@ -2,17 +2,18 @@
 	name = "Witch"
 	tutorial = "You are a witch, seen as wisefolk to some and a demon to many. Ostracized and sequestered for wrongthinks or outright heresy, your potions are what the commonfolk turn to when all else fails, and for this they tolerate you — at an arm's length. Take care not to end 'pon a pyre, for the church condemns your left handed arts."
 	allowed_sexes = list(MALE, FEMALE)
-	allowed_races = RACES_ALL_KINDS
+
 	outfit = /datum/outfit/job/roguetown/adventurer/witch
 	category_tags = list(CTAG_PILGRIM, CTAG_TOWNER)
 	traits_applied = list(TRAIT_DEATHSIGHT, TRAIT_WITCH, TRAIT_ALCHEMY_EXPERT)
+	townie_contract_gate_exempt = TRUE
 	subclass_stats = list(
 		STATKEY_INT = 3,
 		STATKEY_SPD = 2,
 		STATKEY_LCK = 1
 	)
 	age_mod = /datum/class_age_mod/witch
-	
+
 	subclass_skills = list(
 		/datum/skill/misc/reading = SKILL_LEVEL_EXPERT,
 		/datum/skill/craft/alchemy = SKILL_LEVEL_EXPERT,
@@ -34,54 +35,84 @@
 	gloves = /obj/item/clothing/gloves/roguetown/leather/black
 	belt = /obj/item/storage/belt/rogue/leather/black
 	beltr = /obj/item/storage/belt/rogue/pouch/coins/poor
+	beltl = /obj/item/storage/magebag/starter
 	pants = /obj/item/clothing/under/roguetown/trou
 	shoes = /obj/item/clothing/shoes/roguetown/shortboots
-	backl = /obj/item/storage/backpack/rogue/satchel
-	backpack_contents = list(
-						/obj/item/reagent_containers/glass/mortar = 1,
-						/obj/item/pestle = 1,
-						/obj/item/candle/yellow = 2,
-						/obj/item/recipe_book/alchemy = 1,
-						/obj/item/recipe_book/survival = 1,
-						/obj/item/recipe_book/magic = 1,
-						/obj/item/chalk = 1
-						)
-	var/classes = list("Old Magick", "Godsblood", "Mystagogue")
-	var/classchoice = input("How do your powers manifest?", "THE OLD WAYS") as anything in classes
 
-	var/shapeshifts = list("Zad", "Cat", "Cat (Black)", "Bat", "Lesser Volf", "Cabbit", "Small Rous", "Lesser Venard")
-	var/shapeshiftchoice = input("What form does your second skin take?", "THE OLD WAYS") as anything in shapeshifts
+	var/list/prefs = H.client?.prefs?.job_subprefs
+	var/list/witchprefs
+	if(prefs)
+		witchprefs = prefs["Towner"]
+	var/classchoice
+	var/shapeshiftchoice
+	if(witchprefs && witchprefs["witch_type"])
+		classchoice = witchprefs["witch_type"]
+	if(witchprefs && witchprefs["witch_form"])
+		shapeshiftchoice = witchprefs["witch_form"]
+	if(!classchoice)
+		var/classes = list("Old Magick", "Godsblood", "Mystagogue")
+		classchoice = input(H, "How do your powers manifest?", "THE OLD WAYS") as anything in classes
+	if(!shapeshiftchoice)
+		var/shapeshifts = list("Zad", "Cat", "Cat (Black)", "Bat", "Lesser Volf", "Cabbit", "Small Rous", "Lesser Venard")
+		shapeshiftchoice = input(H, "What form does your second skin take?", "THE OLD WAYS") as anything in shapeshifts
 
 	switch (classchoice)
 		if("Old Magick")
-			// the original witch: arcyne t2 with 9 spellpoints
-			ADD_TRAIT(H, TRAIT_ARCYNE_T2, TRAIT_GENERIC)
+			ADD_TRAIT(H, TRAIT_ARCYNE, TRAIT_GENERIC)
 			H.adjust_skillrank(/datum/skill/magic/arcane, SKILL_LEVEL_APPRENTICE, TRUE)
-			H.mind?.adjust_spellpoints(9) // twelve if you pick arcyne potential
-			beltl = /obj/item/storage/magebag/starter
+			H.adjust_skillrank_up_to(/datum/skill/combat/arcyne, SKILL_LEVEL_JOURNEYMAN, TRUE)
+			H.adjust_skillrank_up_to(/datum/skill/combat/staves, SKILL_LEVEL_JOURNEYMAN, TRUE)
+			if(H.mind)
+				H.mind.setup_mage_aspects(list("mastery" = FALSE, "major" = 1, "minor" = 1, "utilities" = 5, "ward" = TRUE))
+			backl = /obj/item/storage/backpack/rogue/satchel
+			backr = choose_implement(H, "lesser")
+			backpack_contents = list(
+								/obj/item/rogueweapon/spellbook = 1,
+								/obj/item/reagent_containers/glass/mortar = 1,
+								/obj/item/pestle = 1,
+								/obj/item/candle/yellow = 2,
+								/obj/item/chalk = 1
+								)
 			if (H.age == AGE_OLD)
 				H.adjust_skillrank(/datum/skill/magic/arcane, SKILL_LEVEL_APPRENTICE, TRUE)
-				H.mind?.adjust_spellpoints(3)
 		if("Godsblood")
 			//miracle witch: capped at t2 miracles. cannot pray to regain devo, but has high innate regen because of it (2 instead of 1 from major)
 			var/datum/devotion/D = new /datum/devotion/(H, H.patron)
 			H.adjust_skillrank(/datum/skill/magic/holy, SKILL_LEVEL_APPRENTICE, TRUE)
 			D.grant_miracles(H, cleric_tier = CLERIC_T2, passive_gain = CLERIC_REGEN_WITCH, devotion_limit = CLERIC_REQ_2)
 			D.max_devotion *= 0.5
+			if (istype (H.patron, /datum/patron/inhumen/zizo))
+				if(H.mind)
+					H.mind.AddSpell(new /datum/action/cooldown/spell/minion_order)
+					H.mind.AddSpell(new /datum/action/cooldown/spell/gravemark)
 			neck = /obj/item/clothing/neck/roguetown/psicross/wood
+			backl = /obj/item/storage/backpack/rogue/satchel
+			backpack_contents = list(
+								/obj/item/reagent_containers/glass/mortar = 1,
+								/obj/item/pestle = 1,
+								/obj/item/candle/yellow = 2,
+								)
 			if (H.age == AGE_OLD)
 				H.adjust_skillrank(/datum/skill/magic/holy, SKILL_LEVEL_NOVICE, TRUE)
 		if("Mystagogue")
-			// hybrid arcane/holy witch with t1 arcane and t1 miracles, but less spellpoints, lower max devotion and less regen (0.5). Still can't pray.
+			// hybrid arcane/holy witch with t1 arcane and t1 miracles
 			var/datum/devotion/D = new /datum/devotion/(H, H.patron)
 			H.adjust_skillrank(/datum/skill/magic/holy, SKILL_LEVEL_NOVICE, TRUE)
 			D.grant_miracles(H, cleric_tier = CLERIC_T1, passive_gain = CLERIC_REGEN_MINOR, devotion_limit = CLERIC_REQ_1)
 			D.max_devotion *= 0.5
-			ADD_TRAIT(H, TRAIT_ARCYNE_T1, TRAIT_GENERIC)
+			ADD_TRAIT(H, TRAIT_ARCYNE, TRAIT_GENERIC)
 			H.adjust_skillrank(/datum/skill/magic/arcane, SKILL_LEVEL_NOVICE, TRUE)
-			H.mind?.adjust_spellpoints(6) // nine if you pick arcyne potential
-			beltl = /obj/item/storage/magebag/starter
+			if(H.mind)
+				H.mind.setup_mage_aspects(list("mastery" = FALSE, "major" = 0, "minor" = 1, "utilities" = 3))
 			neck = /obj/item/clothing/neck/roguetown/psicross/wood
+			backl = /obj/item/storage/backpack/rogue/satchel
+			backpack_contents = list(
+								/obj/item/rogueweapon/spellbook = 1,
+								/obj/item/reagent_containers/glass/mortar = 1,
+								/obj/item/pestle = 1,
+								/obj/item/candle/yellow = 2,
+								/obj/item/chalk = 1
+								)
 			if (H.age == AGE_OLD)
 				H.adjust_skillrank(/datum/skill/magic/arcane, SKILL_LEVEL_NOVICE, TRUE)
 				H.adjust_skillrank(/datum/skill/magic/holy, SKILL_LEVEL_NOVICE, TRUE)
@@ -103,12 +134,9 @@
 				H.mind.AddSpell(new /obj/effect/proc_holder/spell/targeted/shapeshift/witch/rous)
 			if("Cabbit")
 				H.mind.AddSpell(new /obj/effect/proc_holder/spell/targeted/shapeshift/witch/cabbit)
-
 		switch (classchoice)
-			if("Old Magick")
-				H.mind.AddSpell(new /obj/effect/proc_holder/spell/invoked/guidance)
-				H.mind.AddSpell(new /obj/effect/proc_holder/spell/invoked/fortitude)
-				H.mind.AddSpell(new /obj/effect/proc_holder/spell/invoked/projectile/arcynebolt)
+			if("Mystagogue")
+				grant_poke_spell(H)
 	if(H.gender == FEMALE)
 		armor = /obj/item/clothing/suit/roguetown/armor/corset
 		shirt = /obj/item/clothing/suit/roguetown/shirt/undershirt/lowcut
@@ -128,17 +156,27 @@
 			H.cmode_music = 'sound/music/combat_baotha.ogg'
 			ADD_TRAIT(H, TRAIT_HERESIARCH, TRAIT_GENERIC)
 	if(H.mind)
-		SStreasury.give_money_account(ECONOMIC_LOWER_MIDDLE_CLASS, H, "Savings.")
+		SStreasury.grant_savings(ECONOMIC_LOWER_MIDDLE_CLASS, H)
+
+/obj/effect/proc_holder/spell/targeted/shapeshift/witch
+	die_with_shapeshifted_form = FALSE
+	gesture_required = TRUE
+	chargetime = 5 SECONDS
+	recharge_time = 50
+	cooldown_min = 50
+	convert_damage = FALSE
+	do_gib = FALSE
+	knockout_on_death = 10 SECONDS
 
 /obj/effect/proc_holder/spell/targeted/shapeshift/witch/cast(list/targets, mob/user = usr)
-	user.visible_message(span_warning("[user] begins to twist and contort!"), span_notice("I begin to transform..."))
 	return ..()
 
 /obj/effect/proc_holder/spell/targeted/shapeshift/witch/Shapeshift(mob/living/caster)
+	caster.visible_message(span_warning("[caster] begins to twist and contort!"), span_notice("I begin to transform into another form..."))
 	// Do-after before transforming
 	if(!do_after(caster, 3 SECONDS, target = caster))
 		to_chat(caster, span_warning("Transformation interrupted!"))
-		revert_cast(caster)  // Refund the cooldown
+		revert_cast(caster)	// Refund the cooldown
 		return
 
 	// Call parent to actually transform
@@ -148,14 +186,14 @@
 	// Check if restrained before allowing revert
 	if(shape.restrained(ignore_grab = FALSE))
 		to_chat(shape, span_warn("I am restrained, I can't transform back!"))
-		revert_cast(shape)  // Refund the cooldown
+		revert_cast(shape)	// Refund the cooldown
 		return
 
 	// Add do-after for witches when reverting
-	shape.visible_message(span_warning("[shape] begins to shift back!"), span_notice("I begin to transform..."))
+	shape.visible_message(span_warning("[shape] compresses and takes another form!"), span_notice("I begin to twist back into my normal form..."))
 	if(!do_after(shape, 3 SECONDS, target = shape))
 		to_chat(shape, span_warning("Transformation revert interrupted!"))
-		revert_cast(shape)  // Refund the cooldown
+		revert_cast(shape)	// Refund the cooldown
 		return
 
 	return ..()
@@ -165,31 +203,53 @@
 	name = "Cat Form"
 	desc = ""
 	overlay_state = "cat_transform"
-	gesture_required = TRUE
-	chargetime = 5 SECONDS
-	recharge_time = 50
-	cooldown_min = 50
-	die_with_shapeshifted_form = FALSE
 	shapeshift_type = /mob/living/simple_animal/pet/cat/witch_shifted
-	convert_damage = FALSE
-	do_gib = FALSE
 
 /obj/effect/proc_holder/spell/targeted/shapeshift/witch/cat/black
 	shapeshift_type = /mob/living/simple_animal/pet/cat/rogue/black/witch_shifted
-	do_gib = FALSE
 
 /obj/effect/proc_holder/spell/targeted/shapeshift/witch/lesser_wolf
 	name = "Lesser Volf Form"
 	desc = ""
 	overlay_state = "volf_transform"
-	gesture_required = TRUE
-	chargetime = 5 SECONDS
-	recharge_time = 50
-	cooldown_min = 50
-	die_with_shapeshifted_form = FALSE
 	shapeshift_type = /mob/living/simple_animal/hostile/retaliate/rogue/wolf/witch_shifted
-	convert_damage = FALSE
-	do_gib = FALSE
+
+/obj/effect/proc_holder/spell/targeted/shapeshift/witch/bat
+	name = "Bat Form"
+	desc = ""
+	overlay_state = "bat_transform"
+	shapeshift_type = /mob/living/simple_animal/hostile/retaliate/bat
+	knockout_on_death = 30 SECONDS
+
+/obj/effect/proc_holder/spell/targeted/shapeshift/witch/crow
+	name = "Zad Form"
+	overlay_state = "zad"
+	desc = ""
+	knockout_on_death = 15 SECONDS
+	shapeshift_type = /mob/living/simple_animal/hostile/retaliate/bat/crow
+	sound = 'sound/vo/mobs/bird/birdfly.ogg'
+
+/obj/effect/proc_holder/spell/targeted/shapeshift/witch/lesser_vernard
+	name = "Lesser Vernard Form"
+	desc = ""
+	overlay_state = "vernard_transform"
+	shapeshift_type = /mob/living/simple_animal/hostile/retaliate/rogue/fox/witch_shifted
+
+/obj/effect/proc_holder/spell/targeted/shapeshift/witch/rous
+	name = "Small Rous Form"
+	desc = ""
+	overlay_state = "rous_transform"
+	shapeshift_type = /mob/living/simple_animal/hostile/retaliate/smallrat/witch_shifted
+
+/obj/effect/proc_holder/spell/targeted/shapeshift/witch/cabbit
+	name = "Cabbit Form"
+	desc = ""
+	overlay_state = "cabbit_transform"
+	shapeshift_type = /mob/living/simple_animal/hostile/retaliate/rogue/mudcrab/cabbit/witch_shifted
+
+/datum/intent/simple/claw/witch_cat
+	name = "scratch"
+	attack_verb = list("scratches", "claws")
 
 /mob/living/simple_animal/hostile/retaliate/rogue/wolf/witch_shifted
 	name = "lesser volf"
@@ -224,54 +284,6 @@
 	melee_damage_lower = 2
 	melee_damage_upper = 5
 
-/datum/intent/simple/claw/witch_cat
-	name = "scratch"
-	attack_verb = list("scratches", "claws")
-
-/obj/effect/proc_holder/spell/targeted/shapeshift/witch/bat
-	name = "Bat Form"
-	desc = ""
-	overlay_state = "bat_transform"
-	recharge_time = 50
-	cooldown_min = 50
-	die_with_shapeshifted_form =  FALSE
-	do_gib = FALSE
-	shapeshift_type = /mob/living/simple_animal/hostile/retaliate/bat
-	knockout_on_death = 30 SECONDS
-
-/obj/effect/proc_holder/spell/targeted/shapeshift/witch/crow
-	name = "Zad Form"
-	overlay_state = "zad"
-	desc = ""
-	gesture_required = TRUE
-	chargetime = 5 SECONDS
-	recharge_time = 50
-	cooldown_min = 50
-	die_with_shapeshifted_form =  FALSE
-	do_gib = FALSE
-	knockout_on_death = 15 SECONDS
-	shapeshift_type = /mob/living/simple_animal/hostile/retaliate/bat/crow
-	sound = 'sound/vo/mobs/bird/birdfly.ogg'
-
-/obj/effect/proc_holder/spell/targeted/shapeshift/witch/lesser_vernard
-	name = "Lesser Vernard Form"
-	desc = ""
-	overlay_state = "vernard_transform"
-	shapeshift_type = /mob/living/simple_animal/hostile/retaliate/rogue/fox/witch_shifted
-
-/obj/effect/proc_holder/spell/targeted/shapeshift/witch/rous
-	name = "Small Rous Form"
-	desc = ""
-	overlay_state = "rous_transform"
-	shapeshift_type = /mob/living/simple_animal/hostile/retaliate/smallrat/witch_shifted
-
-/obj/effect/proc_holder/spell/targeted/shapeshift/witch/cabbit
-	name = "Cabbit Form"
-	desc = ""
-	overlay_state = "cabbit_transform"
-	shapeshift_type = /mob/living/simple_animal/hostile/retaliate/rogue/mudcrab/cabbit/witch_shifted
-
-
 /mob/living/simple_animal/hostile/retaliate/rogue/fox/witch_shifted
 	name = "lesser vernard"
 	desc = "A smaller, runtier variant of the sneaky vernards that skulk the woods nearby. Rarely seen around these parts, and doesn't look nearly as dangerous as its larger counterparts. This one has a peculiar intelligence in its yellow eyes..."
@@ -305,3 +317,12 @@
 	base_intents = list(/datum/intent/simple/claw/witch_cat)
 	melee_damage_lower = 1
 	melee_damage_upper = 2
+
+/mob/living/simple_animal/hostile/retaliate/rogue/mudcrab/cabbit/witch_shifted/can_be_held(mob/by)
+	return TRUE
+
+/mob/living/simple_animal/hostile/retaliate/rogue/mudcrab/cabbit/witch_shifted/set_item_sprite(obj/item/mob_item/orb)
+	..()
+	orb.mob_overlay_icon = 'icons/roguetown/mob/cabbit_item.dmi'
+	orb.worn_offsets = list("x" = 0, "y" = 25)
+	orb.alternate_worn_layer = BODY_UNDER_LAYER

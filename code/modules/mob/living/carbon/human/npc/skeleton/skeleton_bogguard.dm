@@ -1,4 +1,5 @@
 /mob/living/carbon/human/species/skeleton/npc/bogguard
+	threat_point = THREAT_MODERATE
 	skel_outfit = /datum/outfit/job/roguetown/npc/skeleton/npc/bogguard
 
 /datum/outfit/job/roguetown/npc/skeleton/npc/bogguard/pre_equip(mob/living/carbon/human/H)
@@ -36,15 +37,33 @@
 			r_hand = /obj/item/rogueweapon/mace
 	H.STASTR = rand(12,14)
 	H.STASPD = 8
-	H.STACON = 4
-	H.STAWIL = 15
+	H.STACON = 3
+	H.STAWIL = 8
 	H.STAINT = 1
 	ADD_TRAIT(H, TRAIT_MEDIUMARMOR, TRAIT_GENERIC)
-	H.adjust_skillrank(/datum/skill/combat/polearms, 2, TRUE)
-	H.adjust_skillrank(/datum/skill/combat/maces, 2, TRUE)
-	H.adjust_skillrank(/datum/skill/combat/axes, 2, TRUE)
-	H.adjust_skillrank(/datum/skill/combat/swords, 2, TRUE)
-	H.adjust_skillrank(/datum/skill/combat/shields, 2, TRUE)
+	H.adjust_skillrank_up_to(/datum/skill/combat/polearms, SKILL_LEVEL_APPRENTICE, TRUE)
+	H.adjust_skillrank_up_to(/datum/skill/combat/maces, SKILL_LEVEL_APPRENTICE, TRUE)
+	H.adjust_skillrank_up_to(/datum/skill/combat/axes, SKILL_LEVEL_APPRENTICE, TRUE)
+	H.adjust_skillrank_up_to(/datum/skill/combat/swords, SKILL_LEVEL_APPRENTICE, TRUE)
+	H.adjust_skillrank_up_to(/datum/skill/combat/shields, SKILL_LEVEL_APPRENTICE, TRUE)
+
+/mob/living/carbon/human/species/skeleton/npc/bogguard/archer
+	threat_point = THREAT_LOW
+	skel_outfit = /datum/outfit/job/roguetown/npc/skeleton/npc/bogguard/archer
+
+/datum/outfit/job/roguetown/npc/skeleton/npc/bogguard/archer/pre_equip(mob/living/carbon/human/H)
+	..()
+	name = "Skeleton Archer"
+	backr = /obj/item/gun/ballistic/revolver/grenadelauncher/bow/recurve
+	backl = /obj/item/quiver/randomfill/skeleton
+	armor = /obj/item/clothing/suit/roguetown/shirt/rags
+	head = null
+	mask = null
+	neck = null
+	H.STAPER = 11
+	H.STAWIL -= 1
+	H.adjust_skillrank_up_to(/datum/skill/combat/bows, SKILL_LEVEL_JOURNEYMAN, TRUE)
+	H.upgrade_ai_controller(/datum/ai_controller/human_npc/archer)
 
 /mob/living/carbon/human/species/skeleton/npc/bogguard/master
 	skel_outfit = /datum/outfit/job/roguetown/npc/skeleton/npc/bogguard/master
@@ -63,15 +82,15 @@
 	r_hand = /obj/item/rogueweapon/halberd
 	H.STASTR = 18
 	H.STASPD = 10
-	H.STACON = 10
-	H.STAWIL = 16
+	H.STACON = 8
+	H.STAWIL = 12
 	H.STAINT = 1
 	ADD_TRAIT(H, TRAIT_MEDIUMARMOR, TRAIT_GENERIC)
 	ADD_TRAIT(H, TRAIT_HEAVYARMOR, TRAIT_GENERIC)
 	if(!H.mind)
 		return
-	H.adjust_skillrank(/datum/skill/combat/polearms, 3, TRUE)
-	H.adjust_skillrank(/datum/skill/combat/wrestling, 2, TRUE)
-	H.adjust_skillrank(/datum/skill/combat/unarmed, 2, TRUE)
-	H.adjust_skillrank(/datum/skill/misc/athletics, 4, TRUE)
-	H.adjust_skillrank(/datum/skill/combat/swords, 3, TRUE)
+	H.adjust_skillrank_up_to(/datum/skill/combat/polearms, SKILL_LEVEL_JOURNEYMAN, TRUE)
+	H.adjust_skillrank_up_to(/datum/skill/combat/wrestling, SKILL_LEVEL_APPRENTICE, TRUE)
+	H.adjust_skillrank_up_to(/datum/skill/combat/unarmed, SKILL_LEVEL_APPRENTICE, TRUE)
+	H.adjust_skillrank_up_to(/datum/skill/misc/athletics, SKILL_LEVEL_EXPERT, TRUE)
+	H.adjust_skillrank_up_to(/datum/skill/combat/swords, SKILL_LEVEL_JOURNEYMAN, TRUE)

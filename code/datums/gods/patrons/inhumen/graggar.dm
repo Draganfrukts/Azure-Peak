@@ -4,14 +4,17 @@
 	desc = "Slave orc turned deity, said by the Holy Ecclesial to have been blessed by Ravox himself. He took his blessings to wage a bloody war against his once-captors, and then continued his conquest in his own name. Some Graggarites might care for honor, however many do not- what matters are results, and victory at a reasonable cost."
 	worshippers = "Prisoners, Slaves, Militants, and the Cruel"
 	mob_traits = list(TRAIT_HORDE, TRAIT_ORGAN_EATER)
-	miracles = list(/obj/effect/proc_holder/spell/targeted/touch/orison					= CLERIC_ORI,
-					/obj/effect/proc_holder/spell/self/graggar_bloodrage				= CLERIC_T0,
-					/obj/effect/proc_holder/spell/invoked/lesser_heal 					= CLERIC_T1,
-					/obj/effect/proc_holder/spell/invoked/blood_heal					= CLERIC_T1,
-					/obj/effect/proc_holder/spell/self/call_to_slaughter 				= CLERIC_T1,
-					/obj/effect/proc_holder/spell/invoked/projectile/blood_net 			= CLERIC_T2,
-					/obj/effect/proc_holder/spell/invoked/revel_in_slaughter 			= CLERIC_T3,
-					/obj/effect/proc_holder/spell/invoked/resurrect/graggar				= CLERIC_T4,
+	traits_tier = list(TRAIT_NASTY_EATER = CLERIC_T1)
+	miracles = list(/datum/action/cooldown/spell/touch/orison					= CLERIC_ORI,
+					/datum/action/cooldown/spell/graggar/rush					= CLERIC_T0,
+					/datum/action/cooldown/spell/miracle/heal					= CLERIC_T1,
+					/datum/action/cooldown/spell/miracle/bloodmiracle			= CLERIC_T1,
+					/datum/action/cooldown/spell/graggar/hamstring				= CLERIC_T1,
+					/datum/action/cooldown/spell/projectile/graggar_net				= CLERIC_T2,
+					/datum/action/cooldown/spell/graggar/graggar_battlecry		= CLERIC_T2,
+					/datum/action/cooldown/spell/graggar/exsanguinate				= CLERIC_T3,
+					/datum/action/cooldown/spell/graggar/avatar					= CLERIC_T4,
+					/obj/effect/proc_holder/spell/invoked/resurrect/graggar		= CLERIC_T4,
 	)
 	confess_lines = list(
 		"GRAGGAR IS THE BEAST I WORSHIP!",
@@ -19,14 +22,22 @@
 		"THE GOD OF CONQUEST DEMANDS BLOOD!",
 	)
 	storyteller = /datum/storyteller/graggar
+	crafting_recipes = list(/datum/crafting_recipe/roguetown/structure/graggar_cross_stone, /datum/crafting_recipe/roguetown/structure/graggar_cross_meat)
+
+	titles = list(
+		"Sinistar",
+		"Dark Star",
+		"Gaiyuke", //Not properly a god worshiped by most kazengunites, but still
+		"Moose" // fjall
+	)
 
 /datum/patron/inhumen/graggar/on_lesser_heal(
-    mob/living/user,
-    mob/living/target,
-    message_out,
-    message_self,
-    conditional_buff,
-    situational_bonus,
+	mob/living/user,
+	mob/living/target,
+	message_out,
+	message_self,
+	conditional_buff,
+	situational_bonus,
 	is_inhumen
 )
 	*is_inhumen = TRUE
@@ -37,16 +48,16 @@
 
 	for(var/obj/effect/decal/cleanable/blood/blood in oview(5, target))
 		bonus = min(bonus + 0.1, 2.5)
-	
+
 	if(!bonus)
 		return
-		
+
 	*situational_bonus = bonus
 	*conditional_buff = TRUE
 
 /datum/patron/inhumen/graggar/on_gain(mob/living/living)
 	. = ..()
-	
+
 	RegisterSignal(living, COMSIG_LIVING_DRINKED_LIMB_BLOOD, PROC_REF(on_drink_blood))
 
 /datum/patron/inhumen/graggar/proc/on_drink_blood(mob/living/drinker, mob/living/target)
@@ -56,7 +67,7 @@
 
 /datum/patron/inhumen/graggar/on_loss(mob/living/living)
 	. = ..()
-	
+
 	UnregisterSignal(living, COMSIG_LIVING_DRINKED_LIMB_BLOOD)
 
 // When bleeding, near blood on ground, zchurch, bad-cross, or ritual chalk
@@ -66,9 +77,9 @@
 	if(istype(get_area(follower), /area/rogue/under/cave/inhumen))
 		return TRUE
 	// Allows prayer near EEEVIL psycross
-	for(var/obj/structure/fluff/psycross/zizocross/cross in view(4, get_turf(follower)))
+	for(var/obj/structure/fluff/psycross/cross in view(4, get_turf(follower)))
 		if(cross.divine == TRUE)
-			to_chat(follower, span_danger("That acursed cross interupts my prayers!"))
+			to_chat(follower, span_danger("That accursed cross interupts my prayers!"))
 			return FALSE
 		return TRUE
 	// Allows prayer if actively bleeding.

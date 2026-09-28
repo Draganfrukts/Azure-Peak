@@ -5,6 +5,7 @@
 	desc = "Abstract parent. Contact developer if you see this."
 	icon_state = null
 	slot_flags = ITEM_SLOT_SHIRT|ITEM_SLOT_ARMOR
+	unenchantable = TRUE
 
 	/// Feedback messages
 	var/repairmsg_begin = "My armour begins to slowly mend its abuse.."
@@ -16,6 +17,9 @@
 	var/repair_time
 	/// Holder for timer
 	var/reptimer
+
+	/// Holder for disruption timer
+	var/disrupttimer
 
 	/// To make repairs relative or not.
 	/// In other words, if you use relative repairing then it will use a different repair interval.
@@ -39,10 +43,34 @@
 	var/interrupt_dflag
 	var/interrupt_ddir
 
+	/// Regen cost vars
+	var/blue_to_integ_ratio = 0
+	var/is_disrupted = FALSE
+
 /obj/item/clothing/suit/roguetown/armor/regenerating/Initialize(mapload)
 	. = ..()
 	if(auto_repair_mode)
 		setup_auto_repair()
+	addtimer(CALLBACK(src, PROC_REF(check_owner)), 5 SECONDS)
+
+/obj/item/clothing/suit/roguetown/armor/regenerating/proc/check_owner()
+	if(!ishuman(loc))
+		return
+	var/mob/living/L = loc
+	RegisterSignal(L, COMSIG_MOB_ITEM_BEING_ATTACKED, PROC_REF(process_attack))
+	RegisterSignal(L, COMSIG_MOB_ATTACKED_BY_HAND, PROC_REF(process_attack))
+
+/obj/item/clothing/suit/roguetown/armor/regenerating/proc/process_attack(mob/living/parent, mob/living/target, mob/user, obj/item/I)
+	is_disrupted = TRUE
+	if(reptimer)
+		deltimer(reptimer)
+	disrupttimer = addtimer(CALLBACK(src, PROC_REF(revert_disrupt)), 60 SECONDS, TIMER_OVERRIDE|TIMER_UNIQUE|TIMER_STOPPABLE)
+
+/obj/item/clothing/suit/roguetown/armor/regenerating/proc/revert_disrupt()
+	if(is_disrupted)
+		is_disrupted = FALSE
+		to_chat(loc, repairmsg_begin)
+		armour_regen()
 
 /obj/item/clothing/suit/roguetown/armor/regenerating/take_damage(damage_amount, damage_type, damage_flag, sound_effect, attack_dir, armor_penetration)
 	..()
@@ -52,6 +80,9 @@
 		to_chat(loc, span_notice(repairmsg_stop))
 		deltimer(reptimer)
 		reptimer = null
+
+	if(is_disrupted)
+		return
 
 	// If relative repair mode is on, use the interval instead of repairing 20% every repair_time seconds
 	var/wait_time = relative_repair_mode ? relative_repair_interval : repair_time
@@ -91,6 +122,11 @@
 
 	obj_integrity = min(obj_integrity + repair_amount, max_integrity)
 
+	if(ishuman(loc))
+		var/mob/living/L = loc
+		var/energycost = blue_to_integ_ratio * repair_amount
+		L.energy_add(-energycost)
+
 	// Fix armor so it can still be interrupted from regenerating
 	if(obj_broken && obj_integrity > 0)
 		obj_fix(full_repair = FALSE)
@@ -112,7 +148,7 @@
 
 /obj/item/clothing/suit/roguetown/armor/regenerating/proc/setup_auto_repair()
 	repair_time = (max_integrity / auto_repair_mode_base) * auto_repair_mode_time
-	
+
 	// Ensure relative mode is on to respect the new calculated repair_time
 	relative_repair_mode = TRUE
 	auto_repair_mode_triggered = TRUE
@@ -133,8 +169,8 @@
 	l_sleeve_status = SLEEVE_NORMAL
 	armor_class = ARMOR_CLASS_LIGHT
 	blocksound = SOFTUNDERHIT
-	blade_dulling = DULLING_BASHCHOP
 	armor = ARMOR_PADDED
+	blocking_behavior = BLOCKSHIRT | BLOCKARMOR
 
 	repairmsg_begin = "My skin begins to slowly mend its abuse.."
 	repairmsg_continue = "My skin mends some of its abuse.."
@@ -153,43 +189,13 @@
 
 
 /obj/item/clothing/suit/roguetown/armor/regenerating/skin/disciple
-	name = "disciple's skin"
+	name = "enduring skin" //Now only a parent for the Lirvan tithebound; the jobs use the manual sewable version.
 	desc = "It's far more than just an oath. \
 	</br>Aeon, Psydon, Adonai. Entropy, Humenity, Divinity; a trinity known to all, yet forgotten to tyme. \
 	</br>A corpse. I am living on a fucking corpse. He is the world, and the world is rotting away. \
 	</br>To give into despair and hopelessness, however, is to rob all meaning from His sacrifice. \
 	</br>Heaven's gate closed to us long ago, yet His children persist; as as long as they do, so must I. \
 	</br>Happiness must be fought for."
-	armor = list("blunt" = 30, "slash" = 50, "stab" = 50, "piercing" = 20, "fire" = 0, "acid" = 0) //Custom value; padded gambeson's slash- and stab- armor.
-	prevent_crits = list(BCLASS_CUT, BCLASS_BLUNT)
-	max_integrity = 400
+	armor = ARMOR_PADDED
+	max_integrity = ARMOR_INT_CHEST_LIGHT_ELITE
 	repair_time = 20 SECONDS
-
-/obj/item/clothing/suit/roguetown/armor/regenerating/skin/iconoclast
-	name = "dragon's skin"
-	desc = "We passed upon the stair, we spoke of was and when.</br> \
-	Although I wasn't there, he said I was his friend.</br> \
-	Which came as some surprise. I spoke into his eyes.</br> \
-	I thought you died alone, a long, long time ago.</br> \
-	Oh no, not me, I never lost control.</br> \
-	You're face to face, with the man who sold the world."
-	armor = list("blunt" = 40, "slash" = 60, "stab" = 50, "piercing" = 40, "fire" = 50, "acid" = 0) //Fire resistance unlike the disciple one
-	prevent_crits = list(BCLASS_CUT, BCLASS_BLUNT)
-	max_integrity = 450
-	repair_time = 20 SECONDS
-
-/obj/item/clothing/suit/roguetown/armor/regenerating/skin/disciple/barbarian
-	name = "barbarian's skin"
-	desc = "Toughened from abuse. My mettle remains."
-	max_integrity = 200
-	repair_time = 25 SECONDS
-
-/obj/item/clothing/suit/roguetown/armor/regenerating/skin/disciple/berserker
-	name = "berserker's skin"
-	desc = "I've endured enough. The onslaught has lost its meaning."
-	armor = ARMOR_LEATHER
-
-/obj/item/clothing/suit/roguetown/armor/regenerating/skin/disciple/bailiff
-	name = "executioneer's skin"
-	desc = "Bearing scars of countless whips leaves a gnarly visage. Now it's your time to inflict the same fate upon others."
-	max_integrity = 250

@@ -1,6 +1,13 @@
 // Legacy lootspawner from smalldungeons.dm
 /obj/effect/spawner/lootdrop/roguetown/dungeon
 	name = "dungeon spawner"
+	loot_value = LOOT_VALUE_DUNGEON_MIXED
+	junk_loot = list(
+		/obj/item/ash = 5,
+		/obj/item/natural/glass_shard = 5,
+		/obj/item/natural/stone = 3,
+		/obj/item/candle/yellow = 3,
+	)
 	loot = list(
 		// Materials
 		/obj/item/natural/bundle/stick = 2,
@@ -72,10 +79,9 @@
 		/obj/item/rogueweapon/mace = 2,
 		/obj/item/rogueweapon/huntingknife/idagger/steel = 3,
 		/obj/item/gun/ballistic/revolver/grenadelauncher/bow = 2,
-		/obj/item/gun/ballistic/revolver/grenadelauncher/bow/recurve = 2,
 		/obj/item/gun/ballistic/revolver/grenadelauncher/crossbow = 2,
 		/obj/item/quiver/arrows = 2,
-		/obj/item/quiver/bolts = 2,
+		/obj/item/quiver/bolt/standard = 2,
 		/obj/item/rogueweapon/mace/woodclub/crafted = 3,
 		/obj/item/rogueweapon/mace/steel/morningstar =2,
 		/obj/item/rogueweapon/mace/cudgel = 2,
@@ -145,13 +151,15 @@
 		/obj/item/reagent_containers/food/snacks/rogue/crackerscooked = 3,
 		/obj/item/reagent_containers/food/snacks/butterslice = 3,
 		/obj/item/reagent_containers/powder/salt = 3,
-		/obj/item/reagent_containers/food/snacks/egg = 3,
+		/obj/item/reagent_containers/food/snacks/rogue/egg = 3,
 
 	)
 	lootcount = 1
 
 /obj/effect/spawner/lootdrop/roguetown/dungeon/materials
 	icon_state = "material"
+	loot_value = LOOT_VALUE_DUNGEON_MATERIALS
+	junk_loot = list(/obj/item/natural/stone = 5, /obj/item/natural/fibers = 5)
 	loot = list(
 		// Materials
 		/obj/item/natural/bundle/stick = 2,
@@ -168,6 +176,8 @@
 
 /obj/effect/spawner/lootdrop/roguetown/dungeon/clothing
 	icon_state = "clothing"
+	loot_value = LOOT_VALUE_DUNGEON_CLOTHING
+	junk_loot = list(/obj/item/natural/fibers = 5, /obj/item/ash = 5)
 	loot = list(
 		// Clothing
 		/obj/item/clothing/cloak/tabard/stabard = 3,
@@ -188,6 +198,8 @@
 
 /obj/effect/spawner/lootdrop/roguetown/dungeon/money
 	icon_state = "money"
+	loot_value = LOOT_VALUE_DUNGEON_MONEY
+	junk_loot = list(/obj/item/roguecoin/copper = 5, /obj/item/ash = 3)
 	loot = list(
 		// Money
 		/obj/item/roguecoin/copper = 5,
@@ -201,6 +213,7 @@
 
 /obj/effect/spawner/lootdrop/roguetown/dungeon/misc
 	icon_state = "misc"
+	loot_value = LOOT_VALUE_DUNGEON_MISC
 	loot = list(
 		// Garbage and Miscellanous
 		/obj/item/rogue/instrument/flute = 3,
@@ -230,12 +243,15 @@
 		/obj/item/storage/bag/tray = 3,
 		/obj/item/mundane/puzzlebox/medium = 2,
 		/obj/item/mundane/puzzlebox/easy = 2,
-		/obj/item/mundane/puzzlebox/impossible = 1
+		/obj/item/mundane/puzzlebox/impossible = 1,
+		/obj/item/heelkit = 1
 	)
 	lootcount = 1
 
 /obj/effect/spawner/lootdrop/roguetown/dungeon/medical
 	icon_state = "medical"
+	loot_value = LOOT_VALUE_DUNGEON_MEDICAL
+	junk_loot = list(/obj/item/natural/cloth/bandage = 5, /obj/item/ash = 3)
 	loot = list(
 		//medical
 		/obj/item/needle = 4,
@@ -246,15 +262,16 @@
 
 /obj/effect/spawner/lootdrop/roguetown/dungeon/weapons
 	icon_state = "weapon"
+	loot_value = LOOT_VALUE_DUNGEON_WEAPONS
+	junk_loot = list(/obj/item/natural/bundle/stick = 5, /obj/item/natural/stone = 3)
 	loot = list(
 		//weapons
 		/obj/item/rogueweapon/mace = 2,
 		/obj/item/rogueweapon/huntingknife/idagger/steel = 3,
 		/obj/item/gun/ballistic/revolver/grenadelauncher/bow = 2,
-		/obj/item/gun/ballistic/revolver/grenadelauncher/bow/recurve = 2,
 		/obj/item/gun/ballistic/revolver/grenadelauncher/crossbow = 2,
 		/obj/item/quiver/arrows = 2,
-		/obj/item/quiver/bolts = 2,
+		/obj/item/quiver/bolt/standard = 2,
 		/obj/item/rogueweapon/mace/woodclub/crafted = 3,
 		/obj/item/rogueweapon/mace/steel/morningstar =2,
 		/obj/item/rogueweapon/mace/cudgel = 2,
@@ -279,8 +296,31 @@
 	)
 	lootcount = 1
 
+//dwarf dungeon stuff
+/obj/effect/spawner/lootdrop/roguetown/dungeon/weapons/bronze
+	loot = list(
+		//weapons
+		/obj/item/rogueweapon/mace/bronze = 4,
+		/obj/item/rogueweapon/huntingknife/bronze = 11,
+		/obj/item/gun/ballistic/revolver/grenadelauncher/bow = 2,
+		/obj/item/gun/ballistic/revolver/grenadelauncher/crossbow = 2,
+		/obj/item/quiver/bronzearrows = 2,
+		/obj/item/quiver/bolt/bronze = 2,
+		/obj/item/rogueweapon/mace/woodclub/crafted = 3,
+		/obj/item/rogueweapon/mace/warhammer/bronze = 4,
+		/obj/item/rogueweapon/mace/wsword = 3,
+		/obj/item/rogueweapon/woodstaff = 3,
+		/obj/item/rogueweapon/spear/bronze = 3,
+		/obj/item/rogueweapon/sword/bronze = 3,
+		/obj/item/rogueweapon/sword/long/broadsword/bronze = 3,
+		/obj/item/rogueweapon/katar/bronze = 1,
+		/obj/item/rogueweapon/flail/bronze = 1,
+	)
+
 /obj/effect/spawner/lootdrop/roguetown/dungeon/tools
 	icon_state = "tools"
+	loot_value = LOOT_VALUE_DUNGEON_TOOLS
+	junk_loot = list(/obj/item/natural/stone = 5, /obj/item/natural/bundle/stick = 5)
 	loot = list(
 		// tools
 		/obj/item/rogueweapon/shovel = 3,
@@ -300,6 +340,8 @@
 
 /obj/effect/spawner/lootdrop/roguetown/dungeon/armor
 	icon_state = "armor"
+	loot_value = LOOT_VALUE_DUNGEON_ARMOR
+	junk_loot = list(/obj/item/natural/hide = 5, /obj/item/natural/fibers = 5)
 	loot = list(
 		//armor
 		/obj/item/clothing/suit/roguetown/armor/leather/studded = 2,
@@ -331,40 +373,48 @@
 	)
 	lootcount = 1
 
+/obj/effect/spawner/lootdrop/roguetown/dungeon/armor/bronze
+	loot = list(
+		//armor
+		/obj/item/clothing/suit/roguetown/armor/leather/studded = 2,
+		/obj/item/clothing/suit/roguetown/armor/leather = 2,
+		/obj/item/clothing/suit/roguetown/armor/leather/hide = 2,
+		/obj/item/clothing/suit/roguetown/armor/leather/studded/bikini = 2,
+		/obj/item/clothing/suit/roguetown/armor/leather/hide/bikini = 2,
+		/obj/item/clothing/suit/roguetown/armor/gambeson = 2,
+		/obj/item/clothing/under/roguetown/chainlegs/kilt/bronze = 2,
+		/obj/item/clothing/gloves/roguetown/chain/bronze = 2,
+		/obj/item/clothing/suit/roguetown/armor/chainmail/bronze = 3,
+		/obj/item/clothing/suit/roguetown/armor/chainmail/hauberk/bronze = 1,
+		/obj/item/clothing/suit/roguetown/armor/plate/bronze = 2,
+		/obj/item/clothing/neck/roguetown/gorget/bronze = 1,
+		/obj/item/clothing/head/roguetown/helmet/heavy/bronze = 1,
+		/obj/item/clothing/head/roguetown/helmet/leather = 2,
+		/obj/item/clothing/head/roguetown/helmet/bronzegladiator = 1,
+		/obj/item/clothing/head/roguetown/helmet/bronze = 1,
+		/obj/item/clothing/suit/roguetown/armor/plate/bronze/light = 1,
+		/obj/item/clothing/suit/roguetown/armor/plate/bronze = 3,
+		/obj/item/clothing/suit/roguetown/armor/plate/cuirass/blacksteel = 1,
+	)
+
 /obj/effect/spawner/lootdrop/roguetown/dungeon/food
 	icon_state = "food"
+	loot_value = LOOT_VALUE_DUNGEON_FOOD
+	junk_loot = list(/obj/item/ash = 5, /obj/item/natural/stone = 3)
 	loot = list(
 		//food
 		/obj/item/reagent_containers/food/snacks/rogue/crackerscooked = 3,
 		/obj/item/reagent_containers/food/snacks/butterslice = 3,
 		/obj/item/reagent_containers/powder/salt = 3,
-		/obj/item/reagent_containers/food/snacks/egg = 3
+		/obj/item/reagent_containers/food/snacks/rogue/egg = 3
 	)
 	lootcount = 2
 
 /obj/effect/spawner/lootdrop/roguetown/dungeon/spells
 	icon_state = "spells"
+	loot_value = LOOT_VALUE_DUNGEON_SPELLS
+	junk_loot = list(/obj/item/paper/scroll = 5, /obj/item/ash = 3)
 	loot = list(
-		//spells
-		/obj/item/book/granter/spell/blackstone/spitfire = 5,
-		/obj/item/book/granter/spell/blackstone/lesserknock = 5,
-		/obj/item/book/granter/spell/blackstone/bonechill = 5,
-		/obj/item/book/granter/spell/blackstone/featherfall = 5,
-		/obj/item/book/granter/spell/blackstone/sicknessray = 5,
-
-		/obj/item/book/granter/spell/blackstone/frostbolt = 5,
-		/obj/item/book/granter/spell/blackstone/forcewall_weak = 4,
-		/obj/item/book/granter/spell/blackstone/guidance = 4,
-		/obj/item/book/granter/spell/blackstone/fortitude = 4,
-		/obj/item/book/granter/spell/blackstone/leap = 4,
-		/obj/item/book/granter/spell/blackstone/enlarge = 4,
-		/obj/item/book/granter/spell/blackstone/repel = 3,
-		/obj/item/book/granter/spell/blackstone/fetch = 3,
-		/obj/item/book/granter/spell/blackstone/fireball = 3,
-		/obj/item/book/granter/spell/blackstone/message = 3,
-		/obj/item/book/granter/spell/blackstone/ensnare = 2,
-		/obj/item/book/granter/spell/blackstone/lightning = 2,
-		/obj/item/book/granter/spell/blackstone/invisibility = 2,
-		/obj/item/book/granter/spell/blackstone/greaterfireball = 1
+		/obj/item/book/granter/spell/bonechill = 2,
 	)
 	lootcount = 1

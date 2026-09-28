@@ -1,4 +1,4 @@
-//HUD styles.  Index order defines how they are cycled in F12.
+//HUD styles.	Index order defines how they are cycled in F12.
 /// Standard hud
 #define HUD_STYLE_STANDARD 1
 /// Reduced hud (just hands and intent switcher)
@@ -8,6 +8,11 @@
 
 /// Used in show_hud(); Please ensure this is the same as the maximum index.
 #define HUD_VERSIONS 3
+
+/// Screen object is in its default position
+#define SCRN_OBJ_DEFAULT "default"
+/// Screen object is in a list (e.g. action palette)
+#define SCRN_OBJ_IN_LIST "list"
 
 //1:1 HUD layout stuff
 #define UI_BOXCRAFT "EAST-4:22,SOUTH+1:6"

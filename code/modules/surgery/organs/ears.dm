@@ -30,6 +30,15 @@
 	// Multiplier for both long term and short term ear damage
 	var/damage_multiplier = 1
 
+	//Used for the panel - probably can be used for something ELSE as well.
+	var/ear_sensitivity = EARS_NORMAL //Nothing happens
+
+	/// Can we flick our ears?
+	var/can_flick = TRUE
+
+	/// Bool for ear flicking -- are we currently in the flick animation?
+	var/is_flicking = FALSE
+
 /obj/item/organ/ears/Insert(mob/living/carbon/M, special, drop_if_replaced)
 	. = ..()
 	for(var/datum/wound/facial/ears/ear_wound as anything in M.get_wounds())
@@ -96,13 +105,13 @@
 	if(ears)
 		ears.minimumDeafTicks(value)
 
-
 /obj/item/organ/ears/cat
 	name = "cat ears"
 	icon = 'icons/obj/clothing/hats.dmi'
 	icon_state = "kitty"
 	damage_multiplier = 2
 	accessory_type = /datum/sprite_accessory/ears/cat_big
+	ear_sensitivity = EARS_SENSITIVE
 
 /obj/item/organ/ears/penguin
 	name = "penguin ears"
@@ -115,7 +124,7 @@
 		to_chat(H, span_notice("I suddenly feel like you've lost my balance."))
 		waddle = H.AddComponent(/datum/component/waddling)
 
-/obj/item/organ/ears/penguin/Remove(mob/living/carbon/human/H,  special = 0)
+/obj/item/organ/ears/penguin/Remove(mob/living/carbon/human/H,	special = 0)
 	. = ..()
 	if(istype(H))
 		to_chat(H, span_notice("My sense of balance comes back to you."))
@@ -148,28 +157,35 @@
 
 /obj/item/organ/ears/anthro
 	name = "wild-kin ears"
+	ear_sensitivity = EARS_SENSITIVE
 
 /obj/item/organ/ears/lupian
 	name = "lupian ears"
+	ear_sensitivity = EARS_SENSITIVE
 
 /obj/item/organ/ears/vulpkanin
 	name = "venardine ears"
 	accessory_type = /datum/sprite_accessory/ears/fox
+	ear_sensitivity = EARS_SENSITIVE
 
 /obj/item/organ/ears/tajaran
 	name = "tajaran ears"
+	ear_sensitivity = EARS_SENSITIVE
 
 /obj/item/organ/ears/elf
 	name = "elf ears"
 	accessory_type = /datum/sprite_accessory/ears/elf
+	ear_sensitivity = EARS_SENSITIVE
 
 /obj/item/organ/ears/elfw
 	name = "wood elf ears"
 	accessory_type = /datum/sprite_accessory/ears/elfw
+	ear_sensitivity = EARS_SENSITIVE
 
 /obj/item/organ/ears/tiefling
 	name = "tiefling ears"
 	accessory_type = /datum/sprite_accessory/ears
+	ear_sensitivity = EARS_SENSITIVE
 
 /obj/item/organ/ears/akula
 	name = "axian ears"
@@ -178,10 +194,12 @@
 /obj/item/organ/ears/halforc
 	name = "halforc ears"
 	accessory_type = /datum/sprite_accessory/ears/halforc
+	ear_sensitivity = EARS_SENSITIVE
 
 /obj/item/organ/ears/goblin
 	name = "goblin ears"
 	accessory_type = /datum/sprite_accessory/ears/goblin
+	ear_sensitivity = EARS_SENSITIVE
 
 /obj/item/organ/ears/psy_vault_guard
 	name = "cobra hood"

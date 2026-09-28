@@ -27,6 +27,12 @@
 	else
 		..()
 
+/obj/item/fishingrod/get_mechanics_examine(mob/user)
+	. = ..()
+	. += span_info("Left-clicking a fishing rod with bait will prepare it for a cast. Worms, leeches, and many other wriggling creechers can attract different fishes to catch.")
+	. += span_info("Once baited, left click the water to begin fishing.")
+	. += span_info("The chances of you catching nothing at all, having your bait stolen, or getting a 'biter' depends on how high your Fishing skill is.")
+	. += span_info("Whenever you get a 'biter', interrupt the ensuing timed action before it can complete to successfully catch a fish.")
 
 /obj/item/fishingrod/attackby(obj/item/I, mob/user, params)
 	if(baited)
@@ -64,7 +70,7 @@
 /obj/item/fishingrod/afterattack(obj/target, mob/user, proximity)
 	var/sl = user.get_skill_level(/datum/skill/labor/fishing) // User's skill level
 	var/ft = 120 //Time to get a catch, in ticks
-	var/fpp =  60 - (sl * 10) // Fishing power penalty based on fishing skill level
+	var/fpp =	60 - (sl * 10) // Fishing power penalty based on fishing skill level
 	var/list/modlist
 	if(user.used_intent.type == SPEAR_BASH)
 		return ..()
@@ -73,6 +79,9 @@
 		return ..()
 
 	if(istype(target, /turf/open/water))
+		if(user.get_skill_level(/datum/skill/labor/fishing) >= SKILL_LEVEL_EXPERT)
+			if(!baited)
+				find_bait(user)
 		if(user.used_intent.type == ROD_CAST && !user.doing)
 			if(target in range(user,5))
 				user.visible_message("<span class='warning'>[user] casts a line!</span>", \
@@ -104,12 +113,9 @@
 								target.balloon_alert_to_viewers("Tug!")
 								playsound(src.loc, 'sound/items/fishing_plouf.ogg', 100, TRUE)
 								if(!do_after(user,ow, target = target, same_direction = TRUE))
-									if(A in subtypesof(/mob/living))
-										var/mob/M = A
-										new M(target)
-										if (!(M.type == /mob/living/simple_animal/hostile/retaliate/rogue/mudcrab))
-											user.playsound_local(src, pick('sound/misc/jumpscare (1).ogg','sound/misc/jumpscare (2).ogg','sound/misc/jumpscare (3).ogg','sound/misc/jumpscare (4).ogg'), 100)
-										user.mind.add_sleep_experience(/datum/skill/labor/fishing, fisherman.STAINT*2) // High risk high reward
+									if(ispath(A, /mob/living))
+										new /obj/effect/temp_visual/hunting_phantom(target, A, /datum/component/rot/simple/hunt, 2.5 SECONDS)
+										user.mind.add_sleep_experience(/datum/skill/labor/fishing, fisherman.STAINT*2)
 									else
 										new A(user.loc)
 										to_chat(user, "<span class='warning'>Reel 'em in!</span>")
@@ -127,7 +133,7 @@
 									if(getbaitlife(sl, baited, 100)) // Higher chance for it to flee with your bait.
 										to_chat(user, "<span class='warning'>...And took my bait, too.</span>")
 										qdel(baited)
-										baited = null													
+										baited = null
 						else
 							to_chat(user, "<span class='warning'>Not even a nibble...</span>")
 							user.mind.add_sleep_experience(/datum/skill/labor/fishing, fisherman.STAINT/2) // Pity XP.
@@ -136,6 +142,19 @@
 				else
 					to_chat(user, "<span class='warning'>I must stand still to fish.</span>")
 			update_icon()
+
+/obj/item/fishingrod/proc/find_bait(mob/user)
+	if(!user)
+		return
+	var/turf/T = get_turf(user)
+	if(!T)
+		return
+	for(var/obj/item/I in view(1, T))
+		if(I.isbait)
+			src.attackby(I, user)
+			user.playsound_local(T, 'sound/combat/vite.ogg', 100, TRUE)
+			break
+
 
 /obj/item/fishingrod/update_icon()
 	cut_overlays()
@@ -153,6 +172,12 @@
 	desc = "A tool of religious importance, used by wide-brimmed priests who offer wriggling sacrifices to the endless waves beneath."
 	icon_state = "bronzerod"
 	max_integrity = 200
+
+/obj/item/fishingrod/blacksteel
+	name = "blacksteel fishing rod"
+	desc = "G'morning! Nice dae for fishin', ain't it? Hu-hah!"
+	icon_state = "blacksteelrod"
+	max_integrity = 333
 
 /obj/item/fishingrod/aalloy
 	name = "decrepit fishing rod"

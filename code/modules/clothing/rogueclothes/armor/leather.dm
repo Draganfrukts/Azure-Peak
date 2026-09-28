@@ -3,16 +3,15 @@
 	desc = "A flexible vest, stitched together from lengths of cured leather."
 	icon_state = "roguearmor"
 	body_parts_covered = COVERAGE_TORSO
-	armor = ARMOR_LEATHER
-	prevent_crits = PREVENT_CRITS_NONE
+	armor = ARMOR_LEATHER_NPC
 	blocksound = SOFTHIT
-	blade_dulling = DULLING_BASHCHOP
+	pickup_sound = 'sound/foley/equip/equip_armor.ogg'
+	equip_sound = 'sound/foley/equip/equip_armor.ogg'
 	break_sound = 'sound/foley/cloth_rip.ogg'
 	drop_sound = 'sound/foley/dropsound/cloth_drop.ogg'
 	sewrepair = TRUE
 	nodismemsleeves = TRUE
 	max_integrity = ARMOR_INT_CHEST_LIGHT_BASE
-	sellprice = 20
 	armor_class = ARMOR_CLASS_LIGHT
 	salvage_result = /obj/item/natural/hide/cured
 	chunkcolor = "#7e5d17"
@@ -43,7 +42,7 @@
 	detail_color = primary
 	update_icon()
 
-/obj/item/clothing/suit/roguetown/armor/leather/vest/winterjacket/Initialize()
+/obj/item/clothing/suit/roguetown/armor/leather/vest/winterjacket/Initialize(mapload)
 	. = ..()
 	if(GLOB.lordprimary)
 		lordcolor(GLOB.lordprimary,GLOB.lordsecondary)
@@ -83,7 +82,8 @@
 	name = "forester's brigandine"
 	desc = "A hardened leather harness with a large pauldron worn over a tasseted brigandine, imbued with Dendor's essence."
 	icon_state = "forestbrig"
-	max_integrity = ARMOR_INT_CHEST_PLATE_BRIGANDINE + 50
+	armor = ARMOR_BRIGANDINE//is actually a brigandine now
+	max_integrity = ARMOR_INT_CHEST_LIGHT_ELITE
 	equip_delay_self = 50
 	smeltresult = /obj/item/ingot/iron
 
@@ -93,11 +93,10 @@
 	icon_state = "studleather"
 	item_state = "studleather"
 	blocksound = SOFTHIT
-	armor = ARMOR_LEATHER_STUDDED
-	prevent_crits = PREVENT_CRITS_MOST
+	armor = ARMOR_BRIGANDINE
 	nodismemsleeves = TRUE
 	body_parts_covered = COVERAGE_TORSO
-	max_integrity = ARMOR_INT_CHEST_LIGHT_MASTER 
+	max_integrity = ARMOR_INT_CHEST_LIGHT_MEDIUM // 50 less durability than light brigandines.
 	smeltresult = /obj/item/ingot/iron
 	sellprice = 25
 	armor_class = ARMOR_CLASS_LIGHT
@@ -114,7 +113,7 @@
 	blacksteel-studded reinforcements and psystitchings're anything to go by, this particular vest was likely fashioned to vestume Otava's finest. "
 	icon_state = "cuirbouilli"
 	item_state = "cuirbouilli"
-	max_integrity = ARMOR_INT_CHEST_LIGHT_MASTER + 30
+	max_integrity = ARMOR_INT_CHEST_LIGHT_MASTER + ARMOR_INT_LIGHT_BETWEENTIER_MODIFIER
 
 /obj/item/clothing/suit/roguetown/armor/leather/studded/cuirbouilli
 	name = "cuir-bouilli vest"
@@ -122,20 +121,18 @@
 	is traditionally worn beneath a heavier cuirass to protect against bludgeons-and-thrusts, but can be confidently worn on its own without qualm."
 	icon_state = "cuirbouilli"
 	item_state = "cuirbouilli"
-	body_parts_covered = CHEST | VITALS 
+	body_parts_covered = CHEST | VITALS
 	slot_flags = ITEM_SLOT_ARMOR|ITEM_SLOT_SHIRT
-	max_integrity = ARMOR_INT_CHEST_LIGHT_MASTER - 30
+	max_integrity = ARMOR_INT_CHEST_LIGHT_MASTER - ARMOR_INT_LIGHT_BETWEENTIER_MODIFIER
 
 /obj/item/clothing/suit/roguetown/armor/leather/heavy
 	name = "hardened leather armor"
 	desc = "A heavy steerhide jerkin with enough body to stand on its own. It forms a stiff, protective mantle \
 	for its wearer, shielding from blows and weather alike."
-	icon_state = "leather_armor"
-	item_state = "leather_armor"
-	armor = ARMOR_LEATHER_GOOD
+	icon_state = "roguearmor_belt"
+	item_state = "roguearmor_belt"
+	armor = ARMOR_LEATHER
 	max_integrity = ARMOR_INT_CHEST_LIGHT_MASTER
-	prevent_crits = PREVENT_CRITS_MOST
-	sellprice = 20
 	color = "#7D6653"
 
 /obj/item/clothing/suit/roguetown/armor/leather/heavy/coat
@@ -144,9 +141,8 @@
 	icon_state = "roguearmor_coat"
 	item_state = "roguearmor_coat"
 	body_parts_covered = COVERAGE_ALL_BUT_ARMFEET
-	armor = ARMOR_LEATHER_GOOD
+	armor = ARMOR_LEATHER
 	max_integrity = ARMOR_INT_CHEST_LIGHT_MASTER
-	sellprice = 25
 	color = "#7D6653"
 
 /obj/item/clothing/suit/roguetown/armor/leather/heavy/coat/confessor
@@ -156,30 +152,51 @@
 	item_state = "confessorcoat"
 	body_parts_covered = COVERAGE_ALL_BUT_HANDFEET
 	sleeved = 'icons/roguetown/clothing/onmob/helpers/sleeves_armor.dmi'
-	armor = ARMOR_LEATHER_STUDDED
-	max_integrity = ARMOR_INT_CHEST_LIGHT_BASE	
+	armor = ARMOR_LEATHER
+	max_integrity = ARMOR_INT_CHEST_LIGHT_BASE
 	color = null
 
 /obj/item/clothing/suit/roguetown/armor/leather/heavy/coat/raneshen
 	name = "megarmach scale coat"
-	desc = "A set of lightweight armor fashioned from the scales of the Ranesheni \'megarmach\', an armored reptilian creacher that ambushes prey by the riverside, and drags them deep into Abyssor's domain."
+	desc = "A set of lightweight armor fashioned from the scales of the Ranesheni \"megarmach\", an armored reptilian creacher that ambushes prey by the riverside, and drags them deep into Abyssor's domain."
 	icon_state = "pangolin"
 	item_state = "pangolin"
 	color = null
 
 /obj/item/clothing/suit/roguetown/armor/leather/heavy/coat/steppe
-	name = "fur-woven hatanga coat"
-	desc = "A finely woven hatagna coat, replacing much of its scaled armor with fine furs and reinforced padding for lighter rides."
+	name = "fur-woven chargah coat"
+	desc = "A finely woven chargah coat, replacing much of its scaled armor with fine furs and reinforced padding for lighter rides."
+	icon_state = "chargahfur"
+	item_state = "chargahfur"
+	color = null
+
+/obj/item/clothing/suit/roguetown/armor/leather/heavy/coat/elven
+	name = "fur-lined trophy robes"
+	desc = "A heavy set of hardened robes, lined with fur. The leather is composed of several creatures that were notably difficult to fell by arrow. A proof or rangership among many."
 	icon_state = "hatangafur"
 	item_state = "hatangafur"
 	color = null
+
+/obj/item/clothing/suit/roguetown/armor/leather/heavy/coat/elven/loadout
+	name = "aesthetic fur-lined trophy robes"
+
+/obj/item/clothing/suit/roguetown/armor/leather/heavy/coat/elven/loadout/Initialize(mapload)
+	. = ..()
+	loadoutize()
+
+/obj/item/clothing/suit/roguetown/armor/leather/heavy/coat/steppe/loadout
+	name = "aesthetic fur-woven hatanga coat"
+
+/obj/item/clothing/suit/roguetown/armor/leather/heavy/coat/steppe/loadout/Initialize(mapload)
+	. = ..()
+	loadoutize()
 
 /obj/item/clothing/suit/roguetown/armor/leather/heavy/coat/gravecoat
 	name = "gravetender's coat"
 	desc = "A padded coat bearing the same hues one would find on a Necran. Small steel braces adorn the wrists, a symbol of Necra's grasp on those who serve her."
 	icon_state = "gravecoat"
 	item_state = "gravecoat"
-	max_integrity = ARMOR_INT_CHEST_LIGHT_BASE	
+	max_integrity = ARMOR_INT_CHEST_LIGHT_BASE
 	body_parts_covered = COVERAGE_ALL_BUT_HANDFEET
 	color = null
 
@@ -189,9 +206,8 @@
 	icon_state = "leatherjacketo"
 	item_state = "leatherjacketo"
 	body_parts_covered = COVERAGE_ALL_BUT_HANDLEGS
-	armor = ARMOR_LEATHER_GOOD
+	armor = ARMOR_LEATHER
 	max_integrity = ARMOR_INT_CHEST_LIGHT_MASTER
-	sellprice = 25
 
 /obj/item/clothing/suit/roguetown/armor/leather/heavy/shadowvest
 	name = "drowcraft vest"
@@ -200,12 +216,17 @@
 	item_state = "shadowvest"
 	allowed_race = NON_DWARVEN_RACE_TYPES
 
+/obj/item/clothing/suit/roguetown/armor/leather/heavy/shadowvest/drowraider
+	name = "custom-fit drowcraft vest"
+	desc = "Traditional Drow armour, made from the hide of one of the Underdark's many beasts. Durable yet still flexible, perfect for skirmishers. Custom-fit for its (now deceased) wearer."
+	allowed_race = list(/datum/species/elf/dark/raider)
+
 /obj/item/clothing/suit/roguetown/armor/leather/heavy/freifechter
 	name = "fencing jacket"
 	desc = "A light, flexible button-up leather jacket that will keep your vitals out of harm's way."
 	icon_state = "freijacket"
 	item_state = "freijacket"
-	max_integrity = ARMOR_INT_CHEST_LIGHT_MEDIUM + 35
+	max_integrity = ARMOR_INT_CHEST_LIGHT_MASTER + ARMOR_INT_LIGHT_FENCER_MODIFIER
 	detail_tag = "_detail"
 	color = "#5E4440"
 	detail_color = "#c08955"
@@ -219,9 +240,16 @@
 			pic.color = get_detail_color()
 		add_overlay(pic)
 
-/obj/item/clothing/suit/roguetown/armor/leather/heavy/freifechter/Initialize()
+/obj/item/clothing/suit/roguetown/armor/leather/heavy/freifechter/Initialize(mapload)
 	..()
 	update_icon()
+
+/obj/item/clothing/suit/roguetown/armor/leather/heavy/freifechter/loadout
+	name = "aesthetic fencing jacket"
+
+/obj/item/clothing/suit/roguetown/armor/leather/heavy/freifechter/loadout/Initialize(mapload)
+	. = ..()
+	loadoutize()
 
 /obj/item/clothing/suit/roguetown/armor/leather/heavy/shepherd
 	name = "shepherd's vest"
@@ -231,19 +259,19 @@
 	max_integrity = ARMOR_INT_CHEST_LIGHT_MEDIUM
 	color = "#313131"
 
-/obj/item/clothing/suit/roguetown/armor/leather/trophyfur
-	name = "treated trophy fur robes"
-	desc = "A heavy set of hardened robes, lined with fur. The leather is composed of several creatures that were notably difficult to fell by arrow. A proof or rangership among many."
-	icon_state = "hatanga"
-	item_state = "hatanga"
-	armor = list("blunt" = 90, "slash" = 30, "stab" = 40, "piercing" = 60, "fire" = 0, "acid" = 0)
-	max_integrity = ARMOR_INT_CHEST_LIGHT_MASTER
-	sellprice = 100
+/obj/item/clothing/suit/roguetown/armor/leather/heavy/aristocratavar
+	name = "noble's vest"
+	desc = "A light, custom-tailored flimsy leather and silken vest worn by nobility in the forested peaks of Aavnr."
+	icon_state = "freijacket"
+	item_state = "freijacket"
+	max_integrity = ARMOR_INT_CHEST_LIGHT_BASE - ARMOR_INT_LIGHT_BETWEENTIER_MODIFIER //It'll save you from a blow or two but then it'll break quickly
+	color = "#292626"
 
 /obj/item/clothing/suit/roguetown/armor/leather/bikini
 	name = "leather corslet"
 	desc = "Flexible cowhide armor. Lightweight, better than nothing. Trimmed to protect the heart and hips."
 	body_parts_covered = CHEST|GROIN
+	slot_flags = ITEM_SLOT_ARMOR|ITEM_SLOT_SHIRT // cause I never see those being used
 	icon_state = "leatherkini"
 	item_state = "leatherkini"
 	allowed_sex = list(FEMALE, MALE)
@@ -254,6 +282,7 @@
 	name = "studded leather corslet"
 	desc = "Studded leather is the most durable of all hides and leathers and about as light. Trimmed to protect the heart and hips."
 	body_parts_covered = CHEST|GROIN
+	slot_flags = ITEM_SLOT_ARMOR|ITEM_SLOT_SHIRT
 	icon_state = "studleatherkini"
 	item_state = "studleatherkini"
 	allowed_sex = list(MALE, FEMALE)
@@ -263,6 +292,7 @@
 	name = "hide corslet"
 	desc = "A light armor of wildbeast hide. Far more durable than leather. Trimmed to protect the heart and hips."
 	body_parts_covered = CHEST|GROIN
+	slot_flags = ITEM_SLOT_ARMOR|ITEM_SLOT_SHIRT
 	icon_state = "hidearmorkini"
 	item_state = "hidearmorkini"
 	allowed_sex = list(MALE, FEMALE)
@@ -275,17 +305,17 @@
 	item_state = "vest"
 	color = "#514339"
 	armor = ARMOR_CLOTHING
-	prevent_crits = list(BCLASS_CUT)
 	blocksound = SOFTHIT
 	slot_flags = ITEM_SLOT_ARMOR|ITEM_SLOT_SHIRT
-	blade_dulling = DULLING_BASHCHOP
 	body_parts_covered = COVERAGE_TORSO
 	break_sound = 'sound/foley/cloth_rip.ogg'
 	drop_sound = 'sound/foley/dropsound/cloth_drop.ogg'
 	sewrepair = TRUE
 	sleevetype = null
 	sleeved = null
-	armor_class = ARMOR_CLASS_LIGHT
+	armor_class = ARMOR_CLASS_NONE
+	grid_height = 64
+	grid_height = 64
 
 /obj/item/clothing/suit/roguetown/armor/leather/vest/sailor
 	name = "sea jacket"
@@ -330,7 +360,7 @@
 	detail_tag = "_detail"
 	detail_color = CLOTHING_RED
 
-/obj/item/clothing/suit/roguetown/armor/leather/heavy/jacket/courtphysician/Initialize()
+/obj/item/clothing/suit/roguetown/armor/leather/heavy/jacket/courtphysician/Initialize(mapload)
 	. = ..()
 	update_icon()
 
@@ -356,7 +386,7 @@
 	detail_tag = "_detail"
 	detail_color = CLOTHING_RED
 
-/obj/item/clothing/suit/roguetown/armor/leather/heavy/jacket/courtphysician/female/Initialize()
+/obj/item/clothing/suit/roguetown/armor/leather/heavy/jacket/courtphysician/female/Initialize(mapload)
 	. = ..()
 	update_icon()
 
@@ -368,3 +398,27 @@
 		if(get_detail_color())
 			pic.color = get_detail_color()
 		add_overlay(pic)
+
+/obj/item/clothing/suit/roguetown/armor/leather/heavy/tailcoat
+	name = "tailcoat"
+	desc = "A finely-sewn tailcoat often worn by those on the brink of the upper echelons of Astratan caste."
+	icon_state = "butlercoat"
+	item_state = "butlercoat"
+	detail_tag = "_detail"
+	sleeved = 'icons/roguetown/clothing/special/onmob/sleeves_maids.dmi'
+	armor = ARMOR_LEATHER
+	detail_color = CLOTHING_DARK_GREY
+	slot_flags = ITEM_SLOT_ARMOR
+
+/obj/item/clothing/suit/roguetown/armor/leather/druid
+	name = "druid armor"
+	desc = "A carefully layered armor of cured leather, living oak bark, and woven leaves. Flexible yet resilient, it carries the quiet strength of the forest."
+	icon_state = "druidarmor"
+	item_state = "druidarmor"
+	color = null
+	icon = 'icons/roguetown/clothing/armor.dmi'
+	sleeved = 'icons/roguetown/clothing/onmob/helpers/sleeves_armor.dmi'
+	mob_overlay_icon = 'icons/roguetown/clothing/onmob/armor.dmi'
+	slot_flags = ITEM_SLOT_ARMOR
+	armor = ARMOR_LEATHER
+

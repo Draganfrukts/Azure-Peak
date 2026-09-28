@@ -1,4 +1,4 @@
-#define COMSIG_VICIOUSLY_MOCKED "viciously_mocked_act" // from base of /obj/effect/proc_holder/spell/invoked/mockery/cast() (victim)
+#define COMSIG_VICIOUSLY_MOCKED "viciously_mocked_act" // sent by mockery projectile on_hit (victim)
 #define COMSIG_LUX_EXTRACTED "lux_extracted" // from base of /datum/surgery_step/extract_lux/success() (victim)
 #define COMSIG_DRUG_SNIFFED "drug_sniffed" // from base of /obj/item/reagent_containers/powder/attack() (applier)
 #define COMSIG_ITEM_STOLEN "item_stolen" // from base of /mob/living/MiddleClickOn() (victim)
@@ -13,7 +13,7 @@
 #define COMSIG_ABYSSOID_CREATED "abyssoid_created" // from base of /obj/effect/proc_holder/spell/self/create_abyssoid/cast() ()
 #define COMSIG_ROTTEN_FOOD_EATEN "rotten_food_eaten" // from base of /obj/item/reagent_containers/food/snacks/on_consume() (/obj/item/reagent_containers/food/snacks/eaten_food)
 #define COMSIG_LUX_TASTED "lux_tasted" // from base of /datum/status_effect/buff/lux_drank/on_apply() ()
-#define COMSIG_HEAD_PUNCHED "head_punched" // from base of //mob/living/carbon/monkey/attack_hand() (victim)
+#define COMSIG_HEAD_PUNCHED "head_punched" // from base of ///datum/species/proc/harm() (victim)
 #define COMSIG_TREE_TRANSFORMED "tree_transformed" // from base of /obj/effect/proc_holder/spell/invoked/transform_tree/cast() ()
 #define COMSIG_GLOB_ROLE_CONVERTED "role_converted" // from base of /obj/effect/proc_holder/spell/self/convertrole/proc/convert() (mob/living/carbon/human/recruiter, mob/living/carbon/human/recruit, newrole)
 /// From /obj/item/rogueweapon/sword/long/judgement/vlord/Initialize() (spawned sword) to prevent IF dupe

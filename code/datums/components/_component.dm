@@ -11,31 +11,31 @@
  */
 /datum/component
 	/**
-	  * Defines how duplicate existing components are handled when added to a datum
-	  *
-	  * See [COMPONENT_DUPE_*][COMPONENT_DUPE_ALLOWED] definitions for available options
-	  */
+		* Defines how duplicate existing components are handled when added to a datum
+		*
+		* See [COMPONENT_DUPE_*][COMPONENT_DUPE_ALLOWED] definitions for available options
+		*/
 	var/dupe_mode = COMPONENT_DUPE_HIGHLANDER
 
 	/**
-	  * The type to check for duplication
-	  *
-	  * `null` means exact match on `type` (default)
-	  *
-	  * Any other type means that and all subtypes
-	  */
+		* The type to check for duplication
+		*
+		* `null` means exact match on `type` (default)
+		*
+		* Any other type means that and all subtypes
+		*/
 	var/dupe_type
 
 	/// The datum this components belongs to
 	var/datum/parent
 
 	/**
-	  * Only set to true if you are able to properly transfer this component
-	  *
-	  * At a minimum [RegisterWithParent][/datum/component/proc/RegisterWithParent] and [UnregisterFromParent][/datum/component/proc/UnregisterFromParent] should be used
-	  *
-	  * Make sure you also implement [PostTransfer][/datum/component/proc/PostTransfer] for any post transfer handling
-	  */
+		* Only set to true if you are able to properly transfer this component
+		*
+		* At a minimum [RegisterWithParent][/datum/component/proc/RegisterWithParent] and [UnregisterFromParent][/datum/component/proc/UnregisterFromParent] should be used
+		*
+		* Make sure you also implement [PostTransfer][/datum/component/proc/PostTransfer] for any post transfer handling
+		*/
 	var/can_transfer = FALSE
 
 /**
@@ -49,8 +49,12 @@
 /datum/component/New(list/raw_args)
 	parent = raw_args[1]
 	var/list/arguments = raw_args.Copy(2)
-	if(Initialize(arglist(arguments)) == COMPONENT_INCOMPATIBLE)
+	var/init_result = Initialize(arglist(arguments))
+	if(init_result == COMPONENT_INCOMPATIBLE)
 		stack_trace("Incompatible [type] assigned to a [parent.type]! args: [json_encode(arguments)]")
+		qdel(src, TRUE, TRUE)
+		return
+	if(init_result == COMPONENT_INCOMPATIBLE_SILENT)
 		qdel(src, TRUE, TRUE)
 		return
 
@@ -204,6 +208,11 @@
 		else // Many other things have registered here
 			lookup[sig_type][src] = TRUE
 
+/// Registers multiple signals to the same proc.
+/datum/proc/RegisterSignals(datum/target, list/signal_types, proctype, override = FALSE)
+	for(var/signal_type in signal_types)
+		RegisterSignal(target, signal_type, proctype, override)
+
 /**
  * Stop listening to a given signal from target
  *
@@ -216,9 +225,9 @@
  * * sig_typeor_types Signal string key or list of signal keys to stop listening to specifically
  */
 /datum/proc/UnregisterSignal(datum/target, sig_type_or_types)
-	if (!target || !istype(target) || !target:comp_lookup) //Delinefortune:  If the target is null or not a valid type, we can't unregister
+	if (!target || !istype(target) || !target:comp_lookup) //Delinefortune:	If the target is null or not a valid type, we can't unregister
 		return
-	var/list/lookup = target.comp_lookup  
+	var/list/lookup = target.comp_lookup
 	if(!signal_procs || !signal_procs[target] || !lookup)
 		return
 	if(!islist(sig_type_or_types))
@@ -315,6 +324,8 @@
  */
 /datum/proc/_SendSignal(sigtype, list/arguments)
 	var/target = comp_lookup[sigtype]
+	if(!target)
+		return NONE
 	if(!length(target))
 		var/datum/listening_datum = target
 		return NONE | call(listening_datum, listening_datum.signal_procs[src][sigtype])(arglist(arguments))
@@ -324,6 +335,9 @@
 	// AKA: No you can't cancel the signal reception of another object by doing an unregister in the same signal.
 	var/list/queued_calls = list()
 	for(var/datum/listening_datum as anything in target)
+		if(!listening_datum)
+			stack_trace("null entry in comp_lookup\[[sigtype]\] on [type] during _SendSignal - upstream RegisterSignal/UnregisterSignal corruption")
+			continue
 		queued_calls[listening_datum] = listening_datum.signal_procs[src][sigtype]
 	for(var/datum/listening_datum as anything in queued_calls)
 		. |= call(listening_datum, queued_calls[listening_datum])(arglist(arguments))
@@ -364,10 +378,15 @@
 	var/list/dc = datum_components
 	if(!dc)
 		return null
-	var/datum/component/C = dc[c_type]
+	var/component_entry = dc[c_type]
+	var/datum/component/C = null
+	if(islist(component_entry))
+		var/list/component_list = component_entry
+		if(length(component_list))
+			C = component_list[1]
+	else if(istype(component_entry, /datum/component))
+		C = component_entry
 	if(C)
-		if(length(C))
-			C = C[1]
 		if(C.type == c_type)
 			return C
 	return null

@@ -25,11 +25,11 @@
 	STASTR = 7
 	STASPD = 13
 
-	faction = list("revenants", "spiders")
+	faction = list(FACTION_REVENANTS, FACTION_SPIDERS)
 	base_intents = list(/datum/intent/simple/bite/mirespider)
 	attack_sound = list('sound/vo/mobs/spider/attack (1).ogg','sound/vo/mobs/spider/attack (2).ogg','sound/vo/mobs/spider/attack (3).ogg','sound/vo/mobs/spider/attack (4).ogg')
 
-/mob/living/simple_animal/hostile/retaliate/rogue/revenant/mirespider/Initialize()
+/mob/living/simple_animal/hostile/retaliate/rogue/revenant/mirespider/Initialize(mapload)
 	. = ..()
 	ADD_TRAIT(src, TRAIT_NOPAINSTUN, TRAIT_GENERIC)
 
@@ -63,10 +63,10 @@
 	ranged_cooldown_time = 100
 	check_friendly_fire = 1
 
-	faction = list("revenants", "spiders")
+	faction = list(FACTION_REVENANTS, FACTION_SPIDERS)
 	base_intents = list(/datum/intent/simple/bite/mirespider_lurker)
 	attack_sound = list('sound/vo/mobs/spider/attack (1).ogg','sound/vo/mobs/spider/attack (2).ogg','sound/vo/mobs/spider/attack (3).ogg','sound/vo/mobs/spider/attack (4).ogg')
 
-/mob/living/simple_animal/hostile/retaliate/rogue/revenant/mirespider_lurker/Initialize()
+/mob/living/simple_animal/hostile/retaliate/rogue/revenant/mirespider_lurker/Initialize(mapload)
 	. = ..()
 	ADD_TRAIT(src, TRAIT_NOPAINSTUN, TRAIT_GENERIC)

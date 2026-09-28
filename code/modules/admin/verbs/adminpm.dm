@@ -15,7 +15,7 @@
 
 //shows a list of clients we could send PMs to, then forwards our choice to cmd_admin_pm
 /client/proc/cmd_admin_pm_panel()
-	set category = "-Admin-"
+	set category = "Admin.Admin"
 	set name = "Admin PM"
 	if(!holder)
 		to_chat(src, span_danger("Error: Admin-PM-Panel: Only administrators may use this command."))
@@ -112,9 +112,14 @@
 
 		//get message text, limit it's length.and clean/escape html
 		if(!msg)
+			var/datum/admin_help/sender_ticket = !holder ? current_ticket : null
+			if(sender_ticket)
+				message_admins("[key_name_admin(src)] has started replying to their admin help.")
 			msg = input(src,"Message:", "Private message to [recipient.holder?.fakekey ? "an Administrator" : key_name(recipient, 0, 0)].") as message|null
 			msg = trim(msg)
 			if(!msg)
+				if(sender_ticket)
+					message_admins("[key_name_admin(src)] has cancelled their reply to their admin help.")
 				return
 
 			if(prefs.muted & MUTE_ADMINHELP)
@@ -221,7 +226,7 @@
 	var/client/C = GLOB.directory[target]
 
 	var/datum/admin_help/ticket = C ? C.current_ticket : GLOB.ahelp_tickets.CKey2ActiveTicket(target)
-	var/compliant_msg = trim(lowertext(msg))
+	var/compliant_msg = trim(LOWER_TEXT(msg))
 	var/irc_tagged = "[sender](IRC)"
 	var/list/splits = splittext(compliant_msg, " ")
 	if(splits.len && splits[1] == "ticket")

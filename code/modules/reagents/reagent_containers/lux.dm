@@ -9,6 +9,7 @@
 	list_reagents = list(/datum/reagent/vitae = 5)
 	grind_results = list(/datum/reagent/vitae = 5)
 	sellprice = 90
+	dropshrink = 0.7
 
 /datum/reagent/vitae
 	name = "Vitae"
@@ -18,8 +19,8 @@
 	metabolization_rate = 0.1
 
 /datum/reagent/vitae/overdose_process(mob/living/M)
-	M.adjustOrganLoss(ORGAN_SLOT_HEART, 0.25  * REAGENTS_EFFECT_MULTIPLIER)
-	M.adjustFireLoss(0.25  * REAGENTS_EFFECT_MULTIPLIER, 0)
+	M.adjustOrganLoss(ORGAN_SLOT_HEART, 0.25	* REAGENTS_EFFECT_MULTIPLIER)
+	M.adjustFireLoss(0.25	* REAGENTS_EFFECT_MULTIPLIER, 0)
 	..()
 	. = 1
 
@@ -35,3 +36,13 @@
 	icon_state = "lux_impure"
 	item_state = "lux_impure"
 	sellprice = 15
+	dropshrink = 0.7
+
+/obj/item/reagent_containers/lux_moss
+	name = "corrupted lux"
+	desc = "Something is amiss with this piece of lifeforce. You can see a faint glimpse of a rock piece hurling through the sky."
+	icon = 'icons/roguetown/items/hag/hag_items.dmi'
+	icon_state = "mosslux"
+	item_state = "mosslux"
+	sellprice = 1
+	dropshrink = 0.7

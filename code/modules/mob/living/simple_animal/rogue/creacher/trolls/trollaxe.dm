@@ -3,7 +3,7 @@
 	desc = "This one seems smarter than the rest... And its axe could cut a man in two."
 	icon = 'icons/roguetown/mob/monster/trolls/troll_axe.dmi'
 	perfect_butcher_results = list(
-		/obj/item/reagent_containers/food/snacks/rogue/meat/steak = 5,
+		/obj/item/reagent_containers/food/snacks/rogue/meat/steak/troll = 5,
 		/obj/item/natural/hide = 5,
 		/obj/item/natural/bundle/bone/full = 1,
 		/obj/item/alch/sinew = 7,
@@ -23,9 +23,9 @@
 	name = "troll axe"
 	icon_state = "instrike"
 	attack_verb = list("hacks at", "slashes", "chops", "crushes")
-	animname = "blank22"
+	animname = "chop"
 	hitsound = "genchop"
 	blade_class = BCLASS_CHOP
 	chargetime = 20
-	penfactor = 10
+	penfactor = PEN_NONE
 	swingdelay = 3

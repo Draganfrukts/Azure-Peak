@@ -1,5 +1,4 @@
 /datum/ai_controller/spirit_vengeance
-	movement_delay = HAUNT_MOVEMENT_SPEED
 
 	ai_movement = /datum/ai_movement/astar
 
@@ -11,5 +10,3 @@
 		/datum/ai_planning_subtree/being_a_minion,
 		/datum/ai_planning_subtree/basic_melee_attack_subtree,
 	)
-
-	idle_behavior = /datum/idle_behavior/idle_random_walk

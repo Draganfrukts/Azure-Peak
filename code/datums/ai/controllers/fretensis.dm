@@ -1,5 +1,4 @@
 /datum/ai_controller/fretensis
-	movement_delay = RAT_MOVEMENT_SPEED
 
 	ai_movement = /datum/ai_movement/hybrid_pathing
 
@@ -18,7 +17,5 @@
 
 		/datum/ai_planning_subtree/find_dead_bodies,
 		/datum/ai_planning_subtree/find_food/rat,
-	
-	)
 
-	idle_behavior = /datum/idle_behavior/idle_random_walk
+	)

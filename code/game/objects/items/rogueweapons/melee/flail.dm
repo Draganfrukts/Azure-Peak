@@ -37,8 +37,7 @@
 	hitsound = list('sound/combat/hits/blunt/flailhit.ogg')
 	chargetime = 0
 	damfactor = 1.1
-	swingdelay = 4
-	penfactor = BLUNT_DEFAULT_PENFACTOR
+	penfactor = PEN_NONE
 	icon_state = "instrike"
 	item_d_type = "blunt"
 	intent_intdamage_factor = BLUNT_DEFAULT_INT_DAMAGEFACTOR
@@ -53,9 +52,8 @@
 	hitsound = list('sound/combat/hits/blunt/flailhit.ogg')
 	chargetime = 0
 	recovery = 15
-	swingdelay = 6
 	damfactor = 1.2 // Extra damage. Flail babe flail.
-	penfactor = BLUNT_DEFAULT_PENFACTOR
+	penfactor = PEN_NONE
 	clickcd = CLICK_CD_CHARGED // Higher delay for a powerful ranged attack
 	reach = 2
 	icon_state = "instrike"
@@ -69,7 +67,7 @@
 	animname = "strike"
 	blade_class = BCLASS_BLUNT
 	hitsound = list('sound/combat/hits/punch/punch_hard (1).ogg', 'sound/combat/hits/punch/punch_hard (2).ogg', 'sound/combat/hits/punch/punch_hard (3).ogg')
-	penfactor = BLUNT_DEFAULT_PENFACTOR
+	penfactor = PEN_NONE
 	chargetime = 0
 	swingdelay = 0
 	damfactor = 0.8
@@ -93,7 +91,7 @@
 	var/maxrange = 4
 
 /datum/intent/flail/smash/spec_on_apply_effect(mob/living/H, mob/living/user, params)
-	var/chungus_khan_str = user.STASTR 
+	var/chungus_khan_str = user.STASTR
 	if(H.has_status_effect(/datum/status_effect/debuff/yeetcd))
 		return // Recently knocked back, cannot be knocked back again yet
 	if(chungus_khan_str < 10)
@@ -139,6 +137,23 @@
 	hitsound = list('sound/combat/hits/blunt/flailhit.ogg')
 	item_d_type = "blunt"
 
+/datum/intent/flail/sweep
+	name = "sweeping strike"
+	icon_state = "insweep"
+	blade_class = BCLASS_BLUNT
+	chargetime = 1.2 SECONDS
+	chargedrain = 1
+	chargedloop = /datum/looping_sound/flailswing
+	attack_verb = list("sweeps", "thrashes through")
+	animname = "strike"
+	hitsound = list('sound/combat/hits/blunt/flailhit.ogg')
+	penfactor = PEN_NONE
+	damfactor = 1.5
+	item_d_type = "blunt"
+	intent_intdamage_factor = BLUNT_DEFAULT_INT_DAMAGEFACTOR
+	cleave = /datum/cleave_pattern/horizontal_sweep
+	desc = "A charged sweep that smashes through targets to the front."
+
 /obj/item/rogueweapon/flail/getonmobprop(tag)
 	. = ..()
 	if(tag)
@@ -150,7 +165,7 @@
 
 /obj/item/rogueweapon/flail/aflail
 	name = "decrepit flail"
-	desc = "A spiked ball of wrought bronze, chained to a rotwooden handle. The chains groan with every twirl, strained by forces it hadn't felt in millenia; swing it a bit too hard, and there's a chance that the flailhead might completely fly off."
+	desc = "A spiked ball of rotted metal, chained to a rotwooden handle. The chains groan with every twirl, strained by forces it hadn't felt in millenia; swing it a bit too hard, and there's a chance that the flailhead might completely fly off."
 	icon_state = "aflail"
 	force = 22
 	max_integrity = 75
@@ -242,8 +257,19 @@
 		added_def = 0,\
 	)
 
+/obj/item/rogueweapon/flail/sflail/psyflail/preblessed/ComponentInitialize()
+	AddComponent(\
+		/datum/component/silverbless,\
+		pre_blessed = BLESSING_PSYDONIAN,\
+		silver_type = SILVER_PSYDONIAN,\
+		added_force = 0,\
+		added_blade_int = 0,\
+		added_int = 50,\
+		added_def = 0,\
+	)
+
 /obj/item/rogueweapon/flail/sflail/psyflail/relic
-	name = "Consecratia"
+	name = "\"Consecratia\""
 	desc = "The weight of His anguish, His pain, His hope and His love for humenkind - all hanging on the ornamental silver-steel head chained to this arm. <br><br>A declaration of love for all that Psydon lives for, and a crushing reminder to the arch-nemesis that they will not triumph as long as He endures."
 	icon_state = "psymorningstar"
 	possible_item_intents = list(/datum/intent/flail/strike, /datum/intent/flail/smash/ranged, /datum/intent/flail/bash)
@@ -263,7 +289,7 @@
 	force = 10
 	force_wielded = 35
 	possible_item_intents = list(/datum/intent/flail/strike)
-	gripped_intents = list(/datum/intent/flail/strikerange, /datum/intent/flail/smash/ranged)
+	gripped_intents = list(/datum/intent/flail/strikerange, /datum/intent/flail/smash/ranged, /datum/intent/flail/sweep)
 	name = "militia thresher"
 	desc = "Just like how a sling's bullet can fell a giant, so too does this great flail follow the principle of converting 'momentum' into 'plate-rupturing force'."
 	icon_state = "peasantwarflail"
@@ -280,7 +306,7 @@
 	minstr = 9
 	wbalance = WBALANCE_HEAVY
 	smeltresult = /obj/item/ingot/iron
-	associated_skill = /datum/skill/combat/polearms
+	associated_skill = /datum/skill/combat/whipsflails
 	anvilrepair = /datum/skill/craft/carpentry
 	dropshrink = 0.9
 	wdefense = 4
@@ -310,15 +336,19 @@
 	sellprice = 250
 	smeltresult = /obj/item/ingot/steel
 	possible_item_intents = list(/datum/intent/flail/strike/matthiosflail)
-	gripped_intents = list(/datum/intent/flail/strike/matthiosflail, /datum/intent/flail/smash/matthiosflail)
+	no_loot_taint = TRUE
+	gripped_intents = list(/datum/intent/flail/strike/matthiosflail, /datum/intent/flail/smash/matthiosflail, /datum/intent/flail/sweep)
 	associated_skill = /datum/skill/combat/whipsflails
 	slot_flags = ITEM_SLOT_BACK
 	anvilrepair = /datum/skill/craft/weaponsmithing
+	smeltresult = /obj/item/ingot/component/matthios
 
-
-/obj/item/rogueweapon/flail/peasantwarflail/matthios/Initialize()
+/obj/item/rogueweapon/flail/peasantwarflail/matthios/Initialize(mapload)
 	. = ..()
-	AddComponent(/datum/component/cursed_item, TRAIT_COMMIE, "FLAIL")
+	AddComponent(/datum/component/cursed_item, TRAIT_FREEMAN, "FLAIL")
+
+/obj/item/rogueweapon/flail/peasantwarflail/matthios/get_examine_highlight_status()
+	return list(EXAMINEHIGHLIGHT_HERESYSEVERITY_ALARMING, HERESYDESC_MATTHIOS_WEAPON)
 
 /obj/item/rogueweapon/flail/militia
 	name = "militia flail"
@@ -328,3 +358,23 @@
 	force = 27
 	wdefense = 3
 	wbalance = WBALANCE_HEAVY
+
+/obj/item/rogueweapon/flail/sflail/holysee
+	name = "holy see flail"
+	desc = "A blessed flail, oft conflicts arise betwixt the Otavian Orthodoxy and Holy See on the origins \
+			being betwixt Psydon and Noc being the origin of such weapon, regardless against the forces of evil, \
+			it serves one absolute truth - smashing through plate and skull of Heathen and Heretic alike. Often favored \
+			by Xylix's following for theatrics but also curiously Noc's following as a ceremonial tool of war."
+	icon_state = "churchflail"
+	wlength = WLENGTH_LONG
+
+/obj/item/rogueweapon/flail/blacksteel
+	name = "blacksteel flail"
+	icon_state = "bs_flail"
+	possible_item_intents = list(/datum/intent/flail/strike, /datum/intent/flail/smash, /datum/intent/flail/bash, /datum/intent/flail/sweep)
+	desc = "An elegant flail of blacksteel. The heftsome weight makes it unmatched for driving back plate-armored opponents, so long as one \
+	has the stamina to swing its alloyed chains around."
+	smeltresult = /obj/item/ingot/blacksteel
+	max_integrity = 250
+	minstr = 12
+	force = 35

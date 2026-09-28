@@ -98,10 +98,13 @@ Also added 'exclude' turf to avoid travelling over; defaults to null
 		return FALSE
 	if(maxnodes)
 		//if start turf is farther than maxnodes from end turf, no need to do anything
-		if(call(start, dist)(end, caller) > maxnodes)
+		//Yes, this is a hardcoded distance proc. If you want diagonal moves you'll need to change this,
+		//but otherwise this is fine.
+		// EVERYTHING ELSE SHOULD USE THE DIST PARAMETER, THOUGH!
+		if(start.Distance_cardinal_3d(end, caller) > maxnodes)
 			return FALSE
 		maxnodedepth = maxnodes //no need to consider path longer than maxnodes
-	var/datum/Heap/open = new /datum/Heap(/proc/HeapPathWeightCompare) //the open list
+	var/datum/path_minheap/open = new /datum/path_minheap() //the open list
 	var/list/openc = new() //open list for node check
 	var/list/path = null //the returned path, if any
 	//initialization
@@ -110,7 +113,7 @@ Also added 'exclude' turf to avoid travelling over; defaults to null
 	open.Insert(cur)
 	openc[start] = cur
 	//then run the main loop
-	while(caller && !open.IsEmpty() && !path)
+	while(caller && length(open.L) && !path)
 		cur = open.Pop() //get the lower f turf in the open list
 		//get the lower f node on the open list
 		//if we only want to get near the target, check if we're close enough
@@ -119,8 +122,6 @@ Also added 'exclude' turf to avoid travelling over; defaults to null
 			// I lied, this one is also hardcoded; we don't want to use the heuristic for our termination condition,
 			// only the actual distance.
 			closeenough = cur.source.Distance_cardinal_3d(end, caller) <= mintargetdist
-
-
 
 		//found the target turf (or close enough), let's create the path to it
 		if(cur.source == end || closeenough)
@@ -145,7 +146,7 @@ Also added 'exclude' turf to avoid travelling over; defaults to null
 			if(source_stairs)
 				T = source_stairs.get_transit_destination(dir_to_check)
 			if(T != exclude)
-				var/datum/PathNode/CN = openc[T]  //current checking turf
+				var/datum/PathNode/CN = openc[T]	//current checking turf
 				var/reverse = GLOB.reverse_dir[dir_to_check]
 				var/newg = cur.g + call(cur.source,dist)(T, caller) // add the travel distance between these two tiles to the distance so far
 				if(CN)
@@ -157,7 +158,7 @@ Also added 'exclude' turf to avoid travelling over; defaults to null
 							open.ReSort(CN)//reorder the changed element in the list
 				else
 				//is not already in open list, so add it
-					if(call(cur.source,adjacent)(caller, T, id)) 
+					if(call(cur.source,adjacent)(caller, T, id))
 						CN = new(T,cur,newg,call(T,dist)(end, caller),cur.nodes_traversed+1, ALL_DIRS^reverse)
 						open.Insert(CN)
 						openc[T] = CN
@@ -165,8 +166,9 @@ Also added 'exclude' turf to avoid travelling over; defaults to null
 		CHECK_TICK
 	//reverse the path to get it from start to finish
 	if(path)
-		for(var/i = 1 to round(0.5*path.len))
-			path.Swap(i,path.len-i+1)
+		var/path_len = length(path)
+		for(var/i = 1 to round(0.5*path_len))
+			path.Swap(i,path_len-i+1)
 	openc = null
 	//cleaning after us
 	return path
@@ -181,16 +183,6 @@ Also added 'exclude' turf to avoid travelling over; defaults to null
 	if(!T || T.density)
 		return FALSE
 	if(!T.can_traverse_safely(caller)) // dangerous turf! lava or openspace (or others in the future)
-		// If we can jump, jump over it!
-		if(!ishuman(caller)) // sorry, only humanmobs can jump atm
-			return FALSE
-		var/mob/living/carbon/human/human_caller = caller
-		if(!human_caller.npc_jump_chance) // If we can't jump at all, don't bother.
-			return FALSE
-		var/turf/landing_turf = get_step_away(T, src) // this is the turf we'd want to land on
-		// currently we'll only try to jump 2-tile gaps
-		if(recursive_call < 2 && T.reachableTurftest3d(caller, landing_turf, ID, recursive_call + 1))
-			return TRUE // jumpable
 		return FALSE
 	var/z_distance = abs(T.z - z)
 	if(!z_distance) // standard check for same-z pathing
@@ -214,6 +206,9 @@ Also added 'exclude' turf to avoid travelling over; defaults to null
 	var/rdir = GLOB.reverse_dir[adir]
 	for(var/obj/O in T)
 		if(!O.CanAStarPass(ID, rdir, caller))
+			return TRUE
+	for(var/obj/O in src)
+		if(!O.CanAStarPass(ID, adir, caller))
 			return TRUE
 	for(var/mob/living/M in T)
 		if(!M.CanPass(caller, src))

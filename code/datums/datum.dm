@@ -1,28 +1,26 @@
 /**
-  * The absolute base class for everything
-  *
-  * A datum instantiated has no physical world prescence, use an atom if you want something
-  * that actually lives in the world
-  *
-  * Be very mindful about adding variables to this class, they are inherited by every single
-  * thing in the entire game, and so you can easily cause memory usage to rise a lot with careless
-  * use of variables at this level
-  */
+	* The absolute base class for everything
+	*
+	* A datum instantiated has no physical world prescence, use an atom if you want something
+	* that actually lives in the world
+	*
+	* Be very mindful about adding variables to this class, they are inherited by every single
+	* thing in the entire game, and so you can easily cause memory usage to rise a lot with careless
+	* use of variables at this level
+	*/
 /datum
 	/**
-	  * Tick count time when this object was destroyed.
-	  *
-	  * If this is non zero then the object has been garbage collected and is awaiting either
-	  * a hard del by the GC subsystme, or to be autocollected (if it has no references)
-	  */
+		* Tick count time when this object was destroyed.
+		*
+		* If this is non zero then the object has been garbage collected and is awaiting either
+		* a hard del by the GC subsystme, or to be autocollected (if it has no references)
+		*/
 	var/gc_destroyed
 
 	/// Open uis owned by this datum
 	/// Lazy, since this case is semi rare
 	var/list/open_uis
 
-	/// Active timers with this datum as the target
-	var/list/active_timers
 	/// Status traits attached to this datum
 	var/list/status_traits
 
@@ -52,54 +50,59 @@
 	*/
 	var/list/cooldowns
 	var/abstract_type = /datum
+	var/list/_active_timers
 
 #ifdef TESTING
 	var/running_find_references
 	var/last_find_references = 0
 #endif
 
+	// If we have called dump_harddel_info already. Used to avoid duped calls (since we call it immediately in some cases on failure to process)
+	// Create and destroy is weird and I wanna cover my bases
+	var/harddel_deets_dumped = FALSE
+
 #ifdef DATUMVAR_DEBUGGING_MODE
 	var/list/cached_vars
 #endif
 
 /**
-  * Called when a href for this datum is clicked
-  *
-  * Sends a COMSIG_TOPIC signal
-  */
+	* Called when a href for this datum is clicked
+	*
+	* Sends a COMSIG_TOPIC signal
+	*/
 /datum/Topic(href, href_list[])
 	..()
 	SEND_SIGNAL(src, COMSIG_TOPIC, usr, href_list)
 
 /**
-  * Default implementation of clean-up code.
-  *
-  * This should be overridden to remove all references pointing to the object being destroyed, if
-  * you do override it, make sure to call the parent and return it's return value by default
-  *
-  * Return an appropriate QDEL_HINT to modify handling of your deletion;
-  * in most cases this is QDEL_HINT_QUEUE.
-  *
-  * The base case is responsible for doing the following
-  * * Erasing timers pointing to this datum
-  * * Erasing compenents on this datum
-  * * Notifying datums listening to signals from this datum that we are going away
-  *
-  * Returns QDEL_HINT_QUEUE
-  */
+	* Default implementation of clean-up code.
+	*
+	* This should be overridden to remove all references pointing to the object being destroyed, if
+	* you do override it, make sure to call the parent and return it's return value by default
+	*
+	* Return an appropriate QDEL_HINT to modify handling of your deletion;
+	* in most cases this is QDEL_HINT_QUEUE.
+	*
+	* The base case is responsible for doing the following
+	* * Erasing timers pointing to this datum
+	* * Erasing compenents on this datum
+	* * Notifying datums listening to signals from this datum that we are going away
+	*
+	* Returns QDEL_HINT_QUEUE
+	*/
 /datum/proc/Destroy(force=FALSE, ...)
 	SHOULD_CALL_PARENT(TRUE)
 	tag = null
 	datum_flags &= ~DF_USE_TAG //In case something tries to REF us
 	weak_reference = null	//ensure prompt GCing of weakref.
 
-	var/list/timers = active_timers
-	active_timers = null
-	for(var/thing in timers)
-		var/datum/timedevent/timer = thing
-		if (timer.spent)
-			continue
-		qdel(timer)
+	if(_active_timers)
+		var/list/timers = _active_timers
+		_active_timers = null
+		for(var/datum/timedevent/timer as anything in timers)
+			if(timer.spent && !(timer.flags & TIMER_DELETE_ME))
+				continue
+			qdel(timer)
 
 	//BEGIN: ECS SHIT
 	signal_enabled = FALSE
@@ -131,9 +134,15 @@
 			if(length(comps))
 				for(var/i in comps)
 					var/datum/component/comp = i
+					if(!comp)
+						stack_trace("null entry in comp_lookup\[[sig]\] on [type] during clear_signal_refs - upstream RegisterSignal/UnregisterSignal corruption")
+						continue
 					comp.UnregisterSignal(src, sig)
 			else
 				var/datum/component/comp = comps
+				if(!comp)
+					stack_trace("null scalar in comp_lookup\[[sig]\] on [type] during clear_signal_refs - upstream RegisterSignal/UnregisterSignal corruption")
+					continue
 				comp.UnregisterSignal(src, sig)
 		comp_lookup = lookup = null
 
@@ -168,16 +177,24 @@
 #endif
 
 ///Return a LIST for serialize_datum to encode! Not the actual json!
-/datum/proc/serialize_list(list/options)
-	CRASH("Attempted to serialize datum [src] of type [type] without serialize_list being implemented!")
+///Return a LIST for serialize_datum to encode! Not the actual json!
+/datum/proc/serialize_list(list/options, list/semvers)
+	SHOULD_CALL_PARENT(TRUE)
 
-///Accepts a LIST from deserialize_datum. Should return src or another datum.
+	. = list()
+	.["tag"] = tag
+
+	SET_SERIALIZATION_SEMVER(semvers, "1.0.0")
+	return .
+
+///Accepts a LIST from deserialize_datum. Should return whether or not the deserialization was successful.
 /datum/proc/deserialize_list(json, list/options)
-	CRASH("Attempted to deserialize datum [src] of type [type] without deserialize_list being implemented!")
+	SHOULD_CALL_PARENT(TRUE)
+	return TRUE
 
 ///Serializes into JSON. Does not encode type.
 /datum/proc/serialize_json(list/options)
-	. = serialize_list(options)
+	. = serialize_list(options, list())
 	if(!islist(.))
 		. = null
 	else
@@ -223,23 +240,22 @@
 				return
 		else if(!ispath(jsonlist["DATUM_TYPE"], target_type))
 			return
-	var/typeofdatum = jsonlist["DATUM_TYPE"]			//BYOND won't directly read if this is just put in the line below, and will instead runtime because it thinks you're trying to make a new list?
+	var/typeofdatum = jsonlist["DATUM_TYPE"] //BYOND won't directly read if this is just put in the line below, and will instead runtime because it thinks you're trying to make a new list?
 	var/datum/D = new typeofdatum
-	var/datum/returned = D.deserialize_list(jsonlist, options)
-	if(!istype(returned, /datum))
+	if(!D.deserialize_list(jsonlist, options))
 		qdel(D)
 	else
-		return returned
+		return D
 
 /**
-  * Callback called by a timer to end an associative-list-indexed cooldown.
-  *
-  * Arguments:
-  * * source - datum storing the cooldown
-  * * index - string index storing the cooldown on the cooldowns associative list
-  *
-  * This sends a signal reporting the cooldown end.
-  */
+	* Callback called by a timer to end an associative-list-indexed cooldown.
+	*
+	* Arguments:
+	* * source - datum storing the cooldown
+	* * index - string index storing the cooldown on the cooldowns associative list
+	*
+	* This sends a signal reporting the cooldown end.
+	*/
 /proc/end_cooldown(datum/source, index)
 	if(QDELETED(source))
 		return
@@ -248,14 +264,14 @@
 
 
 /**
-  * Proc used by stoppable timers to end a cooldown before the time has ran out.
-  *
-  * Arguments:
-  * * source - datum storing the cooldown
-  * * index - string index storing the cooldown on the cooldowns associative list
-  *
-  * This sends a signal reporting the cooldown end, passing the time left as an argument.
-  */
+	* Proc used by stoppable timers to end a cooldown before the time has ran out.
+	*
+	* Arguments:
+	* * source - datum storing the cooldown
+	* * index - string index storing the cooldown on the cooldowns associative list
+	*
+	* This sends a signal reporting the cooldown end, passing the time left as an argument.
+	*/
 /proc/reset_cooldown(datum/source, index)
 	if(QDELETED(source))
 		return
@@ -265,3 +281,16 @@
 /// Returns whether a type is an abstract type.
 /proc/is_abstract(datum/datum_type)
 	return (initial(datum_type.abstract_type) == datum_type)
+
+/// Return text from this proc to provide extra context to hard deletes that happen to it
+/// Optional, you should use this for cases where replication is difficult and extra context is required
+/// Can be called more then once per object, use harddel_deets_dumped to avoid duplicate calls (I am so sorry)
+/datum/proc/dump_harddel_info()
+	return
+
+///images are pretty generic, this should help a bit with tracking harddels related to them
+/image/dump_harddel_info()
+	if(harddel_deets_dumped)
+		return
+	harddel_deets_dumped = TRUE
+	return "Image icon: [icon] - icon_state: [icon_state] [loc ? "loc: [loc] ([loc.x],[loc.y],[loc.z])" : ""]"

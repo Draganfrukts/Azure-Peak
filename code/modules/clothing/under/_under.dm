@@ -5,10 +5,10 @@
 	body_parts_covered = CHEST|GROIN|LEGS|ARMS
 	permeability_coefficient = 0.9
 	slot_flags = ITEM_SLOT_ICLOTHING
-	armor = list("blunt" = 0, "slash" = 0, "stab" = 0,  "piercing" = 0, "fire" = 0, "acid" = 0)
+	armor = ARMOR_CLOTHING
 	equip_sound = 'sound/blank.ogg'
 	drop_sound = 'sound/blank.ogg'
-	pickup_sound =  'sound/blank.ogg'
+	pickup_sound =	'sound/blank.ogg'
 	var/fitted = FEMALE_UNIFORM_FULL // For use in alternate clothing styles for women
 	var/has_sensor = HAS_SENSORS // For the crew computer
 	var/random_sensor = TRUE
@@ -48,7 +48,7 @@
 	if(has_sensor > NO_SENSORS)
 		has_sensor = BROKEN_SENSORS
 
-/obj/item/clothing/under/Initialize()
+/obj/item/clothing/under/Initialize(mapload)
 	. = ..()
 	if(random_sensor)
 		//make the sensor mode favor higher levels, except coords.

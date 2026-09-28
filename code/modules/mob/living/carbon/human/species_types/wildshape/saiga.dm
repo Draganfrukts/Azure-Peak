@@ -13,16 +13,16 @@
 
 /mob/living/carbon/human/species/wildshape/saiga/gain_inherent_skills()
 	. = ..()
-	if(src.mind)
-		src.adjust_skillrank(/datum/skill/combat/wrestling, 3, TRUE)
-		src.adjust_skillrank(/datum/skill/combat/unarmed, 3, TRUE)
-		src.adjust_skillrank(/datum/skill/misc/swimming, 4, TRUE)
-		src.adjust_skillrank(/datum/skill/misc/athletics, 5, TRUE)
+	if(mind)
+		adjust_skillrank(/datum/skill/combat/wrestling, 3, TRUE)
+		adjust_skillrank(/datum/skill/combat/unarmed, 3, TRUE)
+		adjust_skillrank(/datum/skill/misc/swimming, 4, TRUE)
+		adjust_skillrank(/datum/skill/misc/athletics, 5, TRUE)
 
-		src.STASTR = 10
-		src.STACON = 13
-		src.STAWIL = 18 //Because I don't want to give it TRAIT_INFINITE_STAMINA
-		src.STASPD = 13
+		STASTR = 10
+		STACON = 13
+		STAWIL = 18 //Because I don't want to give it TRAIT_INFINITE_STAMINA
+		STASPD = 13
 
 		AddSpell(new /obj/effect/proc_holder/spell/self/saigahoofs)
 		real_name = "saiga doe" //So we don't get a random name
@@ -43,7 +43,6 @@
 		TRAIT_MOUNTABLE
 	)
 	inherent_biotypes = MOB_HUMANOID
-	armor = 5
 	no_equip = list(SLOT_SHIRT, SLOT_HEAD, SLOT_WEAR_MASK, SLOT_ARMOR, SLOT_GLOVES, SLOT_SHOES, SLOT_PANTS, SLOT_CLOAK, SLOT_BELT, SLOT_S_STORE)
 	nojumpsuit = 1
 	sexes = 1
@@ -58,6 +57,7 @@
 		ORGAN_SLOT_LIVER = /obj/item/organ/liver,
 		ORGAN_SLOT_STOMACH = /obj/item/organ/stomach,
 		ORGAN_SLOT_APPENDIX = /obj/item/organ/appendix,
+		ORGAN_SLOT_GUTS = /obj/item/organ/guts,
 		)
 
 	languages = list(
@@ -75,10 +75,6 @@
 	H.update_damage_overlays()
 	return TRUE
 
-/datum/species/shapesaiga/on_species_gain(mob/living/carbon/C, datum/species/old_species)
-	. = ..()
-	RegisterSignal(C, COMSIG_MOB_SAY, PROC_REF(handle_speech))
-
 /datum/species/shapesaiga/update_damage_overlays(mob/living/carbon/human/H)
 	H.remove_overlay(DAMAGE_LAYER)
 	return TRUE
@@ -92,7 +88,6 @@
 	body_parts_covered = FULL_BODY
 	body_parts_inherent = FULL_BODY
 	armor = ARMOR_LEATHER //Saiga should be tankier
-	prevent_crits = PREVENT_CRITS_NONE
 	blocksound = SOFTHIT
 	blade_dulling = DULLING_BASHCHOP
 	sewrepair = FALSE
@@ -106,15 +101,16 @@
 	attack_verb = list("hits", "mauls", "bashes")
 	animname = "strike"
 	hitsound = "punch_hard"
-	penfactor = BLUNT_DEFAULT_PENFACTOR
+	penfactor = PEN_NONE
 	candodge = TRUE
 	canparry = TRUE
 	miss_text = "kicks the air!"
-	miss_sound = "bluntswoosh"
+	miss_sound = "bluntwooshmed"
 	item_d_type = "blunt"
 	swingdelay = 8
-	clickcd = 10
+	clickcd = CLICK_CD_QUICK
 	intent_intdamage_factor = BLUNT_DEFAULT_INT_DAMAGEFACTOR // I'm evil
+	demolition_mod = 1.5
 
 /obj/item/rogueweapon/saiga_hoof //Like a mace
 	name = "saiga hoof"
@@ -135,7 +131,6 @@
 	w_class = WEIGHT_CLASS_NORMAL
 	can_parry = TRUE //I just think this is cool as fuck, sue me
 	sharpness = IS_BLUNT
-	demolition_mod = 1.5
 	swingsound = list('sound/vo/mobs/saiga/attack (1).ogg','sound/vo/mobs/saiga/attack (2).ogg')
 	possible_item_intents = list(/datum/intent/simple/saiga)
 	parrysound = list('sound/combat/parry/parrygen.ogg')
@@ -149,7 +144,7 @@
 /obj/item/rogueweapon/saiga_hoof/left
 	icon_state = "claw_l"
 
-/obj/item/rogueweapon/saiga_hoof/Initialize()
+/obj/item/rogueweapon/saiga_hoof/Initialize(mapload)
 	. = ..()
 	ADD_TRAIT(src, TRAIT_NODROP, TRAIT_GENERIC)
 	ADD_TRAIT(src, TRAIT_NOEMBED, TRAIT_GENERIC)

@@ -1,62 +1,66 @@
 /mob/living/carbon/human/species/npc/deadite
-	aggressive = TRUE
-	mode = NPC_AI_IDLE
-	npc_jump_chance = 0
-	rude = FALSE // don't taunt people as a deadite
-	tree_climber = FALSE // or climb trees
-	dodgetime = 8 
-	flee_in_pain = FALSE
+	d_intent = INTENT_PARRY //Test if stuff breaks because make_deadite() should override this.
+	dodgetime = 30
 	ambushable = FALSE
-	wander = TRUE
-	infected = TRUE
 
-/mob/living/carbon/human/species/npc/deadite/Initialize()
+/mob/living/carbon/human/species/npc/deadite/Initialize(mapload)
 	. = ..()
+	//picked from a list because 1: Races that look better w/deaditing here 2: We need deadite infectable races for immersion's sake I.E not sun elves 3: we can bias towards common azurian races
+	//Yes it requires spamming the list with several entries to weight it, if you can do better. please do so. this sucks.
 	var/species = list(
 		/datum/species/human/northern,
-		/datum/species/dwarf/mountain,
-		/datum/species/elf/dark,
+		/datum/species/human/northern,
+		/datum/species/human/northern,
+		/datum/species/human/northern,
+		/datum/species/elf/wood, //Extra bias towards humens and elves/half elves Because deadites are locals likely
 		/datum/species/elf/wood,
-		/datum/species/goblinp,
-		/datum/species/aasimar,
+		/datum/species/elf/wood,
+		/datum/species/elf/wood,
 		/datum/species/human/halfelf,
+		/datum/species/human/halfelf,
+		/datum/species/human/halfelf,
+		/datum/species/human/halfelf,
+		/datum/species/dwarf/mountain, //Racial bias ticks of w/other races from here on
+		/datum/species/goblinp,
+		/datum/species/elf/dark,
+		/datum/species/aasimar,
 		/datum/species/halforc,
+		/datum/species/tieberian,
+		/datum/species/anthromorph,
+		/datum/species/anthromorphsmall,
+		/datum/species/demihuman,
+		/datum/species/akula,
+		/datum/species/moth,
+		/datum/species/tabaxi,
+		/datum/species/vulpkanin,
+		/datum/species/vulpkanin,
+		/datum/species/dracon,
 	)
 
 	set_species(pick(species))
 	gender = pick(MALE, FEMALE)
+	dna.species.handle_body(src)
+	dna.species.random_character(src)
+	//Random voices, this can probably be more random-ish but it'll do for now
+	random_voice_NPC()
+	random_hair_NPC()
 
-	var/obj/item/organ/ears/organ_ears = getorgan(/obj/item/organ/ears)
 	var/list/deadite_firstnames = world.file2list("strings/rt/names/other/deaditenpcfirst.txt")
-	var/list/deadite_lastnames  = world.file2list("strings/rt/names/other/deaditenpclast.txt")
-	
-	if(organ_ears)
-		organ_ears.accessory_colors = "#868e79"
+	var/list/deadite_lastnames	= world.file2list("strings/rt/names/other/deaditenpclast.txt")
+
 
 	real_name = "[pick(deadite_firstnames)] [pick(deadite_lastnames)]"
 
-	addtimer(CALLBACK(src, PROC_REF(after_creation)), 1 SECONDS)
+	addtimer(CALLBACK(src, PROC_REF(after_creation)), 1 SECONDS) //A second delay, let us race up first
 
 /mob/living/carbon/human/species/npc/deadite/after_creation()
 	. = ..()
-	src.mind_initialize()
-	mob_biotypes |= MOB_UNDEAD
-	var/datum/zombie_antag = src.mind.add_antag_datum(/datum/antagonist/zombie, team = FALSE, admin_panel = TRUE)
 	equipOutfit(new /datum/outfit/job/roguetown/deadite)
-	//Make sure deadite NPCs don't show up in the antag listings
-	GLOB.antagonists -= zombie_antag
-	update_body()
-
-/mob/living/carbon/human/species/npc/deadite/npc_try_backstep()
-	return FALSE // deadites cannot juke
-
-/mob/living/carbon/human/species/npc/deadite/npc_should_resist(ignore_grab = TRUE)
-	if(!check_mouth_grabbed())
-		ignore_grab ||= TRUE
-	return ..(ignore_grab = ignore_grab)
+	make_deadite()
 
 /datum/outfit/job/roguetown/deadite/pre_equip(mob/living/carbon/human/H)
 	..()
+	//We simulate being a """deadite""" here
 	head = null
 	beltr = null
 	beltl = null
@@ -80,25 +84,10 @@
 		if(prob(50))
 			shirt = /obj/item/clothing/suit/roguetown/shirt/undershirt/vagrant/l
 
-	r_hand = null
-	l_hand = null
-
 /mob/living/carbon/human/proc/deadite_get_aimheight(victim)
 	if(!(mobility_flags & MOBILITY_STAND))
 		return rand(1, 2) // Bite their ankles!
 	return pick(rand(11, 13), rand(14, 17), rand(5, 8)) // Chest, neck, and mouth; face and ears; arms and hands.
-
-/mob/living/carbon/human/species/npc/deadite/npc_choose_attack_zone(mob/living/victim)
-	aimheight_change(deadite_get_aimheight(victim))
-
-/mob/living/carbon/human/species/npc/deadite/do_best_melee_attack(mob/living/victim)
-	if(do_deadite_attack(victim))
-		return TRUE
-	return ..() // use grabs and such
-
-/mob/living/carbon/human/species/npc/deadite/handle_ai()
-	. = ..()
-	try_do_deadite_idle() // sort of a misnomer, just handles zombie noises
 
 // This proc exists because non-converted deadites don't have minds and can't have the antag datum
 // So we need two separate entry points for this logic
@@ -111,7 +100,7 @@
 /mob/living/carbon/human/proc/try_do_deadite_bite(mob/living/victim)
 	if(!src || stat >= DEAD)
 		return FALSE
-	
+
 	var/obj/item/grabbing/bite/bite = get_item_by_slot(SLOT_MOUTH)
 	if(istype(bite))
 		// 50% chance to continue biting if already started
@@ -159,6 +148,8 @@
 		return
 	if(mind.has_antag_datum(/datum/antagonist/gnoll))
 		return
+	if(mind.has_antag_datum(/datum/antagonist/hag))
+		return
 	if(mind.has_antag_datum(/datum/antagonist/skeleton))
 		return
 	if(HAS_TRAIT(src, TRAIT_ZOMBIE_IMMUNE))
@@ -176,6 +167,9 @@
 		return FALSE
 	if(HAS_TRAIT(src, TRAIT_ZOMBIE_IMMUNE))
 		return FALSE
+	if(HAS_TRAIT(src, TRAIT_BLACKBLOOD) && prob(90))
+		to_chat(src, span_danger("I feel something churning within my body... Luckily, it doesn't take hold."))
+		return FALSE
 	var/datum/status_effect/zombie_infection/infection = has_status_effect(/datum/status_effect/zombie_infection)
 	if(infection)
 		var/time_remaining = infection.transformation_time - world.time
@@ -187,7 +181,7 @@
 	mob_timers["puke"] = world.time
 	vomit(1, blood = TRUE, stun = FALSE)
 	src.infected = TRUE //Is this in use? Just in case it is
-	apply_status_effect(/datum/status_effect/zombie_infection, 5 MINUTES, "wound")
+	apply_status_effect(/datum/status_effect/zombie_infection, 5 MINUTES, FALSE)
 	return zombie_antag
 
 /mob/living/carbon/human/proc/wake_zombie()
@@ -198,5 +192,6 @@
 	to_chat(src, span_danger("It hurts... Is this really the end for me?"))
 	emote("scream") // heres your warning to others bro
 	Knockdown(1)
+	drop_all_held_items()
 	zombie_antag.wake_zombie(TRUE)
 	return TRUE

@@ -9,7 +9,7 @@
 	max_integrity = 0
 	var/aportalloc = "a"
 
-/obj/structure/fluff/testportal/Initialize()
+/obj/structure/fluff/testportal/Initialize(mapload)
 	name = aportalloc
 	..()
 
@@ -40,7 +40,8 @@
 	var/aportalid = "REPLACETHIS"
 	var/aportalgoesto = "REPLACETHIS"
 	var/aallmig
-	var/required_trait = null
+	// Traits that allow you to use the tile, having any one of them grants access.
+	var/list/required_traits = null
 	var/list/required_jobs = null
 	var/travel_time = 5 SECONDS
 	var/travel_message = "I begin to travel..."
@@ -48,7 +49,7 @@
 	var/travel_access_hint = null
 	var/watchable = TRUE
 
-/obj/structure/fluff/traveltile/Initialize()
+/obj/structure/fluff/traveltile/Initialize(mapload)
 	GLOB.traveltiles += src
 	. = ..()
 
@@ -139,15 +140,16 @@
 	return FALSE
 
 /obj/structure/fluff/traveltile/proc/perform_travel(obj/structure/fluff/traveltile/T, mob/living/L)
-	if(watchable && !L.restrained(ignore_grab = TRUE)) // heavy-handedly prevents using prisoners to metagame camp locations. pulledby would stop this but prisoners can also be kicked/thrown into the tile repeatedly
+	if(watchable && !L.restrained(ignore_grab = TRUE) && length(required_traits)) // heavy-handedly prevents using prisoners to metagame camp locations. pulledby would stop this but prisoners can also be kicked/thrown into the tile repeatedly
+		var/watch_trait = required_traits[1]
 		for(var/mob/living/carbon/human/H in hearers(6,src))
 			if(H == L)
 				continue
-			if(!H.IsUnconscious() && H.stat == CONSCIOUS && !HAS_TRAIT(H, TRAIT_PARALYSIS) && !HAS_TRAIT(H, required_trait) && !HAS_TRAIT(H, TRAIT_BLIND))
+			if(!H.IsUnconscious() && H.stat == CONSCIOUS && !HAS_TRAIT(H, TRAIT_PARALYSIS) && !HAS_TRAIT(H, watch_trait) && !HAS_TRAIT(H, TRAIT_BLIND))
 				to_chat(H, "<b>I watch [L.name? L : "someone"] go through a well-hidden entrance.</b>")
 				if(!(H.m_intent == MOVE_INTENT_SNEAK))
 					to_chat(L, "<b>[H.name ? H : "Someone"] watches me pass through the entrance.</b>")
-				ADD_TRAIT(H, required_trait, TRAIT_GENERIC)
+				ADD_TRAIT(H, watch_trait, TRAIT_GENERIC)
 
 	var/atom/movable/pullingg = L.pulling
 
@@ -164,12 +166,19 @@
 	return
 
 /obj/structure/fluff/traveltile/proc/has_access(atom/movable/AM)
-	if(required_jobs && ishuman(AM))
+	if(!length(required_jobs) && !length(required_traits))
+		return TRUE
+	var/has_job = FALSE
+	var/has_trait = FALSE
+	if(length(required_jobs) && ishuman(AM))
 		var/mob/living/carbon/human/H = AM
-		return (H.job in required_jobs)
-	if(required_trait && isliving(AM))
-		return HAS_TRAIT(AM, required_trait)
-	return TRUE
+		has_job = (H.job in required_jobs)
+	if(length(required_traits) && isliving(AM))
+		for(var/trait in required_traits)
+			if(HAS_TRAIT(AM, trait))
+				has_trait = TRUE
+				break
+	return (has_job || has_trait)
 
 /obj/structure/fluff/traveltile/proc/can_go(atom/movable/AM)
 	if(AM.recent_travel)
@@ -225,13 +234,16 @@
 	return TRUE
 
 /obj/structure/fluff/traveltile/bandit
-	required_trait = TRAIT_BANDITCAMP
+	required_traits = list(TRAIT_BANDITCAMP)
 /obj/structure/fluff/traveltile/vampire
-	required_trait = TRAIT_VAMPMANSION
+	required_traits = list(TRAIT_VAMPMANSION)
+/obj/structure/fluff/traveltile/lich
+	required_traits = list(TRAIT_LICHLAIR)
 /obj/structure/fluff/traveltile/wretch
-	required_trait = TRAIT_ZURCH //I'd tie this to trait_outlaw but unfortunately the heresiarch virtue exists so we're making a new trait instead.
+	required_traits = list(TRAIT_ZURCH) //I'd tie this to trait_outlaw but unfortunately the heresiarch virtue exists so we're making a new trait instead.
 /obj/structure/fluff/traveltile/drow
-	required_trait = TRAIT_CAVEDWELLER	
+	required_traits = list(TRAIT_CAVEDWELLER)
+
 /obj/structure/fluff/traveltile/dungeon
 	name = "gate"
 	desc = "This gate's enveloping darkness is so opressive you dread to step through it."
@@ -250,13 +262,19 @@
 	aportalgoesto = "MultizEventOut"
 	aportalid = "MultizEventIn"
 
-/obj/structure/fluff/traveltile/bathhouse_passage
+/obj/structure/fluff/traveltile/bathhouse_passage // this is IN the bathhouse
 	name = "suspicious passage"
 	desc = "A crevice in the wall. It looks like it leads somewhere."
-	required_trait = "bathhouse_passage_seen"
+	required_traits = list(TRAIT_AGENT_BATHHOUSE)
 	required_jobs = list("Bathmaster", "Bathhouse Attendant")
 	travel_time = 30 SECONDS // If there's an active chase you basically cannot use it to escape quickly
 	travel_message = "I begin to squeeze through the passage..."
 	travel_deny_message = "You're not supple enough to use this passage."
 	watchable = FALSE
 	travel_access_hint = "A tight passage that leads between the bathhouse and the northern coast, with many twists and turns - only a bathhouse staff member can fit through it. It takes a while to travel through, and is a popular route for smuggling goods in and out of town."
+	aportalid = "smuggler_bathhouse"
+	aportalgoesto = "smuggler_cove"
+
+/obj/structure/fluff/traveltile/bathhouse_passage/cave // this is ON THE COAST in the ne
+	aportalid = "smuggler_cove"
+	aportalgoesto = "smuggler_bathhouse"

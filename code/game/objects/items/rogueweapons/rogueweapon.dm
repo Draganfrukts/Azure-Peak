@@ -3,6 +3,7 @@
 /obj/item/rogueweapon
 	name = ""
 	desc = ""
+	has_item_quality = TRUE
 	icon_state = "sabre"
 	item_state = "sabre"
 	lefthand_file = 'icons/mob/inhands/weapons/swords_lefthand.dmi'
@@ -12,19 +13,18 @@
 	throwforce = 10
 	w_class = WEIGHT_CLASS_NORMAL
 	block_chance = 0
-	armor_penetration = 0
+	armor_penetration = PEN_NONE
 	sharpness = IS_SHARP
 	possible_item_intents = list(SWORD_CUT, SWORD_THRUST)
 	can_parry = TRUE
 	wlength = WLENGTH_NORMAL
-	sellprice = 1
 	parrysound = list('sound/combat/parry/parrygen.ogg')
 	break_sound = 'sound/foley/breaksound.ogg'
 	anvilrepair = /datum/skill/craft/weaponsmithing
-	obj_flags = CAN_BE_HIT | UNIQUE_RENAME
+	obj_flags = CAN_BE_HIT | UNIQUE_RENAME | CLAMP_BREAK
 	blade_dulling = null
 	max_integrity = 250
-	integrity_failure = 0.2
+	integrity_failure = GENERIC_INTEG_FAILURE
 	wdefense = 3
 	wdefense_wbonus = 3 //Default is 3.
 	experimental_onhip = TRUE
@@ -43,15 +43,32 @@
 
 	var/malumblessed_w = FALSE
 
-	var/cast_time_reduction = null
+	// whether this is actually a tool, like hoes and hammers, not a weapon proper. used to allow TRAIT_TINYPAWS users to conduct repairs and such
+	var/is_tool = FALSE
+	/// sigh
+	var/hoe_damage = null //the durability damage recieved for every work cycle
+	var/work_time = 3 SECONDS // the time it takes to make new soil or till soil
 
-/obj/item/rogueweapon/Initialize()
+
+/obj/item/rogueweapon/Initialize(mapload)
 	. = ..()
 	if(!destroy_message)
 		destroy_message = span_warning("\The [src] shatters!")
-	
+
 	if(ispath(special))
 		special = new special()
+
+/obj/item/rogueweapon/dropped(mob/user, silent)
+	. = ..()
+	if(istype(src, /obj/item/rogueweapon/shield))
+		return
+	if(implement_refund)
+		return
+	if(ispath(associated_skill, /datum/skill/combat/staves) || ispath(associated_skill, /datum/skill/combat/arcyne))
+		return
+	if(isliving(user))
+		var/mob/living/L = user
+		L.apply_status_effect(/datum/status_effect/recent_weapon)
 
 /obj/item/rogueweapon/ComponentInitialize()
 	if(is_silver) // By default, silver weapons are supposed to be blesseable.
@@ -81,7 +98,7 @@
 		wdefense /= 2
 	if(wdefense_wbonus)
 		wdefense_wbonus = -3
-	wdefense_dynamic = wdefense
+	update_wdefense_dynamic()
 	if(sharpness & IS_SHARP)
 		sharpness = IS_BLUNT
 	if(can_parry)
@@ -94,21 +111,22 @@
 	armor_penetration = initial(armor_penetration)
 	wdefense = initial(wdefense)
 	wdefense_wbonus = initial(wdefense_wbonus)
-	wdefense_dynamic = wdefense
+	update_wdefense_dynamic()
 	sharpness = initial(sharpness)
 	can_parry = initial(can_parry)
 	..()
 
-/obj/item/rogueweapon/rmb_self(mob/user)
-	if(length(alt_intents))
-		if(altgripped)
-			ungrip(user)
-			return
-		if(wielded)
+/obj/item/rogueweapon/rmb_self(mob/user, keybind = FALSE)
+	if(has_altgrip_modes() && (keybind || user.cmode))
+		if(wielded && !altgripped)
 			ungrip(user)
 		altgrip(user)
 		user.update_inv_hands()
-	..()
+		return
+	return ..()
+
+/obj/item/rogueweapon/twirl_skill_needed()
+	return twirly - ((associated_skill == /datum/skill/combat/arcyne) ? 1 : 0)
 
 /obj/item/shaft
 	name = "debug shaft"
@@ -162,3 +180,8 @@
 	blade_dulling = new_shaft
 	qdel(S)
 	new replaced_shaft(src.drop_location())
+
+/obj/item/rogueweapon/get_mechanics_examine(mob/user)
+	. = ..()
+	if(twirly)
+		. += span_info("Right-click to twirl it one-handed[has_altgrip_modes()?", out of combat mode":""]. Safe at [skill_to_string(twirl_skill_needed())] skill.")

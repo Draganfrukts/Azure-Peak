@@ -19,6 +19,7 @@ And it also helps for the character set panel
 		TRAIT_VAMPBITE,
 		TRAIT_NOHUNGER,
 		TRAIT_NOBREATH,
+		TRAIT_DEATHLESS,
 		TRAIT_NOPAIN,
 		TRAIT_TOXIMMUNE,
 		TRAIT_STEELHEARTED,
@@ -28,6 +29,7 @@ And it also helps for the character set panel
 		TRAIT_LIMBATTACHMENT,
 		TRAIT_SILVER_WEAK,
 		TRAIT_VAMPMANSION,
+		TRAIT_ZOMBIE_IMMUNE,
 	)
 
 	var/blood_preference = BLOOD_PREFERENCE_ALL
@@ -233,6 +235,8 @@ And it also helps for the character set panel
 
 /datum/clan/proc/apply_clan_components(mob/living/carbon/human/H)
 	H.AddComponent(/datum/component/sunlight_vulnerability)
+	if(H.get_vampire_generation() == GENERATION_THINNERBLOOD)
+		return
 	H.AddComponent(/datum/component/vampire_disguise)
 
 /datum/clan/proc/disable_covens(mob/living/carbon/human/vampire)
@@ -274,7 +278,8 @@ And it also helps for the character set panel
 	if(disguise_comp)
 		qdel(disguise_comp)
 
-	vampire.verbs -= /mob/living/carbon/human/proc/disguise_verb
+	remove_verb(vampire, /mob/living/carbon/human/proc/disguise_verb)
+	remove_verb(vampire, /mob/living/carbon/human/proc/vampire_telepathy)
 
 
 	// Restore normal eyes
@@ -364,13 +369,15 @@ And it also helps for the character set panel
 	H.process_vampire_life()
 
 /datum/clan/proc/setup_vampire_abilities(mob/living/carbon/human/H)
-	H.verbs |= /mob/living/carbon/human/proc/disguise_verb
-
-	H.cmode_music = 'sound/music/cmode/antag/combat_thrall.ogg'
+	H.AddSpell(new /obj/effect/proc_holder/spell/targeted/transfix_neu)
+	if(H.get_vampire_generation() == GENERATION_THINNERBLOOD)
+		return
+	add_verb(H, /mob/living/carbon/human/proc/disguise_verb)
+	add_verb(H, /mob/living/carbon/human/proc/vampire_telepathy)
 
 	H.adjust_skillrank_up_to(/datum/skill/magic/blood, 2, TRUE)
 
-	H.AddSpell(new /obj/effect/proc_holder/spell/targeted/transfix_neu)
+
 
 /// Applies clan-specific vampire look.
 /datum/clan/proc/apply_vampire_look(mob/living/carbon/human/H)
@@ -380,11 +387,9 @@ And it also helps for the character set panel
 	//if the character has their vampire skin color set, use that
 	if(!isnull(H.vampire_skin))
 		H.skin_tone = sanitize_hexcolor(H.vampire_skin, 6, FALSE)
-		ears?.accessory_colors = H.vampire_skin
 		breasts?.accessory_colors = H.vampire_skin
 	else
 		H.skin_tone = "c9d3de"
-		ears?.accessory_colors = "#c9d3de"
 		breasts?.accessory_colors = "#c9d3de"
 	//if the character has their vampire hair color set, use that
 	if(!isnull(H.vampire_hair))
@@ -398,6 +403,13 @@ And it also helps for the character set panel
 		H.set_eye_color(H.vampire_eyes, H.vampire_eyes, TRUE)
 	else
 		H.set_eye_color("#FF0000", "#FF0000", TRUE)
+	H.update_body()
+	H.update_body_parts(redraw = TRUE)
+	//if the character has their vampire ear color set, use that
+	if(!isnull(H.vampire_ears))
+		ears?.accessory_colors = H.vampire_ears
+	else
+		ears?.accessory_colors = H.vampire_skin
 	H.update_body()
 	H.update_body_parts(redraw = TRUE)
 
@@ -557,8 +569,10 @@ And it also helps for the character set panel
 /datum/action/clan_menu
 	name = "Clan Menu"
 	desc = "Open your clan's power management interface"
+	background_icon = 'icons/mob/actions/vampspells.dmi'
 	background_icon_state = "spell"
-	button_icon_state = "coven"
+	button_icon = 'icons/mob/actions/vampspells.dmi'
+	button_icon_state = "clan_menu"
 
 /datum/action/clan_menu/Trigger(trigger_flags)
 	if(!owner || !ishuman(owner))
@@ -579,9 +593,9 @@ And it also helps for the character set panel
 	status_type = STATUS_EFFECT_REFRESH
 
 /atom/movable/screen/alert/status_effect/debuff/blood_disgust
-	name = "Sanguine Curse"
-	desc = "<span class='warning'>This type of blood does not go down well.</span>\n"
-	icon_state = "hunger2"
+	name = "Incompatible Blood"
+	desc = "<span class='artery'>This taste is so REPULSIVE it PHYSICALLY HURTS to drink...</span>\n"
+	icon_state = "vbloodx"
 
 /datum/status_effect/debuff/blood_disgust/on_apply()
 	. = ..()
@@ -594,7 +608,7 @@ And it also helps for the character set panel
 	owner.remove_stress(/datum/stressevent/bad_blood)
 
 /datum/stressevent/bad_blood
-	desc = span_warning("That blood was revolting!")
+	desc = span_artery("That blood was revolting! It churns and burns within me...")
 	stressadd = 3
 	max_stacks = 10
 	stressadd_per_extra_stack = 3

@@ -57,8 +57,14 @@
 /// Helper which creates a chat message which may have a tooltip in some contexts, but not others.
 #define conditional_tooltip(normal_text, tooltip_text, condition) ((condition) ? (span_tooltip(tooltip_text, normal_text)) : (normal_text))
 
+/// Prints a message to every connected player. Don't use this for debugging, as it won't be caught by the linter.
+#define to_world(msg) to_chat(world, msg)
+
 /// Adds a generic box around whatever message you're sending in chat. Really makes things stand out.
 #define examine_block(str) ("<div class='examine_block'>" + str + "</div>")
+
+/// Allows the chat headshot image to zoom in when moused over
+#define chat_headshot(str) ("<div class='chat_headshot'><img src='" + str + "'/></div>")
 
 // For deadchat control
 #define DEMOCRACY_MODE "democracy"

@@ -1,4 +1,6 @@
 /mob/living/simple_animal/hostile/retaliate/rogue/troll
+	attack_aim = MOB_AIM_HIGH
+	anatomy_type = /datum/anatomy/biped/tough
 	icon = 'icons/roguetown/mob/monster/trolls/trolls.dmi'
 	name = "troll"
 	desc = "Elven legends say these monsters were servants of Dendor tasked to guard his realm; nowadays they are sometimes found in the company of orcs. It's said that fire curbs their almost magical regeneration."
@@ -7,7 +9,10 @@
 	icon_dead = "troll_dead"
 	pixel_x = -16
 
-	faction = list("trolls")
+	faction = list(FACTION_TROLLS)
+	threat_point = THREAT_DANGEROUS
+	ambush_faction = "trolls"
+	blood_toll_bucket = STATS_KILLED_TROLLMINOTAUR
 	footstep_type = FOOTSTEP_MOB_HEAVY
 	emote_hear = null
 	emote_see = null
@@ -22,12 +27,12 @@
 	vision_range = 6
 	aggro_vision_range = 6
 	botched_butcher_results = list (
-		/obj/item/reagent_containers/food/snacks/rogue/meat/steak = 2,
+		/obj/item/reagent_containers/food/snacks/rogue/meat/steak/troll = 2,
 		/obj/item/natural/bundle/bone/full = 1,
-		/obj/item/alch/horn = 1, 
+		/obj/item/alch/horn = 1,
 		/obj/item/natural/hide = 2)
 	butcher_results = list(
-		/obj/item/reagent_containers/food/snacks/rogue/meat/steak = 3,
+		/obj/item/reagent_containers/food/snacks/rogue/meat/steak/troll = 3,
 		/obj/item/natural/hide = 3,
 		/obj/item/natural/bundle/bone/full = 1,
 		/obj/item/alch/sinew = 5,
@@ -35,7 +40,7 @@
 		/obj/item/alch/viscera = 3,
 		)
 	perfect_butcher_results = list(
-		/obj/item/reagent_containers/food/snacks/rogue/meat/steak = 5,
+		/obj/item/reagent_containers/food/snacks/rogue/meat/steak/troll = 5,
 		/obj/item/natural/hide = 5,
 		/obj/item/natural/bundle/bone/full = 1,
 		/obj/item/alch/sinew = 7,
@@ -64,7 +69,6 @@
 	retreat_distance = 0
 	minimum_distance = 0
 	deaggroprob = 0
-	defprob = 20
 	del_on_deaggro = 99 SECONDS
 	retreat_health = 0
 	food = 0
@@ -72,24 +76,27 @@
 	aggressive = TRUE
 //	stat_attack = UNCONSCIOUS
 	remains_type = /obj/effect/decal/remains/troll
-	
+
 	can_have_ai = FALSE //disable native ai
 	AIStatus = AI_OFF
 	ai_controller = /datum/ai_controller/troll
+	move_base_delay = MOVEMENT_DELAY_SPD_17
 	melee_cooldown = TROLL_ATTACK_SPEED
 
 	var/critvuln = FALSE
 
-/mob/living/simple_animal/hostile/retaliate/rogue/troll/Initialize()
+/mob/living/simple_animal/hostile/retaliate/rogue/troll/Initialize(mapload)
 	. = ..()
+	AddComponent(/datum/component/ai_aggro_system)
 	if(critvuln)
 		ADD_TRAIT(src, TRAIT_CRITICAL_WEAKNESS, TRAIT_GENERIC)
-	AddElement(/datum/element/ai_retaliate)
 	ai_controller.set_blackboard_key(BB_BASIC_FOODS, food_type)
 
 /mob/living/simple_animal/hostile/retaliate/rogue/troll/death(gibbed)
 	..()
 	update_icon()
+	if(!QDELETED(src) && !no_reanimate)
+		src.AddComponent(/datum/component/deadite_animal_reanimation)
 
 /mob/living/simple_animal/hostile/retaliate/rogue/troll/get_sound(input)
 	switch(input)
@@ -118,67 +125,23 @@
 	if(has_status_effect(/datum/status_effect/fire_handler))
 		adjustHealth(-rand(20,35))
 
-/mob/living/simple_animal/hostile/retaliate/rogue/troll/bog/LoseTarget()
-	..()
-	if(health > 0)
-		icon_state = "troll_hiding"
+// these procs apply to all trolls. that being said; if you want your regular trolls to hide, USE BOG TROLLS!!
+// normal trolls DO NOT have the overrides to make these function right.
+/mob/living/simple_animal/hostile/retaliate/rogue/troll/proc/hide()
+	flick("troll_hiding", src)
+	icon_state = "troll_hide"
 
-/mob/living/simple_animal/hostile/retaliate/rogue/troll/bog/Moved()
-	. = ..()
-	if(!icon_state == "troll")
-		icon_state = "troll"
-
-/mob/living/simple_animal/hostile/retaliate/rogue/troll/bog/GiveTarget()
-	..()
-	icon_state = "troll_ambush"
-
-/mob/living/simple_animal/hostile/retaliate/rogue/troll/simple_limb_hit(zone)
-	if(!zone)
-		return ""
-	switch(zone)
-		if(BODY_ZONE_PRECISE_R_EYE)
-			return "head"
-		if(BODY_ZONE_PRECISE_L_EYE)
-			return "head"
-		if(BODY_ZONE_PRECISE_NOSE)
-			return "nose"
-		if(BODY_ZONE_PRECISE_MOUTH)
-			return "mouth"
-		if(BODY_ZONE_PRECISE_SKULL)
-			return "head"
-		if(BODY_ZONE_PRECISE_EARS)
-			return "head"
-		if(BODY_ZONE_PRECISE_NECK)
-			return "neck"
-		if(BODY_ZONE_PRECISE_L_HAND)
-			return "foreleg"
-		if(BODY_ZONE_PRECISE_R_HAND)
-			return "foreleg"
-		if(BODY_ZONE_PRECISE_L_FOOT)
-			return "leg"
-		if(BODY_ZONE_PRECISE_R_FOOT)
-			return "leg"
-		if(BODY_ZONE_PRECISE_STOMACH)
-			return "stomach"
-		if(BODY_ZONE_PRECISE_GROIN)
-			return "tail"
-		if(BODY_ZONE_HEAD)
-			return "head"
-		if(BODY_ZONE_R_LEG)
-			return "leg"
-		if(BODY_ZONE_L_LEG)
-			return "leg"
-		if(BODY_ZONE_R_ARM)
-			return "foreleg"
-		if(BODY_ZONE_L_ARM)
-			return "foreleg"
-	return ..()
+/mob/living/simple_animal/hostile/retaliate/rogue/troll/proc/ambush()
+	// find out a better way to do hide & ambush procs on trolls if youre adding another thats going to use these
+	if(src.icon_state == "troll_hide")
+		flick("troll_ambush", src)
+		icon_state = initial(icon_state)
 
 /obj/effect/decal/remains/troll
 	name = "remains"
 	gender = PLURAL
 	icon_state = "Trolld"
-	
+
 /datum/intent/unarmed/claw/troll
 	clickcd = TROLL_ATTACK_SPEED
-	penfactor = 20
+	penfactor = PEN_LIGHT

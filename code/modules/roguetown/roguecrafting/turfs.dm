@@ -66,6 +66,8 @@
 	result = /turf/open/floor/rogue/ruinedwood/platform
 	reqs = list(/obj/item/natural/wood/plank = 2)
 	craftdiff = 2
+	adminlog = TRUE
+	loud = TRUE
 	category = "Floors"
 
 //Platform has unique turf-check vs normal turf.
@@ -82,11 +84,26 @@
 	result = /turf/closed/wall/mineral/rogue/wood
 	reqs = list(/obj/item/grown/log/tree/small = 2)
 	craftdiff = 2
+	adminlog = TRUE
 	category = "Walls"
+
+/datum/crafting_recipe/roguetown/turfs/wood/wall/woodbark
+	name = "Bark Wall"
+	result = /turf/closed/wall/mineral/rogue/woodbark
+
+/datum/crafting_recipe/roguetown/turfs/wood/wall/woodbark/TurfCheck(mob/user, turf/T)
+	var/datum/patron/user_patron
+	if(istype(user, /mob/living))
+		user_patron = user.vars["patron"]
+	if(!iself(user) && !iswildkin(user) && user.job != "Druid" && !istype(user_patron, /datum/patron/divine/dendor))
+		to_chat(user, span_warning("Only Elves, Wild-Kin, Druids, and followers of Dendor can master the art of natural wood walls."))
+		return FALSE
+	return ..()
 
 /datum/crafting_recipe/roguetown/turfs/wood/wall/alt
 	name = "wall alt(wood)"
 	reqs = list(/obj/item/natural/wood/plank = 2)
+	adminlog = TRUE
 	category = "Walls"
 
 /datum/crafting_recipe/roguetown/turfs/wood/fancy
@@ -94,6 +111,7 @@
 	result = /turf/closed/wall/mineral/rogue/decowood
 	reqs = list(/obj/item/natural/wood/plank = 2)
 	craftdiff = 3
+	adminlog = TRUE
 	category = "Walls"
 
 /datum/crafting_recipe/roguetown/turfs/wood/murderhole
@@ -104,18 +122,24 @@
 	verbage_simple = "construct"
 	verbage = "constructs"
 	craftdiff = 2
+	adminlog = TRUE
 	category = "Windows"
+
+/datum/crafting_recipe/roguetown/turfs/wood/murderhole/woodbark
+	name = "Bark Window"
+	result = /turf/closed/wall/mineral/rogue/woodbark/window
 
 /datum/crafting_recipe/roguetown/turfs/wood/murderhole/alt
 	name = "murder hole alt(wood)"
 	reqs = list(/obj/item/natural/wood/plank = 2)
+	adminlog = TRUE
 	category = "Windows"
 
 /// carpet
 /datum/crafting_recipe/roguetown/turfs/carpet
 	name = "carpet(inn)"
 	result = /turf/open/floor/carpet/inn
-	reqs = list(/obj/item/natural/silk= 2)	
+	reqs = list(/obj/item/natural/silk= 2)
 	skillcraft = /datum/skill/craft/carpentry
 	verbage_simple = "construct"
 	verbage = "constructs"
@@ -125,7 +149,7 @@
 /datum/crafting_recipe/roguetown/turfs/carpet/purple
 	name = "carpet(purple)"
 	result = /turf/open/floor/carpet/purple
-	reqs = list(/obj/item/natural/silk= 2)	
+	reqs = list(/obj/item/natural/silk= 2)
 	skillcraft = /datum/skill/craft/carpentry
 	verbage_simple = "construct"
 	verbage = "constructs"
@@ -135,7 +159,7 @@
 /datum/crafting_recipe/roguetown/turfs/carpet/red
 	name = "carpet(red)"
 	result = /turf/open/floor/carpet/red
-	reqs = list(/obj/item/natural/silk= 2)	
+	reqs = list(/obj/item/natural/silk= 2)
 	skillcraft = /datum/skill/craft/carpentry
 	verbage_simple = "construct"
 	verbage = "constructs"
@@ -145,7 +169,7 @@
 /datum/crafting_recipe/roguetown/turfs/carpet/stellar
 	name = "carpet(stellar)"
 	result = /turf/open/floor/carpet/stellar
-	reqs = list(/obj/item/natural/silk= 2)	
+	reqs = list(/obj/item/natural/silk= 2)
 	skillcraft = /datum/skill/craft/carpentry
 	verbage_simple = "construct"
 	verbage = "constructs"
@@ -155,7 +179,7 @@
 /datum/crafting_recipe/roguetown/turfs/carpet/royalblack
 	name = "carpet(royal black)"
 	result = /turf/open/floor/carpet/royalblack
-	reqs = list(/obj/item/natural/silk= 2)	
+	reqs = list(/obj/item/natural/silk= 2)
 	skillcraft = /datum/skill/craft/carpentry
 	verbage_simple = "construct"
 	verbage = "constructs"
@@ -240,6 +264,8 @@
 	result = /turf/open/floor/rogue/blocks/platform
 	reqs = list(/obj/item/natural/stoneblock = 2)
 	craftdiff = 2
+	loud = TRUE
+	adminlog = TRUE
 	category = "Floors"
 
 /datum/crafting_recipe/roguetown/turfs/stone/platform/TurfCheck(mob/user, turf/T)
@@ -255,6 +281,7 @@
 	result = /turf/closed/wall/mineral/rogue/stone
 	reqs = list(/obj/item/natural/stone = 2)
 	craftdiff = 2
+	adminlog = TRUE
 	category = "Walls"
 
 /datum/crafting_recipe/roguetown/turfs/stone/brick
@@ -262,6 +289,7 @@
 	result = /turf/closed/wall/mineral/rogue/stonebrick
 	reqs = list(/obj/item/natural/stoneblock = 2)
 	craftdiff = 3
+	adminlog = TRUE
 	category = "Walls"
 
 /datum/crafting_recipe/roguetown/turfs/stone/decorated
@@ -269,6 +297,7 @@
 	result = /turf/closed/wall/mineral/rogue/decostone
 	reqs = list(/obj/item/natural/stone = 2)
 	craftdiff = 3
+	adminlog = TRUE
 	category = "Walls"
 
 /datum/crafting_recipe/roguetown/turfs/stone/craft
@@ -276,6 +305,7 @@
 	result = /turf/closed/wall/mineral/rogue/craftstone
 	reqs = list(/obj/item/natural/stoneblock = 3)
 	craftdiff = 4
+	adminlog = TRUE
 	category = "Walls"
 
 /datum/crafting_recipe/roguetown/turfs/stone/window
@@ -283,6 +313,7 @@
 	result = /turf/closed/wall/mineral/rogue/stone/window
 	reqs = list(/obj/item/natural/stoneblock = 2)
 	craftdiff = 2
+	adminlog = TRUE
 	category = "Windows"
 
 
@@ -315,6 +346,7 @@
 	result = /turf/closed/wall/mineral/rogue/brick
 	reqs = list(/obj/item/natural/brick = 1)
 	craftdiff = 2
+	adminlog = TRUE
 	category = "Walls"
 
 /datum/crafting_recipe/roguetown/turfs/brick/window
@@ -322,28 +354,32 @@
 	result = /turf/closed/wall/mineral/rogue/brick/window
 	reqs = list(/obj/item/natural/brick = 2)
 	craftdiff = 2
+	adminlog = TRUE
 	category = "Windows"
 
 /datum/crafting_recipe/roguetown/turfs/brick/window/openclose
 	name = "reinforced window (brick)"
+	display_category = ITEM_CAT_ENG_CONSTRUCTION
 	result = /obj/structure/roguewindow/openclose/reinforced/brick
 	reqs = list(
-	  /obj/item/natural/brick = 2,
-	  /obj/item/ingot/iron = 1,
-	  /obj/item/natural/glass = 1,
-	  /obj/item/natural/dirtclod = 1,
+		/obj/item/natural/brick = 2,
+		/obj/item/ingot/iron = 1,
+		/obj/item/natural/glass = 1,
+		/obj/item/natural/dirtclod = 1,
 	)
 	skillcraft = /datum/skill/craft/blacksmithing
 	craftsound = 'sound/items/bsmith1.ogg'
 	verbage_simple = "build"
 	verbage = "builds"
 	craftdiff = 2
+	adminlog = TRUE
 	category = "Windows"
 
 /// WINDOWS
 
 /datum/crafting_recipe/roguetown/turfs/roguewindow
 	name = "wooden window"
+	display_category = ITEM_CAT_ENG_CONSTRUCTION
 	result = /obj/structure/roguewindow
 	reqs = list(/obj/item/grown/log/tree/small = 2)
 	skillcraft = /datum/skill/craft/carpentry
@@ -351,26 +387,30 @@
 	verbage_simple = "build"
 	verbage = "builds"
 	craftdiff = 2
+	adminlog = TRUE
 	category = "Windows"
 
 /datum/crafting_recipe/roguetown/turfs/fancywindow/openclose
 	name = "fancy window"
+	display_category = ITEM_CAT_ENG_CONSTRUCTION
 	result = /obj/structure/roguewindow/openclose
 	reqs = list(
-	  /obj/item/grown/log/tree/small = 2,
-	  /obj/item/natural/stone = 1,
-	  /obj/item/natural/glass = 1,
-	  /obj/item/natural/dirtclod = 1,
+		/obj/item/grown/log/tree/small = 2,
+		/obj/item/natural/stone = 1,
+		/obj/item/natural/glass = 1,
+		/obj/item/natural/dirtclod = 1,
 	)
 	skillcraft = /datum/skill/craft/carpentry
 	craftsound = 'sound/foley/Building-01.ogg'
 	verbage_simple = "build"
 	verbage = "builds"
 	craftdiff = 3
+	adminlog = TRUE
 	category = "Windows"
 
 /datum/crafting_recipe/roguetown/turfs/reinforcedwindow/openclose
 	name = "reinforced window"
+	display_category = ITEM_CAT_ENG_CONSTRUCTION
 	result = /obj/structure/roguewindow/openclose/reinforced
 	reqs = list(
 		/obj/item/grown/log/tree/small = 2,
@@ -383,8 +423,9 @@
 	verbage_simple = "build"
 	verbage = "builds"
 	craftdiff = 2
+	adminlog = TRUE
 	category = "Windows"
-	
+
 /// HAY, TWIG AND TENT
 
 /datum/crafting_recipe/roguetown/turfs/hay
@@ -406,6 +447,7 @@
 	verbage = "assembles"
 	craftdiff = 0
 	loud = TRUE
+	adminlog = TRUE
 	category = "Floors"
 
 /datum/crafting_recipe/roguetown/turfs/twig/TurfCheck(mob/user, turf/T)
@@ -425,6 +467,7 @@
 	verbage = "assembles"
 	craftdiff = 1
 	loud = TRUE
+	adminlog = TRUE
 	category = "Floors"
 
 /datum/crafting_recipe/roguetown/turfs/twigplatform/TurfCheck(mob/user, turf/T)
@@ -441,9 +484,10 @@
 	reqs = list(/obj/item/grown/log/tree/stick = 1,
 				/obj/item/natural/cloth = 1)
 	skillcraft = /datum/skill/craft/crafting
-	verbage_simple = "set up"	
+	verbage_simple = "set up"
 	verbage = "sets up"
 	craftdiff = 1
+	adminlog = TRUE
 	category = "Walls"
 
 /datum/crafting_recipe/roguetown/turfs/tentwall/TurfCheck(mob/user, turf/T)
@@ -462,6 +506,7 @@
 	verbage_simple = "set up"
 	verbage = "sets up"
 	craftdiff = 1
+	adminlog = TRUE
 	category = "Doors"
 
 /datum/crafting_recipe/roguetown/turfs/tentdoor/TurfCheck(mob/user, turf/T)
@@ -474,12 +519,14 @@
 // Normal, non-openable window
 /datum/crafting_recipe/roguetown/turfs/roguewindow
 	name = "static glass window"
+	display_category = ITEM_CAT_ENG_CONSTRUCTION
 	result = /obj/structure/roguewindow
 	reqs = list(/obj/item/grown/log/tree/small = 2, /obj/item/natural/glass = 1)
 	skillcraft = /datum/skill/craft/carpentry
 	verbage_simple = "build"
 	verbage = "builds"
 	craftdiff = 3
+	adminlog = TRUE
 	category = "Windows"
 
 	/*
@@ -498,24 +545,49 @@
 // The windows you can open and close
 /datum/crafting_recipe/roguetown/turfs/roguewindow/dynamic
 	name = "openable glass window"
+	display_category = ITEM_CAT_ENG_CONSTRUCTION
 	result = /obj/structure/roguewindow/openclose
 	reqs = list(/obj/item/grown/log/tree/small = 2, /obj/item/natural/glass = 1)
 	craftdiff = 3
+	adminlog = TRUE
 	category = "Windows"
 
-// The 'windows' of the church that almost no one knows exists.
-/datum/crafting_recipe/roguetown/turfs/roguewindow/stone
-	name = "static church window"
+/datum/crafting_recipe/roguetown/turfs/roguewindow/stone_psydon
+	name = "static psydonic church window"
+	display_category = ITEM_CAT_ENG_CONSTRUCTION
 	result = /obj/structure/roguewindow/stained/silver
 	reqs = list(/obj/item/natural/stone = 2, /obj/item/natural/glass = 1)
 	skillcraft = /datum/skill/craft/masonry
 	craftdiff = 3
+	adminlog = TRUE
+	category = "Windows"
+
+/datum/crafting_recipe/roguetown/turfs/roguewindow/stone_astrata
+	name = "static astratan church window"
+	display_category = ITEM_CAT_ENG_CONSTRUCTION
+	result = /obj/structure/roguewindow/stained/yellow
+	reqs = list(/obj/item/natural/stone = 2, /obj/item/natural/glass = 1)
+	skillcraft = /datum/skill/craft/masonry
+	craftdiff = 3
+	adminlog = TRUE
+	category = "Windows"
+
+/datum/crafting_recipe/roguetown/turfs/roguewindow/stone_zizo
+	name = "static ecclesial church window"
+	display_category = ITEM_CAT_ENG_CONSTRUCTION
+	result = /obj/structure/roguewindow/stained/zizo
+	reqs = list(/obj/item/natural/stone = 2, /obj/item/natural/glass = 1)
+	skillcraft = /datum/skill/craft/masonry
+	craftdiff = 3
+	adminlog = TRUE
 	category = "Windows"
 
 // Reinfored windows
 /datum/crafting_recipe/roguetown/turfs/roguewindow/reinforced
 	name = "reinforced glass window"
+	display_category = ITEM_CAT_ENG_CONSTRUCTION
 	result = /obj/structure/roguewindow/openclose/reinforced
 	reqs = list(/obj/item/grown/log/tree/small = 2, /obj/item/natural/glass = 1, /obj/item/ingot/iron = 1)
 	craftdiff = 3
+	adminlog = TRUE
 	category = "Windows"

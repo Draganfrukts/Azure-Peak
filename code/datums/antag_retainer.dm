@@ -13,8 +13,6 @@
 	var/list/aspirants = list()
 	var/list/assassins = list()
 
-	var/head_rebel_decree = FALSE
-
 	///vampire stuff
 	var/mob/living/carbon/human/vampire_lord
 	var/king_submitted = FALSE
@@ -65,6 +63,10 @@
 			addomen(OMEN_NOLORD)
 		return FALSE
 	else
+		// Ruler is alive - clear any stale "no lord" state so the omen does not linger
+		// after admin spawns, latejoins, or other paths that don't go through revive()/usurpation.
+		SSticker.missing_lord_time = 0
+		removeomen(OMEN_NOLORD)
 		return TRUE
 
 /proc/age_check(client/C)

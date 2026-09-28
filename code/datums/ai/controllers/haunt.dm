@@ -1,6 +1,5 @@
 //Their sprite is spirits so they can probably move fast.
 /datum/ai_controller/haunt
-	movement_delay = HAUNT_MOVEMENT_SPEED
 
 	ai_movement = /datum/ai_movement/hybrid_pathing
 
@@ -14,5 +13,3 @@
 		/datum/ai_planning_subtree/basic_melee_attack_subtree,
 		//datum/ai_planning_subtree/find_dead_bodies,
 	)
-
-	idle_behavior = /datum/idle_behavior/idle_random_walk

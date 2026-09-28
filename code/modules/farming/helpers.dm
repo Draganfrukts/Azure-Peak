@@ -14,10 +14,34 @@
 /proc/get_farming_do_time(mob/user, time)
 	return time / get_farming_effort_multiplier(user, 3)
 
+/proc/get_hunting_effort_multiplier(mob/user, factor = 2)
+	return (10 + (user.get_skill_level(/datum/skill/misc/hunting) * factor)) * 0.1
+
+/proc/get_hunting_do_time(mob/user, time)
+	return time / get_hunting_effort_multiplier(user, 3)
+
+/proc/get_cooking_effort_multiplier(mob/user, factor = 2)
+	return (10 + (user.get_skill_level(/datum/skill/craft/cooking) * factor)) * 0.1
+
+/proc/get_cooking_do_time(mob/user, time)
+	return time / get_cooking_effort_multiplier(user, 3)
+
+/proc/get_herb_effort_multiplier(mob/user, factor = 2)
+	var/farming_lvl = user.get_skill_level(/datum/skill/labor/farming)
+	var/medicine_lvl = user.get_skill_level(/datum/skill/misc/medicine)
+	var/effective_lvl = max(farming_lvl, medicine_lvl)
+
+	return (10 + (effective_lvl * factor)) * 0.1
+
+/proc/get_herb_do_time(mob/user, time)
+	var/multiplier = get_herb_effort_multiplier(user, 3)
+	return time / multiplier
+
 /proc/apply_farming_fatigue(mob/user, fatigue_amount)
 	var/multiplier = get_farming_effort_multiplier(user)
 	user.stamina_add(fatigue_amount / multiplier)
 
+/// You almost certainly do not want to call this proc directly, as it will bypass the sleep levelling system and can bypass trait caps as well. Use the global proc add_sleep_experience instead, which does respect both of those systems.
 /proc/adjust_experience(mob/user, skill_type, exp_amount)
 	user.adjust_experience(skill_type, exp_amount)
 

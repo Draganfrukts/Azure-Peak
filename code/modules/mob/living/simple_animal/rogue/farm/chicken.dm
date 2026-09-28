@@ -9,12 +9,13 @@
 
 	gender = FEMALE
 	mob_biotypes = MOB_ORGANIC|MOB_BEAST
+	blood_toll_bucket = STATS_KILLED_LIVESTOCK
 	emote_see = list("pecks at the ground.","flaps its wings viciously.")
 	density = FALSE
 	base_intents = list(/datum/intent/simple/claw)
 	speak_chance = 2
 	turns_per_move = 5
-	faction = list("chickens")
+	faction = list(FACTION_CHICKENS)
 	botched_butcher_results = list(/obj/item/reagent_containers/food/snacks/rogue/meat/poultry = 1)
 	butcher_results = list(/obj/item/reagent_containers/food/snacks/fat = 1,
 		/obj/item/reagent_containers/food/snacks/rogue/meat/poultry = 1,
@@ -32,8 +33,8 @@
 		/obj/item/alch/bone = 1,
 		/obj/item/alch/viscera = 1
 		)
-	var/egg_type = /obj/item/reagent_containers/food/snacks/egg
-	food_type = list(/obj/item/reagent_containers/food/snacks/grown/berries/rogue,/obj/item/natural/worms,/obj/item/reagent_containers/food/snacks/grown/wheat,/obj/item/reagent_containers/food/snacks/grown/oat)
+	var/egg_type = /obj/item/reagent_containers/food/snacks/rogue/egg
+	food_type = list(/obj/item/reagent_containers/food/snacks/grown/berries/rogue,/obj/item/natural/worms,/obj/item/reagent_containers/food/snacks/grown/wheat,/obj/item/reagent_containers/food/snacks/grown/oat,/obj/item/reagent_containers/food/snacks/grown/rice)
 	response_help_continuous = "pets"
 	response_help_simple = "pet"
 	response_disarm_continuous = "gently pushes aside"
@@ -64,6 +65,7 @@
 	AIStatus = AI_OFF
 	can_have_ai = FALSE
 	ai_controller = /datum/ai_controller/generic
+	move_base_delay = MOVEMENT_DELAY_SLOW
 
 /mob/living/simple_animal/hostile/retaliate/rogue/chicken/get_sound(input)
 	switch(input)
@@ -113,10 +115,10 @@
 			return "wing"
 	return ..()
 
-/mob/living/simple_animal/hostile/retaliate/rogue/chicken/Initialize()
+/mob/living/simple_animal/hostile/retaliate/rogue/chicken/Initialize(mapload)
 	. = ..()
 	AddElement(/datum/element/ai_retaliate)
-	ai_controller.set_blackboard_key(BB_BASIC_FOODS, food_type)
+	ai_controller.set_blackboard_key(BB_BASIC_FOODS, typecacheof(food_type))
 	if(!body_color)
 		body_color = pick(validColors)
 	icon_state = "[icon_prefix]_[body_color]"
@@ -137,7 +139,7 @@
 		if(locate(/obj/structure/fluff/nest) in loc)
 			visible_message(span_alertalien("[src] [pick(layMessage)]"))
 			production = max(production - 30, 0)
-			var/obj/item/reagent_containers/food/snacks/egg/E = new egg_type(get_turf(src))
+			var/obj/item/reagent_containers/food/snacks/rogue/egg/E = new egg_type(get_turf(src))
 			E.pixel_x = rand(-6,6)
 			E.pixel_y = rand(-6,6)
 			if(eggsFertile)
@@ -171,11 +173,11 @@
 						foundchaff += S
 				if(foundchaff.len)
 					stop_automated_movement = TRUE
-					Goto(pick(foundchaff),move_to_delay)
+					Goto(pick(foundchaff))
 					addtimer(CALLBACK(src, PROC_REF(return_action)), 15 SECONDS)
 			else
 				stop_automated_movement = TRUE
-				Goto(pick(foundnests),move_to_delay)
+				Goto(pick(foundnests))
 				addtimer(CALLBACK(src, PROC_REF(return_action)), 15 SECONDS)
 
 

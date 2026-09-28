@@ -4,12 +4,15 @@
 	opacity = 1
 	density = TRUE
 	blocks_air = TRUE
-	baseturfs = list(/turf/open/floor/rogue/naturalstone, /turf/open/transparent/openspace)
+	baseturfs = /turf/open/floor/rogue/naturalstone
 	plane = WALL_PLANE
 	var/above_floor
 	var/wallpress = TRUE
 	var/wallclimb = FALSE
 	var/climbdiff = 0
+
+/turf/closed/basic
+	baseturfs = /turf/closed/basic
 
 /turf/closed/basic/New()//Do not convert to Initialize
 	SHOULD_CALL_PARENT(FALSE)
@@ -29,8 +32,13 @@
 		if(L.mobility_flags & MOBILITY_MOVE)
 			wallpress(L)
 			return
+	else if(user != O && ishuman(user) && ishuman(O)) // check to see if user is dragging another mob onto the wall
+		var/mob/living/carbon/human/us = user
+		var/mob/living/carbon/human/them = O
+		if((us.mobility_flags & MOBILITY_MOVE) && (them.mobility_flags & MOBILITY_MOVE) && us.get_highest_grab_state_on(them) > GRAB_PASSIVE)
+			wallpress(them, us)
 
-/turf/closed/proc/wallpress(mob/living/user)
+/turf/closed/proc/wallpress(mob/living/user, mob/living/pressing_mob = null)
 	if(user.wallpressed)
 		return
 	if(user.is_shifted)
@@ -38,11 +46,18 @@
 	if(!(user.mobility_flags & MOBILITY_STAND))
 		return
 	var/dir2wall = get_dir(user,src)
+	if(pressing_mob) // step up to the wall
+		user.Move(get_step(pressing_mob, user))
+		user.setDir(turn(get_dir(pressing_mob, src),180))
+		dir2wall = get_dir(user,src)
 	if(!(dir2wall in GLOB.cardinals))
 		return
 	user.wallpressed = dir2wall
 	user.update_wallpress_slowdown()
-	user.visible_message(span_info("[user] leans against [src]."))
+	if(user.m_intent == MOVE_INTENT_SNEAK)
+		to_chat(user, span_info("You press yourself against [src]."))
+	else
+		user.visible_message(pressing_mob ? span_info("[user] is pushed against [src] by [pressing_mob].") : span_info("[user] leans against [src]."))
 	switch(dir2wall)
 		if(NORTH)
 			user.setDir(SOUTH)
@@ -56,6 +71,19 @@
 		if(WEST)
 			user.setDir(EAST)
 			user.set_mob_offsets("wall_press", _x = -12, _y = 0)
+
+/mob/living/proc/get_wallpress_alpha()
+	var/skill_level = src.get_skill_level(/datum/skill/misc/sneaking)
+
+	switch(skill_level)
+		if(1) return 128 //50%
+		if(2) return 115 //55%
+		if(3) return 102 //60%
+		if(4) return 90	//65%
+		if(5) return 77	//70%
+		if(6) return 64	//75%
+
+	return 255
 
 /turf/closed/proc/wallshove(mob/living/user)
 	if(user.wallpressed)
@@ -84,8 +112,18 @@
 /mob/living/proc/update_wallpress_slowdown()
 	if(wallpressed)
 		add_movespeed_modifier("wallpress", TRUE, 100, override = TRUE, multiplicative_slowdown = 3)
+		if(m_intent == MOVE_INTENT_SNEAK)
+			ADD_TRAIT(src, TRAIT_SPELLCOCKBLOCK, TRAIT_GENERIC) // spell restrictions don't seem to be working well so I'm doing it this way for now
+			var/lean_alpha = get_wallpress_alpha()
+			if(src.alpha != 0 && lean_alpha < src.alpha)
+				var/used_time = 50
+				used_time = max(used_time - (get_skill_level(/datum/skill/misc/sneaking) * 8), 10)
+				animate(src, alpha = lean_alpha, time = used_time)
+
 	else
 		remove_movespeed_modifier("wallpress")
+		animate(src, alpha = 255, time = 10)
+		REMOVE_TRAIT(src, TRAIT_SPELLCOCKBLOCK, TRAIT_GENERIC)
 
 /turf/closed/Bumped(atom/movable/AM)
 	..()
@@ -100,7 +138,7 @@
 				H.visible_message(span_warning("[H] runs into [src]!"), span_warning("I run into [src]!"))
 				addtimer(CALLBACK(H, TYPE_PROC_REF(/mob/living/carbon/human, Knockdown), 10), 10)
 
-/turf/closed/Initialize()
+/turf/closed/Initialize(mapload)
 	. = ..()
 	if(above_floor)
 		var/turf/open/transparent/openspace/target = get_step_multiz(src, UP)
@@ -124,9 +162,6 @@
 				if(count < 2)
 					above.ScrapeAway()
 	. = ..()
-
-/turf/closed/attack_paw(mob/user)
-	return attack_hand(user)
 
 /turf/closed/attack_hand(mob/user)
 	if(wallclimb)
@@ -204,15 +239,22 @@
 							helping_items += rope.name
 							has_wall_ladder = TRUE
 							break
+				if(HAS_TRAIT(L, TRAIT_DEADITE) && climbdiff > 1) //Deadites CANNOT climb... Anything more complex than rock walls
+					to_chat(user, span_warning("...What?"))
+					return
 
 				if(myskill < climbdiff)
 					to_chat(user, span_warning("I'm not capable of climbing this wall."))
 					return
 				used_time = max(70 - (myskill * 10) - (L.STASPD * 3), 30)
+			if(!L.start_climb())
+				return
 			if(user.m_intent != MOVE_INTENT_SNEAK)
 				playsound(user, climbsound, 100, TRUE)
 			user.visible_message(span_warning("[user] starts to climb [src][length(helping_items) ? " with the help of \the [english_list(helping_items)]" : ""]."), span_warning("I start to climb [src][length(helping_items) ? " with the help of \the [english_list(helping_items)]" : ""]..."))
-			if(do_after(L, used_time, target = src))
+			var/climbed = do_after(L, used_time, target = src, extra_checks = L.climb_check_callback())
+			L.end_climb()
+			if(climbed)
 				var/pulling = user.pulling
 				var/mob/living/carbon/human/climber = user
 				var/baseline_stamina_cost = 30 // have to disable stamina regen while on wall bruh in energystamina.dm
@@ -221,11 +263,13 @@
 				if(ismob(pulling))
 					user.pulling.forceMove(target)
 				var/climber_armor_class = climber.highest_ac_worn()
+				var/hadflying = (user.movement_type & FLYING)
 				if((climber_armor_class <= ARMOR_CLASS_LIGHT) && !(ismob(pulling))) // if our armour is not light or none OR we are pulling someone we eat shit and die and can't climb vertically at all, except for 'vaulting' aka we got a sold turf we can walk on in front of us
 					user.movement_type |= FLYING
 				L.stamina_add(stamina_cost_final)
 				user.forceMove(target)
-				user.movement_type &= ~FLYING
+				if(!hadflying)
+					user.movement_type &= ~FLYING
 				if(istype(user.loc, /turf/open/transparent/openspace)) // basically only apply this slop after we moved. if we are hovering on the openspace turf, then good, we are doing an 'active climb' instead of the usual vaulting action
 					var/climber2wall_dir = get_dir(climber, src)
 					climber.wallpressed = climber2wall_dir
@@ -359,13 +403,13 @@
 /turf/closed/indestructible/opshuttle
 	icon_state = "wall3"
 
-/turf/closed/indestructible/fakeglass/Initialize()
+/turf/closed/indestructible/fakeglass/Initialize(mapload)
 	. = ..()
 	icon_state = null //set the icon state to null, so our base state isn't visible
 	underlays += mutable_appearance('icons/obj/structures.dmi', "grille") //add a grille underlay
 	underlays += mutable_appearance('icons/turf/floors.dmi', "plating") //add the plating underlay, below the grille
 
-/turf/closed/indestructible/opsglass/Initialize()
+/turf/closed/indestructible/opsglass/Initialize(mapload)
 	. = ..()
 	icon_state = null
 	underlays += mutable_appearance('icons/obj/structures.dmi', "grille")

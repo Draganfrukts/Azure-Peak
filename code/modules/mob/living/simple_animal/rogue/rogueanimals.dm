@@ -10,14 +10,14 @@
 	response_disarm_simple = "gently push aside"
 	response_harm_continuous = "kicks"
 	response_harm_simple = "kick"
-	faction = list("rogueanimal")
+	faction = list(FACTION_ROGUEANIMAL)
+	blood_toll_bucket = STATS_KILLED_LESSER_BEASTS
 	robust_searching = 1
 	mob_biotypes = MOB_ORGANIC|MOB_BEAST
 	attack_sound = PUNCHWOOSH
 	health = 40
 	maxHealth = 40
 	move_to_delay = 5
-	d_intent = INTENT_DODGE
 	minbodytemp = 180
 	lose_patience_timeout = 150
 	vision_range = 5
@@ -43,10 +43,9 @@
 	var/deaggroprob = 10
 	var/eat_forever
 
-	candodge = TRUE
-
 	var/summon_tier = 0 // Tier of summoning
 	var/summon_primer = null // The message they get when summoned
+	var/list/death_loot = list() // Items spawned on death — cleared for bound creatures
 
 	//If the creature is doing something they should STOP MOVING.
 	var/can_act = TRUE
@@ -63,7 +62,6 @@
 		if(damage > 5 && prob(damage * 3))
 			emote("pain")
 		if(damage > 10)
-			Immobilize(clamp(damage/2, 1, 30))
 			shake_camera(src, 1, 1)
 		if(show_redflash())
 			if(damage < 10)
@@ -87,6 +85,11 @@
 /mob/living/simple_animal/hostile/retaliate/rogue/death(gibbed)
 	emote("death")
 	..(gibbed)
+	if(length(death_loot))
+		var/turf/deathspot = get_turf(src)
+		for(var/loot_path in death_loot)
+			for(var/i in 1 to death_loot[loot_path])
+				new loot_path(deathspot)
 
 /mob/living/simple_animal/hostile/retaliate/rogue/handle_automated_movement()
 	set waitfor = FALSE
@@ -101,24 +104,24 @@
 /mob/living/simple_animal/hostile/retaliate/rogue/proc/find_food()
 	if(food > 50 && !eat_forever)
 		return
-	var/list/around = view(1, src)
 	var/list/foundfood = list()
-	if(stat)
+	if(stat || !food_typecache)
 		return
-	for(var/obj/item/F in around)
-		if(is_type_in_list(F, food_type))
+	for(var/obj/item/F in view(1, src))
+		if(!food_typecache[F.type])
+			continue
+		if(!src.Adjacent(F))
 			foundfood += F
-			if(src.Adjacent(F))
-				face_atom(F)
-				playsound(src,'sound/misc/eat.ogg', rand(30,60), TRUE)
-				qdel(F)
-				food = max(food + 30, 100)
-				return TRUE
+			continue
+		face_atom(F)
+		playsound(src,'sound/misc/eat.ogg', rand(30,60), TRUE)
+		qdel(F)
+		food = max(food + 30, 100)
+		return TRUE
 	for(var/obj/item/F in foundfood)
-		if(is_type_in_list(F, food_type))
-			var/turf/T = get_turf(F)
-			Goto(T,move_to_delay,0)
-			return TRUE
+		var/turf/T = get_turf(F)
+		Goto(T, 0)
+		return TRUE
 	return FALSE
 
 /mob/living/simple_animal/hostile/retaliate/rogue/AttackingTarget()
@@ -136,6 +139,9 @@
 		return
 	for(var/mob/living/eattarg in around)
 		if(eattarg.stat != CONSCIOUS)
+			// Skip mobs that were ever player-controlled — don't RR player corpses
+			if(eattarg.mind || (iscarbon(eattarg) && eattarg:last_mind))
+				continue
 			foundfood += eattarg
 			L = eattarg
 			if(src.Adjacent(L))
@@ -171,11 +177,11 @@
 						return TRUE
 	for(var/mob/living/eattarg in foundfood)
 		var/turf/T = get_turf(eattarg)
-		Goto(T,move_to_delay,0)
+		Goto(T, 0)
 		return TRUE
 	return FALSE
 
-/mob/living/simple_animal/hostile/retaliate/rogue/Initialize()
+/mob/living/simple_animal/hostile/retaliate/rogue/Initialize(mapload)
 	. = ..()
 	if(milkies)
 		udder = new()
@@ -193,7 +199,7 @@
 	aggressive = 0
 	if(enemies.len)
 		if(prob(23))
-			enemies = list()
+			clear_enemies()
 			src.visible_message(span_notice("[src] calms down."))
 			LoseTarget()
 		else
@@ -215,7 +221,7 @@
 			if(prob(deaggroprob))
 				if(mob_timers["aggro_time"])
 					if(world.time > mob_timers["aggro_time"] + 30 SECONDS)
-						enemies = list()
+						clear_enemies()
 						src.visible_message(span_info("[src] calms down."))
 						LoseTarget()
 				else
@@ -274,13 +280,13 @@
 /mob/living/simple_animal/hostile/retaliate/rogue/beckoned(mob/user)
 	if(tame && !stop_automated_movement)
 		stop_automated_movement = TRUE
-		Goto(user,move_to_delay)
+		Goto(user)
 		addtimer(CALLBACK(src, PROC_REF(return_action)), 3 SECONDS)
 
 /mob/living/simple_animal/hostile/retaliate/rogue/food_tempted(obj/item/O, mob/user)
 
-	if(is_type_in_list(O, food_type) && !stop_automated_movement)
+	if(food_typecache?[O.type] && !stop_automated_movement)
 
 		stop_automated_movement = TRUE
-		Goto(user,move_to_delay)
+		Goto(user)
 		addtimer(CALLBACK(src, PROC_REF(return_action)), 3 SECONDS)

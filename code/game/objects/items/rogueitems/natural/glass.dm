@@ -1,6 +1,6 @@
 /obj/item/natural/glass
 	name = "glass"
-	desc = "Windowpanes for construction work."
+	desc = "Glimmering panes that offer a slightly tinted glimpse into the outside world, while keeping the wind-and-weather at bay. Fit for fashioning windows, just be mindful not to drop them."
 	icon = 'icons/roguetown/items/crafting.dmi'
 	icon_state = "glasspane"
 	dropshrink = 0.8
@@ -31,28 +31,6 @@
 		playsound(src, 'sound/foley/glassbreak.ogg', 90, TRUE)
 		qdel(src)
 
-/obj/item/natural/glass/attack_right(mob/user)
-	if(user.get_active_held_item())
-		return
-	to_chat(user, span_warning("I start to collect [src]..."))
-	if(move_after(user, 4 SECONDS, target = src))
-		var/stackcount = 0
-		for(var/obj/item/natural/glass/F in get_turf(src))
-			stackcount++
-		while(stackcount > 0)
-			if(stackcount == 1)
-				new /obj/item/natural/glass(get_turf(user))
-				stackcount--
-			else if(stackcount >= 2)
-				var/obj/item/natural/bundle/glass/B = new(get_turf(user))
-				B.amount = clamp(stackcount, 2, 3)
-				B.update_bundle()
-				stackcount -= clamp(stackcount, 2, 3)
-				user.put_in_hands(B)
-		for(var/obj/item/natural/glass/F in get_turf(src))
-			playsound(get_turf(user.loc), 'sound/foley/dropsound/glass_drop.ogg', 90)
-			qdel(F)
-
 //................	Glass panes stack	............... //
 /obj/item/natural/bundle/glass
 	name = "stack of glass"
@@ -80,6 +58,7 @@
 	icon1step = 2
 	icon2 = "glasspane2"
 	icon2step = 3
+	dropshrink = 0.9
 
 /obj/item/natural/bundle/glass/throw_impact(atom/hit_atom, datum/thrownthing/thrownthing)
 	if(!..()) //was it caught by a mob?
@@ -94,7 +73,7 @@
 //................	Glass shard	............... //
 /obj/item/natural/glass_shard
 	name = "shard"
-	desc = "A sharp shard of glass."
+	desc = "A sharp shard of glass. Mind the jagged edge, especially if you lack a tough sole."
 	icon = 'icons/roguetown/items/crafting.dmi'
 	experimental_inhand = FALSE
 	icon_state = "shard1"
@@ -108,8 +87,9 @@
 	attack_verb = list("stabbed", "slashed", "sliced", "cut")
 	max_integrity = 40
 	smeltresult = /obj/item/natural/glass
+	dropshrink = 0.8
 
-/obj/item/natural/glass_shard/Initialize()
+/obj/item/natural/glass_shard/Initialize(mapload)
 	. = ..()
 	AddComponent(/datum/component/caltrop, force)
 	AddComponent(/datum/component/butchering, 150, 65)

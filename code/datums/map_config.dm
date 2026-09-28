@@ -1,16 +1,15 @@
 //used for holding information about unique properties of maps
 //feed it json files that match the datum layout
 //defaults to box
-//  -Cyberboss
+//	-Cyberboss
 
 /datum/map_config
 	// Metadata
 	var/config_filename = "_maps/dun_world.json"
-	var/defaulted = TRUE  // set to FALSE by LoadConfig() succeeding
+	var/defaulted = TRUE	// set to FALSE by LoadConfig() succeeding
 	// Config from maps.txt
 	var/config_max_users = 0
 	var/config_min_users = 0
-	var/voteweight = 1
 	var/votable = FALSE
 
 	// Config actually from the JSON - should default to Dun World
@@ -21,9 +20,7 @@
 	var/traits = null
 	var/space_ruin_levels = 7
 	var/space_empty_levels = 1
-
-	/// Anything but null will load matthios dungeon
-	var/matthios_dungeon = FALSE
+	var/load_dungeon = TRUE
 
 	/// List of unit tests that are skipped when running this map
 	var/list/skipped_tests
@@ -45,7 +42,7 @@
 	if (!config.LoadConfig(filename, error_if_missing))
 		qdel(config)
 		if(default_to_box)
-			config = new /datum/map_config  // Fall back to Dun Manor
+			config = new /datum/map_config	// Fall back to Dun Manor
 	if (delete_after)
 		fdel(filename)
 	if(config)
@@ -131,12 +128,7 @@
 		log_world("map_config space_empty_levels is not a number!")
 		return
 
-	temp = json["matthios_dungeon"]
-	if(isnum(temp))
-		matthios_dungeon = temp
-	else if(!isnull(temp))
-		log_world("map_config matthios_dungeon is not a number!")
-		return
+	load_dungeon = json["load_dungeon"] != FALSE
 
 	allow_custom_shuttles = json["allow_custom_shuttles"] != FALSE
 

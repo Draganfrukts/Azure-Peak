@@ -23,10 +23,17 @@ GLOBAL_LIST_EMPTY(antagonists)
 	var/antagpanel_category = "Uncategorized"	//Antagpanel will display these together, REQUIRED
 	var/show_name_in_check_antagonists = FALSE //Will append antagonist name in admin listings - use for categories that share more than one antag type
 	var/increase_votepwr = TRUE
-	var/rogue_enabled = FALSE
+	var/rogue_enabled = FALSE // this also determines whether it shows up in the panel! i dont know why!
 
 	///flags used by storytellers
 	var/antag_flags = NONE
+	var/has_tempo = FALSE
+	var/storyteller_antag_flags = STORYTELLER_ANTAG_NONE
+	var/storyteller_slot_scaling = 1
+	var/storyteller_slot_default_cap = 0
+	var/list/storyteller_maxcaps
+	var/storyteller_min_players = 0
+	var/override_candidatereq = FALSE
 
 /datum/antagonist/New()
 	GLOB.antagonists += src
@@ -56,7 +63,7 @@ GLOBAL_LIST_EMPTY(antagonists)
 		if(is_type_in_typecache(src, A.typecache_datum_blacklist))
 			return FALSE
 
-/// Proc to return the weight of this antagonist for purpose of antag cap calculations. Meant to be overriddeable  
+/// Proc to return the weight of this antagonist for purpose of antag cap calculations. Meant to be overriddeable
 /datum/antagonist/proc/get_antag_cap_weight()
 	return 1
 
@@ -104,6 +111,8 @@ GLOBAL_LIST_EMPTY(antagonists)
 			replace_banned_player()
 		else if(owner.current.client?.holder && (CONFIG_GET(flag/auto_deadmin_antagonists) || owner.current.client.prefs?.toggles & DEADMIN_ANTAGONIST))
 			owner.current.client.holder.auto_deadmin()
+		if(!has_tempo)
+			REMOVE_TRAIT(owner.current, TRAIT_TEMPO, SPECIES_TRAIT)
 
 /datum/antagonist/proc/is_banned(mob/M)
 	if(!M)
@@ -174,7 +183,7 @@ GLOBAL_LIST_EMPTY(antagonists)
 
 //Displayed at the start of roundend_category section, default to roundend_category header
 /datum/antagonist/proc/roundend_report_header()
-	return 	"<span class='header'>The [roundend_category] were:</span><br>"
+	return	"<span class='header'>The [roundend_category] were:</span><br>"
 
 //Displayed at the end of roundend_category section
 /datum/antagonist/proc/roundend_report_footer()

@@ -19,6 +19,26 @@
 	path = /obj/item/clothing/head/roguetown/archercap
 	sort_category = "Hats"
 
+/datum/loadout_item/cap
+	name = "Cap"
+	path = /obj/item/clothing/head/roguetown/cap
+	sort_category = "Hats"
+
+/datum/loadout_item/tiyon
+	name = "Tiyon"
+	path = /obj/item/clothing/head/roguetown/tiyon
+	sort_category = "Hats"
+
+/datum/loadout_item/longveil
+	name = "Long Veil"
+	path = /obj/item/clothing/head/roguetown/longveil
+	sort_category = "Hats"
+
+/datum/loadout_item/durag
+	name = "Durag"
+	path = /obj/item/clothing/head/roguetown/durag
+	sort_category = "Hats"
+
 /datum/loadout_item/strawhat
 	name = "Straw Hat"
 	path = /obj/item/clothing/head/roguetown/strawhat
@@ -27,6 +47,26 @@
 /datum/loadout_item/witchhat
 	name = "Witch Hat"
 	path = /obj/item/clothing/head/roguetown/witchhat
+	sort_category = "Hats"
+
+/datum/loadout_item/witchhat/old
+	name = "Witch Hat (Old)"
+	path = /obj/item/clothing/head/roguetown/witchhat/old
+	sort_category = "Hats"
+
+/datum/loadout_item/wizhat
+	name = "Wizard Hat"
+	path = /obj/item/clothing/head/roguetown/wizhat
+	sort_category = "Hats"
+
+/datum/loadout_item/wizhat/gen
+	name = "Wizard Hat (No Brim)"
+	path = /obj/item/clothing/head/roguetown/wizhat/gen
+	sort_category = "Hats"
+
+/datum/loadout_item/chefhat
+	name = "Chef's Hat"
+	path = /obj/item/clothing/head/roguetown/chef
 	sort_category = "Hats"
 
 /datum/loadout_item/bardhat
@@ -99,6 +139,17 @@
 	path = /obj/item/flowercrown/rosa
 	sort_category = "Hats"
 
+/datum/loadout_item/thorn_rosa_crown
+	name = "Rosa Crown with Thorns"
+	path = /obj/item/flowercrown/rosa/thorns
+	sort_category = "Hats"
+
+/datum/loadout_item/dyeable_crown
+	name = "Gray Flower Crown"
+	path = /obj/item/flowercrown/rosa/dyecrown
+	sort_category = "Hats"
+
+
 /datum/loadout_item/salvia_crown
 	name = "Salvia Crown"
 	path = /obj/item/flowercrown/salvia
@@ -144,3 +195,42 @@
 	path = /obj/item/clothing/head/roguetown/jester
 	sort_category = "Hats"
 
+/datum/loadout_item/shawl
+	name = "Shawl"
+	path = /obj/item/clothing/head/roguetown/shawl
+	sort_category = "Hats"
+
+/datum/loadout_item/shawlhood
+	name = "Shawl (Hijab Variant)"
+	path = /obj/item/clothing/head/roguetown/roguehood/shawlhood
+	sort_category = "Hats"
+
+/datum/loadout_item/maidband
+	name = "Maid Headdress"
+	path = /obj/item/clothing/head/roguetown/maidhead
+	sort_category = "Hats"
+
+/datum/loadout_item/maidbandfancy
+	name = "Valorian Maid Headband"
+	path = /obj/item/clothing/head/roguetown/maidband
+	sort_category = "Hats"
+
+/datum/loadout_item/loudmouth_headgear
+	name = "Loudmouth's Headcover"
+	path = /obj/item/clothing/head/roguetown/veiled/loudmouth
+	sort_category = "Hats"
+
+/datum/loadout_item/turban
+	name = "Turban"
+	path = /obj/item/clothing/head/roguetown/veiled/loudmouth
+	sort_category = "Hats"
+
+/datum/loadout_item/duelisthat
+	name = "Dashing Feathered Hat"
+	path = /obj/item/clothing/head/roguetown/duelisthat
+	sort_category = "Hats"
+
+/datum/loadout_item/flamboyant
+	name = "Flamboyant Hat"
+	path = /obj/item/clothing/head/roguetown/flamboyant
+	sort_category = "Hats"

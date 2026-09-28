@@ -5,6 +5,7 @@
 	persistent_loop = TRUE
 	var/stress2give = /datum/stressevent/music
 	sound_group = /datum/sound_group/instruments //reserves sound channels for up to 10 instruments at a time
+	filter_pref = SOUND_INSTRUMENTS
 
 /obj/item/rogue/instrument
 	name = ""
@@ -44,7 +45,7 @@
 			if("onbelt")
 				return list("shrink" = 0.3,"sx" = -2,"sy" = -5,"nx" = 4,"ny" = -5,"wx" = 0,"wy" = -5,"ex" = 2,"ey" = -5,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 0,"sflip" = 0,"wflip" = 0,"eflip" = 0,"northabove" = 0,"southabove" = 1,"eastabove" = 1,"westabove" = 0)
 
-/obj/item/rogue/instrument/Initialize()
+/obj/item/rogue/instrument/Initialize(mapload)
 	soundloop = new(src, FALSE)
 	. = ..()
 
@@ -60,18 +61,6 @@
 		soundloop.stop()
 		user.remove_status_effect(/datum/status_effect/buff/playing_music)
 
-/obj/item/rogue/instrument/proc/check_file(infile, filename, user)
-	var/file_ext = lowertext(copytext(filename, -4))
-	var/file_size = length(infile)
-
-	if(file_ext != ".ogg")
-		return "SONG MUST BE AN OGG."
-	if(file_size > 4 * 1024 * 1024)
-		return "TOO BIG. 4 MEGS OR LESS."
-
-	message_admins("[ADMIN_LOOKUPFLW(user)] uploaded a song [filename] of size [file_size / 1000000] (~MB).")
-	return null
-
 /obj/item/rogue/instrument/attack_self(mob/living/user)
 	var/stressevent = /datum/stressevent/music
 	. = ..()
@@ -85,21 +74,49 @@
 		user.remove_status_effect(/datum/status_effect/buff/playing_music)
 		return
 	else
-		var/playdecision = alert(user, "Would you like to start a band?", "Band Play", "Yes", "No")
+		var/playdecision = alert(user, "Would you like to start a band?", "Band Play", "Nay", "Yea")
 		switch(playdecision)
-			if("Yes")
-				groupplaying = TRUE
-			if("No")
+			if("Nay")
 				groupplaying = FALSE
+			if("Yea")
+				groupplaying = TRUE
+			else
+				return
+
+		if(user.mind)
+			switch(user.get_skill_level(/datum/skill/misc/music))
+				if(1)
+					note_color = "#ffffff"
+					stressevent = /datum/stressevent/music/novice
+				if(2)
+					note_color = "#ffffff"
+					stressevent = /datum/stressevent/music/apprentice
+				if(3)
+					note_color = "#1eff00"
+					stressevent = /datum/stressevent/music/journeyman
+				if(4)
+					note_color = "#0070dd"
+					stressevent = /datum/stressevent/music/expert
+				if(5)
+					note_color = "#a335ee"
+					stressevent = /datum/stressevent/music/master
+				if(6)
+					note_color = "#ff8000"
+					stressevent = /datum/stressevent/music/legendary
+				else
+					note_color = initial(note_color)
+					stressevent = /datum/stressevent/music
+		soundloop.stress2give = stressevent
+
 		if(!groupplaying)
 			var/list/options = song_list.Copy()
 			if(user.mind && user.get_skill_level(/datum/skill/misc/music) >= 4)
 				options["Upload New Song"] = "upload"
-			
+
 			var/choice = input(user, "Which song?", "Music", name) as null|anything in options
 			if(!choice || !user)
 				return
-				
+
 			if(playing || !(src in user.held_items) || user.get_inactive_held_item())
 				return
 
@@ -108,59 +125,27 @@
 					say("NOT YET!")
 					return
 				playsound(loc, 'sound/misc/beep.ogg', 100, FALSE, -1)
-				var/infile = input(user, "CHOOSE A NEW SONG", src) as null|file
-
-				if(!infile)
+				var/newfile = music_upload(user, src)
+				if(!newfile)
 					return
 				if(playing || !(src in user.held_items) || user.get_inactive_held_item())
 					return
 
-				var/filename = "[infile]"
-				var/file_error = check_file(infile, filename, user)
-				if(file_error)
-					to_chat(user, span_warning(file_error))
-					return
-
 				lastfilechange = world.time
-				fcopy(infile,"data/jukeboxuploads/[user.ckey]/[filename]")
-				curfile = file("data/jukeboxuploads/[user.ckey]/[filename]")
+				curfile = newfile
 
-				var/songname = input(user, "Name your song:", "Song Name") as text|null
-				if(songname)
-					song_list[songname] = curfile
+				var/path = "[curfile]"
+				var/entry = input(user, "Name your song:", "Song Name") as text|null
+				if(QDELETED(src))
+					return
+				var/songname = strip_html(entry, MAX_NAME_LEN)
+				if(!songname || songname == "Upload New Song")
+					songname = copytext(path, findlasttext(path, "/") + 1)
+				song_list[songname] = newfile
 				return
 
 			curfile = song_list[choice]
 			if(!user || playing || !(src in user.held_items))
-				return
-			if(user.mind)
-				switch(user.get_skill_level(/datum/skill/misc/music))
-					if(1)
-						stressevent = /datum/stressevent/music
-						soundloop.stress2give = stressevent
-					if(2)
-						note_color = "#ffffff"
-						stressevent = /datum/stressevent/music/two
-						soundloop.stress2give = stressevent
-					if(3)
-						note_color = "#1eff00"
-						stressevent = /datum/stressevent/music/three
-						soundloop.stress2give = stressevent
-					if(4)
-						note_color = "#0070dd"
-						stressevent = /datum/stressevent/music/four
-						soundloop.stress2give = stressevent
-					if(5)
-						note_color = "#a335ee"
-						stressevent = /datum/stressevent/music/five
-						soundloop.stress2give = stressevent
-					if(6)
-						note_color = "#ff8000"
-						stressevent = /datum/stressevent/music/six
-						soundloop.stress2give = stressevent
-					else
-						soundloop.stress2give = stressevent
-			if(!(src in user.held_items))
 				return
 			if(user.get_inactive_held_item())
 				playing = FALSE
@@ -169,8 +154,8 @@
 				return
 			if(curfile)
 				playing = TRUE
-				soundloop.mid_sounds = list(curfile)
-				soundloop.cursound = null
+				soundloop.set_mid_sounds(list(curfile))
+				soundloop.mid_length = rustg_sound_length("[curfile]")
 				soundloop.start()
 				user.apply_status_effect(/datum/status_effect/buff/playing_music, stressevent, note_color)
 				record_round_statistic(STATS_SONGS_PLAYED)
@@ -179,38 +164,38 @@
 				groupplaying = FALSE
 				soundloop.stop()
 				user.remove_status_effect(/datum/status_effect/buff/playing_music)
+
 		if(groupplaying)
-			var/pplnearby =view(7,loc)
+			var/list/pplnearby = view(7,loc)
 			var/list/instrumentsintheband = list()
 			var/list/bandmates = list()
 			for(var/mob/living/carbon/human/potentialbandmates in pplnearby)
-				var/list/thisguyinstrument = list()
-				var/obj/item/iteminhand = potentialbandmates.get_active_held_item()
-				if(istype(iteminhand, /obj/item/rogue/instrument))
-					var/decision = alert(potentialbandmates, "Would you like to perform in a band?", "Band Play", "Yes", "No")
-					switch(decision)
-						if("No")
-							return
-						else
-							bandmates += potentialbandmates
-							instrumentsintheband += iteminhand
-							thisguyinstrument += iteminhand
-							for(var/obj/item/rogue/instrument/bandinstrumentspersonal in thisguyinstrument)
-								if(bandinstrumentspersonal.playing)
-									return
-								bandinstrumentspersonal.curfile = input(potentialbandmates, "Which song shall [potentialbandmates] perform?", "Music", name) as null|anything in bandinstrumentspersonal.song_list
-								bandinstrumentspersonal.curfile = bandinstrumentspersonal.song_list[bandinstrumentspersonal.curfile]
+				var/obj/item/rogue/instrument/theirinstrument = potentialbandmates.get_active_held_item()
+				if(!istype(theirinstrument))
+					continue
+				if(theirinstrument.playing)
+					continue
+				if(potentialbandmates != user)
+					if(alert(potentialbandmates, "Would you like to perform in a band?", "Band Play", "Nay", "Yea") != "Yea")
+						continue
+				var/songchoice = input(potentialbandmates, "Which song shall [potentialbandmates] perform?", "Music", name) as null|anything in theirinstrument.song_list
+				if(!songchoice)
+					continue
+				theirinstrument.curfile = theirinstrument.song_list[songchoice]
+				bandmates += potentialbandmates
+				instrumentsintheband += theirinstrument
 			if(do_after(user, 1))
 				for(var/obj/item/rogue/instrument/bandinstrumentsband in instrumentsintheband)
-					if(!curfile)
-						return
+					if(!bandinstrumentsband.curfile)
+						continue
 					bandinstrumentsband.playing = TRUE
 					bandinstrumentsband.groupplaying = TRUE
-					bandinstrumentsband.soundloop.mid_sounds = bandinstrumentsband.curfile
-					bandinstrumentsband.soundloop.cursound = null
+					bandinstrumentsband.soundloop.stress2give = stressevent
+					bandinstrumentsband.soundloop.mid_length = rustg_sound_length("[bandinstrumentsband.curfile]")
+					bandinstrumentsband.soundloop.set_mid_sounds(list(bandinstrumentsband.curfile))
 					bandinstrumentsband.soundloop.start()
-					for(var/mob/living/carbon/human/A in bandmates)
-						A.apply_status_effect(/datum/status_effect/buff/playing_music, stressevent, note_color)
+				for(var/mob/living/carbon/human/A in bandmates)
+					A.apply_status_effect(/datum/status_effect/buff/playing_music, stressevent, note_color)
 
 /obj/item/rogue/instrument/lute
 	name = "lute"
@@ -236,7 +221,7 @@
 	"We Toil Together" = 'sound/music/instruments/accord (3).ogg',
 	"Just One More, Tavern Wench" = 'sound/music/instruments/accord (4).ogg',
 	"Moonlight Carnival" = 'sound/music/instruments/accord (5).ogg',
-	"'Ye Best Be Goin'" = 'sound/music/instruments/accord (6).ogg',
+	"\"Ye Best Be Goin\"" = 'sound/music/instruments/accord (6).ogg',
 	"Beloved Blue" = 'sound/music/instruments/accord (7).ogg')
 
 /obj/item/rogue/instrument/guitar
@@ -246,7 +231,7 @@
 	song_list = list("Fire-Cast Shadows" = 'sound/music/instruments/guitar (1).ogg',
 	"The Forced Hand" = 'sound/music/instruments/guitar (2).ogg',
 	"Regrets Unpaid" = 'sound/music/instruments/guitar (3).ogg',
-	"'Took the Mammon and Ran'" = 'sound/music/instruments/guitar (4).ogg',
+	"\"Took the Mammon and Ran\"" = 'sound/music/instruments/guitar (4).ogg',
 	"Poor Man's Tithe" = 'sound/music/instruments/guitar (5).ogg',
 	"In His Arms Ye'll Find Me" = 'sound/music/instruments/guitar (6).ogg',
 	"El Odio" = 'sound/music/instruments/guitar (7).ogg',
@@ -321,7 +306,6 @@
 	"Bard Dance" = 'sound/music/instruments/viola (7).ogg', // BG3 Song
 	"Old Time Battles" = 'sound/music/instruments/viola (8).ogg') // BG3 Song
 
-
 /obj/item/rogue/instrument/vocals
 	name = "vocalist's talisman"
 	desc = "This talisman emanates a soft shimmer of light. When held, it can amplify and even change a bard's voice."
@@ -348,6 +332,18 @@
 	lefthand_file = 'icons/mob/inhands/items_lefthand.dmi'
 	righthand_file = 'icons/mob/inhands/items_righthand.dmi'
 	song_list = list(
+	"A Rambling Tongue" = 'sound/music/instruments/shamisen A Rambling Tongue.ogg',
+	"Ashitaka" = 'sound/music/instruments/shamisen The Legend of Ashitaka.ogg',
+	"Daimyo Dreamwalker" = 'sound/music/instruments/shamisen Daimyo Dreamwalker.ogg',
+	"Fire Phoenix" = 'sound/music/instruments/shamisen Fire Phoenix.ogg',
+	"Kaiju Islands" = 'sound/music/instruments/shamisen Kaiju Islands.ogg',
+	"Lavender Village" = 'sound/music/instruments/shamisen Lavender Village.ogg',
+	"Morning Is Coming" = 'sound/music/instruments/shamisen Morning Is Coming.ogg',
+	"Pouncing Shadow" = 'sound/music/instruments/shamisen Pouncing Shadow.ogg',
+	"Rising Sun" = 'sound/music/instruments/shamisen Rising Sun.ogg',
+	"Those Who Fight" = 'sound/music/instruments/shamisen Those Who Fight.ogg',
+	"Village in the Mountains" = 'sound/music/instruments/shamisen Village in the Mountains.ogg',
+	"Winning the Soul" = 'sound/music/instruments/shamisen Winning the Soul.ogg',
 	"Cursed Apple" = 'sound/music/instruments/shamisen (1).ogg',
 	"Fire Dance" = 'sound/music/instruments/shamisen (2).ogg',
 	"Lute" = 'sound/music/instruments/shamisen (3).ogg',
@@ -356,8 +352,6 @@
 	"Season" = 'sound/music/instruments/shamisen (6).ogg',
 	"Parade" = 'sound/music/instruments/shamisen (7).ogg',
 	"Koshiro" = 'sound/music/instruments/shamisen (8).ogg')
-
-
 
 /obj/item/rogue/instrument/psyaltery
 	name = "psyaltery"

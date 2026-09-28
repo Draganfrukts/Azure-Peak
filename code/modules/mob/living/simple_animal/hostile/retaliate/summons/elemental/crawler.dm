@@ -1,4 +1,5 @@
 /mob/living/simple_animal/hostile/retaliate/rogue/elemental/crawler
+	anatomy_type = /datum/anatomy/construct/trash
 	icon = 'icons/mob/summonable/32x32.dmi'
 	name = "earthen crawler"
 	desc = "This is a relatively small elemental formed of dirt, rock, and clay. It \
@@ -15,10 +16,12 @@
 	move_to_delay = 8
 	base_intents = list(/datum/intent/simple/elemental_unarmed)
 	butcher_results = list()
-	faction = list("elemental")
+	death_loot = list(/obj/item/magic/elemental/mote = 4)
+	faction = list(FACTION_ELEMENTAL)
 	mob_biotypes = MOB_ORGANIC|MOB_BEAST
 	health = 120
 	maxHealth = 120
+	threat_point = 15
 	melee_damage_lower = 15
 	melee_damage_upper = 17
 	vision_range = 8
@@ -32,10 +35,8 @@
 	pooptype = null
 	simple_detect_bonus = 20
 	deaggroprob = 0
-	defprob = 20
-	candodge = TRUE
 	// del_on_deaggro = 44 SECONDS
-	retreat_health = 0.3
+	retreat_health = 0
 	food = 0
 	attack_sound = 'sound/combat/hits/onstone/wallhit.ogg'
 	attack_verb_continuous = "pounds"
@@ -48,19 +49,15 @@
 	STASTR = 8
 	STASPD = 8
 
-/mob/living/simple_animal/hostile/retaliate/rogue/elemental/crawler/Initialize()
+	ai_controller = /datum/ai_controller/elemental
+	move_base_delay = MOVEMENT_DELAY_SPD_3
+
+/mob/living/simple_animal/hostile/retaliate/rogue/elemental/crawler/Initialize(mapload)
 	src.adjust_skillrank(/datum/skill/combat/unarmed, 2, TRUE)
 	. = ..()
 
 /mob/living/simple_animal/hostile/retaliate/rogue/elemental/crawler/death(gibbed)
 	..()
-	var/turf/deathspot = get_turf(src)
-	new /obj/item/magic/elemental/mote(deathspot)
-	new /obj/item/magic/elemental/mote(deathspot)
-	new /obj/item/magic/elemental/mote(deathspot)
-	new /obj/item/magic/elemental/mote(deathspot)
-	new /obj/item/magic/elemental/mote(deathspot)
-	new /obj/item/magic/elemental/mote(deathspot)
 	update_icon()
-	sleep(1)
-	qdel(src)
+	spawn(1)
+		qdel(src)

@@ -3,7 +3,6 @@
 	var/key_third_person = "" //This will also call the emote
 	var/message = "" //Message displayed when emote is used
 	var/message_mime = "" //Message displayed if the user is a mime
-	var/message_monkey = "" //Message displayed if the user is a monkey
 	var/message_simple = "" //Message to display if the user is a simple_animal
 	var/message_param = "" //Message to display if a param was given
 	var/message_muffled = null //Message to display if the user is muffled
@@ -33,6 +32,12 @@
 	/// Whether this emote is filtered by our "hear animal noises" preference.
 	var/is_animal = FALSE
 
+	/// If true, emote will check for detached trait and not run if the user has it and the emote wasn't intentional. Used for emotes that require emotional investment to make sense, like crying or laughing.
+	var/needs_emotion = FALSE
+
+	/// For ranged targeted emotes, range of 2 is for adjacents
+	var/targetrange = 2
+
 	/// Whether this emote will ONLY go through a few walls on the same z-level.
 	var/is_quiet = FALSE
 
@@ -59,7 +64,10 @@
 /datum/emote/proc/adjacentaction(mob/user, mob/target)
 	return
 
-/datum/emote/proc/run_emote(mob/user, params, type_override, intentional = FALSE, targetted = FALSE, animal = FALSE)
+/datum/emote/proc/get_env(mob/user)
+	return null
+
+/datum/emote/proc/run_emote(mob/user, params, type_override, intentional = FALSE, targetted = FALSE, animal = FALSE, quiet = FALSE)
 	. = TRUE
 	if(!can_run_emote(user, TRUE, intentional))
 		return FALSE
@@ -68,15 +76,16 @@
 	if(targetted)
 		var/list/mobsadjacent = list()
 		var/mob/chosenmob
-		for(var/mob/living/M in range(user, 2))
-			if(M != user)
+		for(var/mob/living/M in range(user, targetrange))
+			if(M != user && !M.rogue_sneaking && (M.name != "Unknown"))
 				mobsadjacent += M
 		if(mobsadjacent.len)
-			chosenmob = tgui_input_list(user, "[key] who?", "XYLIX", mobsadjacent)
+			chosenmob = input(user, "[key] who?") in mobsadjacent
 		if(chosenmob)
-			if(user.Adjacent(chosenmob))
+			if(user.Adjacent(chosenmob) || targetrange > 2)
 				params = chosenmob.name
 				adjacentaction(user, chosenmob)
+
 	var/raw_msg = select_message_type(user, intentional)
 	var/msg = raw_msg
 	if(params && message_param)
@@ -120,47 +129,45 @@
 				emotelocation = dullahan.my_head
 			else// if(!vision.viewing_head)
 				emotelocation = user
+		var/sound_range = snd_range
+		if(quiet)
+			sound_range = -6
 
-		playsound(emotelocation, tmp_sound, snd_vol, FALSE, snd_range, soundping = soundping, animal_pref = animal, quiet = is_quiet)
+		playsound(emotelocation, tmp_sound, snd_vol, FALSE, sound_range, soundping = soundping, animal_pref = animal, quiet = is_quiet)
 	if(!nomsg)
-		user.log_message(msg, LOG_EMOTE)
+		if(user.key)
+			user.log_message(msg, LOG_EMOTE)
 		var/pre_color_msg = msg
 		if (use_params_for_runechat) // apply puncutation stripping here where appropriate
 			var/static/regex/regex = regex(@"[,.!?]", "g")
 			pre_color_msg = regex.Replace(pre_color_msg, "")
 			pre_color_msg = trim(pre_color_msg, MAX_MESSAGE_LEN)
-		// Checks to see if we're emoting on the body while we have a head, or if we're emoting on the head.
+		// Build the styled name for chat
+		var/styled_name
 		if(human && human.voice_color)
-			msg = "<span style='color:#[human.voice_color];text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;'><b>[emotelocation]</b></span> " + msg
+			var/color_to_use = human.voice_color
+			if(human.voicecolor_override)
+				color_to_use = human.voicecolor_override
+			styled_name = "<span style='color:[color_to_use];text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;'><b>[emotelocation]</b></span>"
 		else
-			msg = "<b>[emotelocation]</b> " + msg
-		for(var/mob/M in GLOB.dead_mob_list)
-			if(!M.client || isnewplayer(M))
-				continue
-			var/T = get_turf(emotelocation)
-			if(M.stat == DEAD && M.client && (M.client.prefs?.chat_toggles & CHAT_GHOSTSIGHT) && !(M in viewers(T, null)))
-				M.show_message(msg)
+			styled_name = "<b>[emotelocation]</b>"
+		// If the message contains $n, substitute it with the name instead of prepending
+		if(findtext(msg, "$n"))
+			msg = trim(replacetext(msg, "$n", styled_name))
+			pre_color_msg = trim(replacetext(pre_color_msg, "$n", "[emotelocation]"))
+		else
+			msg = "[styled_name] [msg]"
 		var/runechat_msg_to_use = null
 		if(show_runechat)
-			runechat_msg_to_use = runechat_msg ? runechat_msg : pre_color_msg
+			runechat_msg_to_use = (runechat_msg && !use_params_for_runechat) ? runechat_msg : pre_color_msg
+
 		if(emote_type == EMOTE_AUDIBLE)
-			emotelocation.audible_message(msg, runechat_message = runechat_msg_to_use, log_seen = SEEN_LOG_EMOTE)
+			emotelocation.audible_message(msg, runechat_message = runechat_msg_to_use, log_seen = SEEN_LOG_EMOTE, hearing_distance = (quiet ? 1 : DEFAULT_MESSAGE_RANGE))
 		else
-			emotelocation.visible_message(msg, runechat_message = runechat_msg_to_use, log_seen = SEEN_LOG_EMOTE)
+			emotelocation.visible_message(msg, runechat_message = runechat_msg_to_use, log_seen = SEEN_LOG_EMOTE, vision_distance = (quiet ? 1 : DEFAULT_MESSAGE_RANGE))
 
 /mob/living/proc/get_emote_pitch()
 	return clamp(voice_pitch, 0.5, 2)
-
-/mob/living/carbon/human/get_emote_pitch()
-	var/final_pitch = ..()
-	var/pitch_modifier = 0
-	if(STASTR > 10)
-		pitch_modifier -= (STASTR - 10) * 0.03
-	else if(STASTR < 10)
-		pitch_modifier += (10 - STASTR) * 0.03
-	return clamp(final_pitch + pitch_modifier, 0.5, 2)
-/datum/emote/proc/get_env(mob/living/user)
-	return
 
 
 
@@ -188,13 +195,13 @@
 			var/modifier
 			if(H.age == AGE_OLD)
 				modifier = "old"
-			if((!ignore_silent && (H.silent)) || (!ignore_silent && !is_emote_muffled(H)) || (!ignore_silent && HAS_TRAIT(H, TRAIT_MUTE)) ||  (!ignore_silent && HAS_TRAIT(H, TRAIT_BAGGED)))
+			if((!ignore_silent && (H.silent)) || (!ignore_silent && !is_emote_muffled(H)) || (!ignore_silent && HAS_TRAIT(H, TRAIT_MUTE)) ||	(!ignore_silent && HAS_TRAIT(H, TRAIT_BAGGED)))
 				modifier = "silenced"
 			if(user.gender == FEMALE && H.dna.species.soundpack_f)
 				possible_sounds = H.dna.species.soundpack_f.get_sound(key,modifier)
 			else if(H.dna.species.soundpack_m)
 				possible_sounds = H.dna.species.soundpack_m.get_sound(key,modifier)
-			 // LETHALSTONE ADDITION BEGIN: use preference-set voice types where possible
+				// LETHALSTONE ADDITION BEGIN: use preference-set voice types where possible
 			if(H.voice_type)
 				switch (H.voice_type)
 					if (VOICE_TYPE_MASC)
@@ -218,8 +225,15 @@
 					used_sound = possible_sounds
 				H.last_sound = used_sound
 				return used_sound
-		else
-			return user.get_sound(key)
+		else if(user.mind && isanimal(user))
+			var/mob/living/simple_animal/A = user
+			var/datum/voicepack/VP = A.get_animal_voicepack()
+			if(VP)
+				var/possible_sounds = VP.get_sound(key)
+				if(possible_sounds)
+					if(islist(possible_sounds))
+						return pick(possible_sounds)
+					return possible_sounds
 
 /mob/living/proc/get_sound(input)
 	return
@@ -231,6 +245,8 @@
 		msg = replacetext(msg, "them", user.p_them())
 	if(findtext(msg, "%s"))
 		msg = replacetext(msg, "%s", user.p_s())
+	if(findtext(msg, "themselves"))
+		msg = replacetext(msg, "themselves", user.p_themselves())
 	return msg
 
 /datum/emote/proc/select_message_type(mob/user, intentional)
@@ -247,8 +263,6 @@
 			. = message_muffled
 	if(user.mind && user.mind.miming && message_mime)
 		. = message_mime
-	else if(ismonkey(user) && message_monkey)
-		. = message_monkey
 	else if(isanimal(user) && message_simple)
 		. = message_simple
 
@@ -286,6 +300,9 @@
 				return FALSE
 //			to_chat(user, span_warning("I cannot [key] while restrained!"))
 			return FALSE
+
+	if(needs_emotion && HAS_TRAIT(user, TRAIT_DETACHED) && !intentional)
+		return FALSE
 
 	if(intentional && HAS_TRAIT(user, TRAIT_EMOTEMUTE))
 		return FALSE

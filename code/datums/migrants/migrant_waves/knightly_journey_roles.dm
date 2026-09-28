@@ -20,7 +20,7 @@
 		var/prev_real_name = H.real_name
 		var/prev_name = H.name
 		var/honorary = "Ser"
-		if(H.pronouns == SHE_HER || H.pronouns == THEY_THEM_F)
+		if(H.titles_pref == TITLES_F)
 			honorary = "Dame"
 		H.real_name = "[honorary] [prev_real_name]"
 		H.name = "[honorary] [prev_name]"
@@ -29,10 +29,12 @@
 	name = "Knight"
 	tutorial = "You are a knight from a distant land, a scion of a noble house visiting Azuria for one reason or another."
 	allowed_sexes = list(MALE, FEMALE)
-	allowed_races = RACES_NO_CONSTRUCT
+	forbidden_races = list(RACES_CONSTRUCT RACES_DESPISED)
 	outfit = /datum/outfit/job/roguetown/adventurer/knighte_expert
 	traits_applied = list(TRAIT_NOBLE, TRAIT_HEAVYARMOR, TRAIT_STEELHEARTED)
 	category_tags = list(CTAG_KJ_KNIGHT)
+	townie_contract_gate_exempt = TRUE
+	townie_contract_gate_hide_in_list = TRUE
 	subclass_stats = list(
 		STATKEY_STR = 2,
 		STATKEY_INT = 1,
@@ -60,16 +62,19 @@
 /datum/outfit/job/roguetown/adventurer/knighte_expert/pre_equip(mob/living/carbon/human/H)
 	..()
 	var/helmets = list(
-		"Pigface Bascinet" 	= /obj/item/clothing/head/roguetown/helmet/bascinet/pigface,
+		"Pigface Bascinet"	= /obj/item/clothing/head/roguetown/helmet/bascinet/pigface,
 		"Guard Helmet"		= /obj/item/clothing/head/roguetown/helmet/heavy/guard,
 		"Barred Helmet"		= /obj/item/clothing/head/roguetown/helmet/heavy/sheriff,
 		"Bucket Helmet"		= /obj/item/clothing/head/roguetown/helmet/heavy/bucket,
 		"Knight Helmet"		= /obj/item/clothing/head/roguetown/helmet/heavy/knight,
 		"Visored Sallet"			= /obj/item/clothing/head/roguetown/helmet/sallet/visored,
+		"Snouted Visored Sallet"			= /obj/item/clothing/head/roguetown/helmet/sallet/visored/snouted,
 		"Armet"				= /obj/item/clothing/head/roguetown/helmet/heavy/knight/armet,
-		"Hounskull Bascinet" 		= /obj/item/clothing/head/roguetown/helmet/bascinet/pigface/hounskull,
-		"Etruscan Bascinet" 		= /obj/item/clothing/head/roguetown/helmet/bascinet/etruscan,
+		"Snouted Armet"				= /obj/item/clothing/head/roguetown/helmet/heavy/knight/armet/snouted,
+		"Hounskull Bascinet"		= /obj/item/clothing/head/roguetown/helmet/bascinet/pigface/hounskull,
+		"Etruscan Bascinet"		= /obj/item/clothing/head/roguetown/helmet/bascinet/etruscan,
 		"Slitted Kettle"		= /obj/item/clothing/head/roguetown/helmet/heavy/knight/skettle,
+		"Volfskulle Bascinet"		= /obj/item/clothing/head/roguetown/helmet/heavy/volfplate,
 		"None"
 		)
 	var/helmchoice = input(H, "Choose your Helm.", "TAKE UP HELMS") as anything in helmets
@@ -78,7 +83,7 @@
 
 	var/armors = list(
 		"Brigandine"		= /obj/item/clothing/suit/roguetown/armor/brigandine,
-		"Coat of Plates"	= /obj/item/clothing/suit/roguetown/armor/plate/scale/knight,
+		"Coat of Plates"	= /obj/item/clothing/suit/roguetown/armor/brigandine/heavy,
 		"Steel Cuirass"		= /obj/item/clothing/suit/roguetown/armor/plate/cuirass,
 		"Fluted Cuirass"	= /obj/item/clothing/suit/roguetown/armor/plate/cuirass/fluted,
 		"Scalemail"		= /obj/item/clothing/suit/roguetown/armor/plate/scale,
@@ -98,9 +103,8 @@
 	beltl = /obj/item/flashlight/flare/torch/lantern
 	backpack_contents = list(
 		/obj/item/storage/belt/rogue/pouch/coins/poor = 1,
-		/obj/item/recipe_book/survival = 1,
 		)
-	H.dna.species.soundpack_m = new /datum/voicepack/male/knight()
+	H.dna.species.soundpack_m = GLOB.voice_packs[/datum/voicepack/male/knight]
 	H.set_blindness(0)
 	var/weapons = list("Longsword + Shield","Mace + Shield","Flail + Shield","Billhook","Lance + Kite Shield","Battle Axe","Greataxe")
 	var/weapon_choice = input(H, "Choose your weapon.", "TAKE UP ARMS") as anything in weapons
@@ -147,7 +151,9 @@
 	outfit = /datum/outfit/job/roguetown/adventurer/squire
 	traits_applied = list(TRAIT_SQUIRE_REPAIR, TRAIT_MEDIUMARMOR)
 	category_tags = list(CTAG_KG_SQUIRE)
-	horse = /mob/living/simple_animal/hostile/retaliate/rogue/saiga/saigabuck/tame/saddled	
+	townie_contract_gate_exempt = TRUE
+	townie_contract_gate_hide_in_list = TRUE
+	horse = /mob/living/simple_animal/hostile/retaliate/rogue/saiga/saigabuck/tame/saddled
 	subclass_stats = list(
 		STATKEY_STR = 1,
 		STATKEY_PER = 1,

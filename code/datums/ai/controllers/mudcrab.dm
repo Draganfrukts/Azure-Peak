@@ -1,5 +1,4 @@
 /datum/ai_controller/mudcrab
-	movement_delay = MUDCRAB_MOVEMENT_SPEED
 
 	ai_movement = /datum/ai_movement/hybrid_pathing
 
@@ -15,5 +14,3 @@
 		//datum/ai_planning_subtree/basic_melee_attack_subtree,
 		//datum/ai_planning_subtree/eat_food,
 	)
-
-	idle_behavior = /datum/idle_behavior/idle_crab_walk

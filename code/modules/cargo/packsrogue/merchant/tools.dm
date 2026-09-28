@@ -59,12 +59,12 @@
 	contains = list(/obj/item/rogueweapon/tongs)
 
 /datum/supply_pack/rogue/tools/metalkit
-	name = "Steel Armor Plates"
+	name = "Armor Plates"
 	cost = 60 // 1 Steel 0.5 iron 1 leather
 	contains = list(/obj/item/repair_kit/metal)
 
 /datum/supply_pack/rogue/tools/ironpick
-	name = "Iron Pickaxe"
+	name = "Iron Pick"
 	cost = 10
 	contains = list(/obj/item/rogueweapon/pick)
 
@@ -85,8 +85,13 @@
 
 /datum/supply_pack/rogue/tools/surgeonsbag
 	name = "Surgeon's bag, Full"
-	cost = 80
+	cost = 45
 	contains = list(/obj/item/storage/belt/rogue/surgery_bag)
+
+/datum/supply_pack/rogue/tools/surgeonsbagempty
+	name = "Surgeon's bag, Empty"
+	cost = 15
+	contains = list(/obj/item/storage/belt/rogue/surgery_bag/empty)
 
 /datum/supply_pack/rogue/tools/soapps
 	name = "Soap"
@@ -104,7 +109,7 @@
 	contains = list(/obj/item/cooking/pan)
 
 /datum/supply_pack/rogue/tools/bottle_kit
-	name = "Bottle Kit"
+	name = "Bottlin' Kit"
 	cost = 50
 	contains = list(/obj/item/bottle_kit)
 
@@ -141,7 +146,7 @@
 				)
 
 /datum/supply_pack/rogue/tools/paper
-	name = "Paper"
+	name = "Papyrus"
 	cost = 20
 	contains = list(
 					/obj/item/paper/scroll,
@@ -186,7 +191,7 @@
 
 /datum/supply_pack/rogue/tools/alch_bottle
 	name = "Alchemy Bottle"
-	cost = 1
+	cost = 2
 	contains = list(/obj/item/reagent_containers/glass/bottle/alchemical,)
 
 /datum/supply_pack/rogue/tools/alch_bottles
@@ -243,3 +248,40 @@
 	name = "Prosthetic Wood Leg (R)"
 	cost = 15
 	contains = list(/obj/item/bodypart/r_leg/prosthetic)
+
+/datum/supply_pack/rogue/tools/prbronze
+	name = "Prosthetic (Bronze)"
+	cost = 60
+	contains = list(/obj/item/rogueweapon/contraption/bronzeprosthetic)
+
+/datum/supply_pack/rogue/tools/priron
+	name = "Prosthetic (Iron)"
+	cost = 60
+	contains = list(/obj/item/rogueweapon/contraption/ironprosthetic)
+
+/datum/supply_pack/rogue/tools/prsteel
+	name = "Prosthetic (Steel)"
+	cost = 80
+	contains = list(/obj/item/rogueweapon/contraption/steelprosthetic)
+
+/datum/supply_pack/rogue/tools/pot
+	name = "Iron Pot"
+	cost = 12
+	contains = list(/obj/item/reagent_containers/glass/bucket/pot)
+
+/datum/supply_pack/rogue/tools/cart_upgrade
+	name = "Woodcutters Wheelbrace (Cart Capacity Upgrade)"
+	cost = 25
+	contains = list(/obj/item/cart_upgrade/level_1)
+
+/datum/supply_pack/rogue/tools/cart_upgrade2
+	name = "Reinforced Woodcutters Wheelbrace (Cart Capacity Upgrade)"
+	cost = 50
+	contains = list(/obj/item/cart_upgrade/level_2)
+
+/datum/supply_pack/rogue/tools/steel_pick
+	name = "Steel Pick"
+	cost = 40
+	contains = list(/obj/item/rogueweapon/pick/steel)
+	// i forgot why we decided no steel pick in the public face but we did. i think this was when it was way easier to game gems...? idfk im keeping it.
+	not_in_public = TRUE

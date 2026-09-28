@@ -33,6 +33,10 @@
 		/datum/sprite_accessory/frills/earlike,
 		/datum/sprite_accessory/frills/earlike_thick,
 		/datum/sprite_accessory/frills/earlike_angled,
+		/datum/sprite_accessory/frills/earlike_long,
+		/datum/sprite_accessory/frills/zardish,
+		/datum/sprite_accessory/frills/zardish_big,
+		/datum/sprite_accessory/frills/zardish_big_alt,
 		)
 
 /datum/customizer/organ/frills/anthro
@@ -58,4 +62,5 @@
 		/datum/sprite_accessory/frills/earlike,
 		/datum/sprite_accessory/frills/earlike_thick,
 		/datum/sprite_accessory/frills/earlike_angled,
+		/datum/sprite_accessory/frills/earlike_long,
 		)

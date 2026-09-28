@@ -24,6 +24,8 @@
 		/mob/living/carbon/human/species/wildshape/saiga,
 		/mob/living/carbon/human/species/wildshape/spider
 	)
+	var/list/disallowed_equipment_type = list(/obj/item/storage, /obj/item/rogueweapon)
+	var/list/allowed_equipment_type = list(/obj/item/rogueweapon/woodstaff, /obj/item/storage/belt)
 
 /obj/effect/proc_holder/spell/self/wildshape/cast(list/targets, mob/living/carbon/human/user = usr)
 	. = ..()
@@ -53,7 +55,7 @@
 
 		icon_img.pixel_x = -(size_x / 2) + 16
 		icon_img.pixel_y = -(size_y / 2) + 16
-		
+
 		choices[shape.name] = icon_img
 
 	var/new_wildshape_type = show_radial_menu(user, user, choices)
@@ -64,7 +66,7 @@
 
 	user.Stun(30)
 	user.Knockdown(30)
-	INVOKE_ASYNC(user, TYPE_PROC_REF(/mob/living/carbon/human, wildshape_transformation), GLOB.wildshapes[new_wildshape_type])
+	INVOKE_ASYNC(user, TYPE_PROC_REF(/mob/living/carbon/human, wildshape_transformation), GLOB.wildshapes[new_wildshape_type], allowed_equipment_type, disallowed_equipment_type)
 
 	return TRUE
 
@@ -77,6 +79,8 @@
 
 	var/wildshape_icon
 	var/wildshape_icon_state
+	var/untransform_on_death = TRUE
+	can_do_sex = FALSE
 
 /mob/living/carbon/human/species/wildshape/proc/gain_inherent_skills()
 	if(src.mind)

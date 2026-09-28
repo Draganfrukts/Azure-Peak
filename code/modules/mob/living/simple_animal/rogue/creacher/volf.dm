@@ -1,12 +1,14 @@
 
 
 /mob/living/simple_animal/hostile/retaliate/rogue/wolf
-	icon = 'icons/roguetown/mob/monster/vol.dmi'
+	attack_aim = MOB_AIM_LOW
+	anatomy_type = /datum/anatomy/quadruped/trash
+	icon = 'icons/roguetown/mob/monster/volf.dmi'
 	name = "volf"
 	desc = "A snarling beast of mangy fur and yellowed teeth. Volves are known to attack hapless travelers in the deep forests when prey is scarce."
-	icon_state = "vv"
-	icon_living = "vv"
-	icon_dead = "vvd"
+	icon_state = "volf_brown"
+	icon_living = "volf_brown_dead"
+	icon_dead = "volf_brown_dead"
 	gender = MALE
 	emote_hear = null
 	emote_see = null
@@ -15,15 +17,15 @@
 	see_in_dark = 6
 	move_to_delay = 3
 	base_intents = list(/datum/intent/simple/bite/volf)
-	botched_butcher_results = list(/obj/item/reagent_containers/food/snacks/rogue/meat/steak/wolf = 1, /obj/item/alch/viscera = 1, /obj/item/alch/sinew = 1, /obj/item/natural/bone = 2)
-	butcher_results = list(/obj/item/reagent_containers/food/snacks/rogue/meat/steak/wolf = 2,
+	botched_butcher_results = list(/obj/item/reagent_containers/food/snacks/rogue/meat/wolf = 1, /obj/item/alch/viscera = 1, /obj/item/alch/sinew = 1, /obj/item/natural/bone = 2)
+	butcher_results = list(/obj/item/reagent_containers/food/snacks/rogue/meat/wolf = 2,
 						/obj/item/natural/hide = 2,
 						/obj/item/alch/sinew = 2,
 						/obj/item/alch/bone = 1,
 						/obj/item/alch/viscera = 1,
 						/obj/item/natural/fur/wolf = 1,
 						/obj/item/natural/bone = 3)
-	perfect_butcher_results = list(/obj/item/reagent_containers/food/snacks/rogue/meat/steak/wolf = 2,
+	perfect_butcher_results = list(/obj/item/reagent_containers/food/snacks/rogue/meat/wolf = 2,
 						/obj/item/natural/hide = 2,
 						/obj/item/alch/sinew = 2,
 						/obj/item/alch/bone = 1,
@@ -31,7 +33,9 @@
 						/obj/item/natural/fur/wolf = 2,
 						/obj/item/natural/bone = 4)
 	head_butcher = /obj/item/natural/head/volf
-	faction = list("wolfs", "zombie")
+	faction = list(FACTION_WOLFS, FACTION_ZOMBIE)
+	threat_point = THREAT_LOW
+	ambush_faction = "wildlife"
 	mob_biotypes = MOB_ORGANIC|MOB_BEAST
 	health = WOLF_HEALTH
 	maxHealth = WOLF_HEALTH
@@ -55,7 +59,6 @@
 	STASPD = 12
 	simple_detect_bonus = 20
 	deaggroprob = 0
-	defprob = 40
 	del_on_deaggro = 44 SECONDS
 	retreat_health = 0.3
 	food = 0
@@ -72,6 +75,7 @@
 	AIStatus = AI_OFF
 	can_have_ai = FALSE
 	ai_controller = /datum/ai_controller/volf
+	move_base_delay = MOVEMENT_DELAY_SPD_3
 	melee_cooldown = WOLF_ATTACK_SPEED
 
 /mob/living/simple_animal/hostile/retaliate/rogue/wolf/AttackingTarget() //7+1d6 vs con to knock ppl down
@@ -100,17 +104,21 @@
 	desc = "Whether by starvation, disease, inter-pack conflict, or an unlucky kick from a saiga, this volf has died."
 	gender = PLURAL
 	icon_state = "bones"
-	icon = 'icons/roguetown/mob/monster/vol.dmi'
+	icon = 'icons/roguetown/mob/monster/volf.dmi'
 
-/mob/living/simple_animal/hostile/retaliate/rogue/wolf/Initialize()
+/mob/living/simple_animal/hostile/retaliate/rogue/wolf/Initialize(mapload)
 	. = ..()
-	AddElement(/datum/element/ai_retaliate)
+	AddComponent(/datum/component/ai_aggro_system)
 	AddElement(/datum/element/ai_flee_while_injured, 0.75, 0.4)
 	gender = MALE
 	if(prob(33))
 		gender = FEMALE
 	update_icon()
 	ai_controller.set_blackboard_key(BB_BASIC_FOODS, food_type)
+	var/color = pick("brown", "black", "white")
+	icon_state = "volf_[color]"
+	icon_living = "volf_[color]"
+	icon_dead = "volf_[color]_dead"
 
 
 /mob/living/simple_animal/hostile/retaliate/rogue/wolf/death(gibbed)
@@ -154,47 +162,6 @@
 		Retaliate()
 		GiveTarget(pulledby)
 
-/mob/living/simple_animal/hostile/retaliate/rogue/wolf/simple_limb_hit(zone)
-	if(!zone)
-		return ""
-	switch(zone)
-		if(BODY_ZONE_PRECISE_R_EYE)
-			return "head"
-		if(BODY_ZONE_PRECISE_L_EYE)
-			return "head"
-		if(BODY_ZONE_PRECISE_NOSE)
-			return "nose"
-		if(BODY_ZONE_PRECISE_MOUTH)
-			return "mouth"
-		if(BODY_ZONE_PRECISE_SKULL)
-			return "head"
-		if(BODY_ZONE_PRECISE_EARS)
-			return "head"
-		if(BODY_ZONE_PRECISE_NECK)
-			return "neck"
-		if(BODY_ZONE_PRECISE_L_HAND)
-			return "foreleg"
-		if(BODY_ZONE_PRECISE_R_HAND)
-			return "foreleg"
-		if(BODY_ZONE_PRECISE_L_FOOT)
-			return "leg"
-		if(BODY_ZONE_PRECISE_R_FOOT)
-			return "leg"
-		if(BODY_ZONE_PRECISE_STOMACH)
-			return "stomach"
-		if(BODY_ZONE_PRECISE_GROIN)
-			return "tail"
-		if(BODY_ZONE_HEAD)
-			return "head"
-		if(BODY_ZONE_R_LEG)
-			return "leg"
-		if(BODY_ZONE_L_LEG)
-			return "leg"
-		if(BODY_ZONE_R_ARM)
-			return "foreleg"
-		if(BODY_ZONE_L_ARM)
-			return "foreleg"
-	return ..()
 
 /datum/intent/simple/bite/volf
 	clickcd = WOLF_ATTACK_SPEED

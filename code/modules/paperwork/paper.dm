@@ -8,7 +8,7 @@
 #ifdef TESTSERVER
 
 /client/verb/textperp()
-	set category = "PAPER"
+	set category = "IC.Paper"
 	set name = "textper+"
 	set desc = ""
 
@@ -25,7 +25,7 @@
 			P.read(mob)
 
 /client/verb/textperm()
-	set category = "PAPER"
+	set category = "IC.Paper"
 	set name = "textper-"
 	set desc = ""
 
@@ -59,7 +59,7 @@
 	max_integrity = 30
 	dog_fashion = /datum/dog_fashion/head
 	drop_sound = 'sound/foley/dropsound/paper_drop.ogg'
-	pickup_sound =  'sound/blank.ogg'
+	pickup_sound =	'sound/blank.ogg'
 	grind_results = list(/datum/reagent/cellulose = 3)
 
 
@@ -84,11 +84,15 @@
 
 /obj/item/paper/examine()
 	. = ..()
-	. += span_info("Use a feather to write on it. You can create a two-page manuscript that can be turned into a book by writing on it and applying it to another piece of paper that also have something written on it.")
+	. += span_info("Use a feather to write on it. You can create a two-page manuscript that can be turned into a book by writing on it and applying it to another piece of paper that also has something written on it.")
 
 /obj/item/paper/get_mechanics_examine(mob/user)
 	. = ..()
-	. += span_info("Use paper on an item to wrap it into a mailable package.")
+	. += span_info("Left-click with a feather to write on the parchment. Left-clicking two pieces of written parchment together will form a larger manuscript, which can then be turned into a book.")
+	. += span_info("Most items can be wrapped up by left-clicking them with a piece of parchment. Writing on the parchment beforehand allows you to include a message with the package.")
+	. += span_info("Wrapped items can be mailed through the HERMES. Note that the size of a wrapped-up package will depend on how large the targeted item is.")
+	. += span_info("Activate - or left-click - a package in your hand to unwrap it.")
+	. += span_info("Note that if someone does not have a minimum of Novice in the Literacy skill, they'll be unable to make any sense of what's been written down.")
 
 /obj/item/paper/get_real_price()
 	if(info)
@@ -121,7 +125,7 @@
 	. = ..()
 	update_icon_state()
 
-/obj/item/paper/Initialize()
+/obj/item/paper/Initialize(mapload)
 	. = ..()
 	pixel_y = rand(-8, 8)
 	pixel_x = rand(-9, 9)
@@ -131,6 +135,21 @@
 		/datum/crafting_recipe/roguetown/cooking/sigsweet,
 		/datum/crafting_recipe/roguetown/cooking/sigdry,
 		/datum/crafting_recipe/roguetown/cooking/rocknutdry,
+		/datum/crafting_recipe/roguetown/cooking/menthadry,
+		/datum/crafting_recipe/roguetown/cooking/blackberrydry,
+		/datum/crafting_recipe/roguetown/cooking/appledry,
+		/datum/crafting_recipe/roguetown/cooking/menthaappledry,
+		/datum/crafting_recipe/roguetown/cooking/chocolatedry,
+		/datum/crafting_recipe/roguetown/cooking/strawberrydry,
+		/datum/crafting_recipe/roguetown/cooking/carrotdry,
+		/datum/crafting_recipe/roguetown/cooking/limedry,
+		/datum/crafting_recipe/roguetown/cooking/salviadry,
+		/datum/crafting_recipe/roguetown/cooking/salviavalerianadry,
+		/datum/crafting_recipe/roguetown/cooking/calenduladry,
+		/datum/crafting_recipe/roguetown/cooking/jacksberriesdry,
+		/datum/crafting_recipe/roguetown/cooking/jacksberriespoisondry,
+		/datum/crafting_recipe/roguetown/cooking/abyssdry,
+		/datum/crafting_recipe/roguetown/cooking/zigardry,
 		)
 
 	AddElement(
@@ -167,12 +186,13 @@
 		return
 	if(!user.can_read(src))
 		if(info)
-			user.adjust_experience(/datum/skill/misc/reading, 2, FALSE)
+			add_sleep_experience(user, /datum/skill/misc/reading, 2)
 		return
 	if(mailer)
 		return
 	if(in_range(user, src) || isobserver(user))
 //		var/obj/screen/read/R = user.hud_used.reads
+		user << browse_rsc('html/book.png')
 		var/dat = {"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">
 			<html><head><style type=\"text/css\">
 			body { background-image:url('book.png');background-repeat: repeat; }</style></head><body scroll=yes>"}
@@ -205,7 +225,7 @@
 	dat += "[t]<br>"
 	dat += "<a href='?src=[REF(src)];close=1' style='position:absolute;right:50px'>Close</a>"
 	dat += "</body></html>"
-	user << browse(dat, "window=reading;size=500x400;can_close=1;can_minimize=0;can_maximize=0;can_resize=1;titlebar=0;border=0")
+	user << browse(dat, "window=reading;size=500x400;can_close=1;can_minimize=0;can_maximize=0;can_resize=1;titlebar=1;border=0")
 
 /obj/item/paper/verb/rename()
 	set name = "Rename paper"
@@ -241,7 +261,7 @@
 		victim.visible_message(span_notice("[user] opens the [src]."))
 		to_chat(user, span_warning("This parchment is full of strange symbols that start to glow. How odd. Wait-"))
 		sleep(5)
-		victim.adjust_fire_stacks(15)
+		victim.adjust_fire_stacks(6)
 		victim.ignite_mob()
 		victim.visible_message(span_danger("[user] bursts into flames upon reading [src]!"))
 	read(user)
@@ -382,7 +402,7 @@
 			victim.visible_message(span_notice("[usr] opens the [src]."))
 			to_chat(usr, span_warning("This parchment is full of strange symbols that start to glow. How odd. Wait-"))
 			sleep(5)
-			victim.adjust_fire_stacks(15)
+			victim.adjust_fire_stacks(6)
 			victim.ignite_mob()
 			victim.visible_message(span_danger("[usr] bursts into flames upon reading [src]!"))
 		read(usr)
@@ -393,7 +413,7 @@
 
 	if(href_list["write"])
 		var/id = href_list["write"]
-		var/t =  stripped_multiline_input("Enter what you want to write:", "Write", no_trim=TRUE)
+		var/t =	stripped_multiline_input(usr, "Enter what you want to write:", "Write", no_trim=TRUE)
 		if(!t || !usr.canUseTopic(src, BE_CLOSE, literate))
 			return
 		var/obj/item/i = usr.get_active_held_item()	//Check to see if he still got that darn pen, also check if he's using a crayon or pen.
@@ -512,7 +532,7 @@
 
 /obj/item/paper/construction
 
-/obj/item/paper/construction/Initialize()
+/obj/item/paper/construction/Initialize(mapload)
 	. = ..()
 	color = pick("FF0000", "#33cc33", "#ffb366", "#551A8B", "#ff80d5", "#4d94ff")
 
@@ -520,7 +540,7 @@
  * Natural paper
  */
 
-/obj/item/paper/natural/Initialize()
+/obj/item/paper/natural/Initialize(mapload)
 	. = ..()
 	color = "#FFF5ED"
 
@@ -621,3 +641,6 @@
 
 /obj/item/inqarticles/indexer/can_be_package_wrapped()
 	return 0
+
+/obj/item/mob_item/can_be_package_wrapped()
+	return FALSE

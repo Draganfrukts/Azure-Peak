@@ -9,7 +9,7 @@
 			p.move_indicator = image('icons/mouseover.dmi',src,"mouseover",ABOVE_HUD_LAYER,null)
 			p.move_indicator.pixel_x = -1
 			p.move_indicator.pixel_y = -1
-			p <<  p.move_indicator
+			p <<	p.move_indicator
 		else
 			world << "[src.x] [src.y]" //outputs the turf's x/y
 			p.move_indicator.loc = src //set to turf I entered before this /turf
@@ -20,24 +20,39 @@
 	/// This means that the mouse over text will not be displayed when the mouse is over this atom
 	var/nomouseover = FALSE
 
-/atom/MouseEntered(location,control,params)
-	. = ..()
-	if(!nomouseover && name && ismob(usr))
-		handle_mouseover(location, control, params)
+/atom/MouseEntered(location, control, params)
+	if(!nomouseover && usr?.client)
+		SSmouse_entered.hovers[usr.client] = src
+		SSmouse_entered.hover_params[usr.client] = params
+
+/// Fired whenever this atom is the most recent to be hovered over in the tick.
+/// Preferred over MouseEntered if you do not need information such as the position of the mouse.
+/// Especially because this is deferred over a tick, do not trust that `client` is not null.
+/atom/proc/on_mouse_enter(client/C, params)
+	SHOULD_NOT_SLEEP(TRUE)
+	var/mob/user = C?.mob
+	if(!user)
+		return
+	if(!nomouseover && name)
+		handle_mouseover(user, params)
 
 /atom/MouseExited(params)
 	. = ..()
 	if(!nomouseover && ismob(usr))
+		if(usr.client && SSmouse_entered.hovers[usr.client] == src)
+			SSmouse_entered.hovers[usr.client] = null
 		handle_mouseexit(params)
 
-/atom/proc/handle_mouseover(location, control, params)
-	var/mob/p = usr
+/atom/proc/handle_mouseover(mob/user, params)
+	var/mob/p = user || usr
 	if(QDELETED(src))
 		return FALSE
 	if(!p)
 		return FALSE
 	if(p.client)
 		var/atom/AT = get_turf(p.client.eye)
+		if(!AT)
+			return FALSE
 		if(!p.client.mouseovertext)
 			p.client.genmouseobj()
 			return FALSE
@@ -46,7 +61,7 @@
 		var/offset_x = 8 - (AT.x - x) - (p.client.pixel_x / world.icon_size)
 		var/offset_y = 8 - (AT.y - y) - (p.client.pixel_y / world.icon_size)
 		var/list/PM = list("screen-loc" = "[offset_x]:0,[offset_y]:0")
-		if(!isturf(loc))
+		if(!isturf(loc) && params)
 			PM = params2list(params)
 			p.client.mouseovertext.movethis(PM, TRUE)
 		else
@@ -55,11 +70,11 @@
 		p.client.screen |= p.client.mouseovertext
 	return TRUE
 
-/obj/structure/soul/handle_mouseover(location, control, params)
+/obj/structure/soul/handle_mouseover(mob/user, params)
 	return TRUE
 
-/obj/structure/handle_mouseover(location, control, params)
-	var/mob/p = usr
+/obj/structure/handle_mouseover(mob/user, params)
+	var/mob/p = user || usr
 	if(p.client)
 		if(!p.client.mouseovertext)
 			p.client.genmouseobj()
@@ -71,12 +86,12 @@
 		var/offset_x = 8 - (p.x - x)
 		var/offset_y = 8 - (p.y - y)
 		var/list/PM = list("screen-loc" = "[offset_x]:0,[offset_y]:0")
-		if(!isturf(loc))
+		if(!isturf(loc) && params)
 			PM = params2list(params)
 			p.client.mouseovertext.movethis(PM, TRUE)
 		else
 			p.client.mouseovertext.movethis(PM)
-		//if((((rotation_structure && rotation_network) || istype(src, /obj/structure/water_pipe)) || accepts_water_input) && HAS_TRAIT(p, TRAIT_ENGINEERING_GOGGLES))	
+		//if((((rotation_structure && rotation_network) || istype(src, /obj/structure/water_pipe)) || accepts_water_input) && HAS_TRAIT(p, TRAIT_ENGINEERING_GOGGLES))
 		if(((rotation_structure && rotation_network)) && (HAS_TRAIT(p, TRAIT_ENGINEERING_GOGGLES))) //changing this to just look at rotations and removing the trait, users just need over 3 engineering.
 			var/rotation_chat = return_rotation_chat(p.client.mouseovertext)
 			p.client.mouseovertext.maptext_width = 96
@@ -120,12 +135,14 @@
 			p.client.mouseoverbox.screen_loc = null
 */
 
-/turf/handle_mouseover(location,control,params)
-	var/mob/p = usr
+/turf/handle_mouseover(mob/user, params)
+	var/mob/p = user || usr
 	if(QDELETED(src))
 		return FALSE
 	if(p.client)
 		var/atom/AT = get_turf(p.client.eye)
+		if(!AT)
+			return FALSE
 		if(!p.client.mouseovertext)
 			p.client.genmouseobj()
 			return FALSE
@@ -144,12 +161,14 @@
 /turf/open
 	nomouseover = TRUE
 
-/turf/open/handle_mouseover(location, control, params)
-	var/mob/p = usr
+/turf/open/handle_mouseover(mob/user, params)
+	var/mob/p = user || usr
 	if(QDELETED(src))
 		return FALSE
 	if(p.client)
 		var/atom/AT = get_turf(p.client.eye)
+		if(!AT)
+			return FALSE
 		if(!p.client.mouseovertext)
 			p.client.genmouseobj()
 			return FALSE
@@ -163,12 +182,14 @@
 		p.client.screen |= p.client.mouseovertext
 	return TRUE
 
-/mob/handle_mouseover(location,control,params)
-	var/mob/p = usr
+/mob/handle_mouseover(mob/user, params)
+	var/mob/p = user || usr
 	if(QDELETED(src))
 		return FALSE
 	if(p.client)
 		var/atom/AT = get_turf(p.client.eye)
+		if(!AT)
+			return FALSE
 		if(!p.client.mouseovertext)
 			p.client.genmouseobj()
 			return FALSE
@@ -186,9 +207,9 @@
 		var/mousecolor = "#c1aaaa"
 		if(ishuman(src))
 			var/mob/living/carbon/human/H = src
-			if(H.voice_color)
+			if(H.voice_color && H.show_descriptors)
 				if(H.name == H.real_name)
-					mousecolor = "#[H.voice_color]"
+					mousecolor = "[H.voice_color]"
 		p.client.mouseovertext.maptext = {"<span style='font-size:8pt;font-family:"Pterra";color:[mousecolor];text-shadow:0 0 10px #fff, 0 0 20px #fff, 0 0 30px #e60073, 0 0 40px #e60073, 0 0 50px #e60073, 0 0 60px #e60073, 0 0 70px #e60073;' class='center maptext '>[name]"}
 		p.client.mouseovertext.movethis(PM)
 		p.client.screen |= p.client.mouseovertext

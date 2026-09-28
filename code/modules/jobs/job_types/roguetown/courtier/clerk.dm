@@ -6,10 +6,11 @@
 	total_positions = 1
 	spawn_positions = 1
 
-	allowed_races = ACCEPTED_RACES
+	forbidden_races = list(RACES_DESPISED)
 	allowed_sexes = list(MALE, FEMALE)
 	allowed_ages = list(AGE_ADULT)
 	is_quest_giver = TRUE
+	quest_claim_barred = TRUE
 
 	tutorial = "Clerk, tax-collector, blessed fool. You help the Steward with anything they need and perform their tasks when they are unavailable. Although you aren't a noble, it's not the worst position. The caveat? If money is misplaced or goes missing, a noble could probably weasel out of the stockades as punishment. You? Eh...well, Etrusca is lovely this time of year."
 
@@ -21,10 +22,12 @@
 	round_contrib_points = 2
 	advclass_cat_rolls = list(CTAG_CLERK = 2)
 
-	job_traits = list(TRAIT_SEEPRICES)
+	job_traits = list(TRAIT_SEEPRICES, TRAIT_ROYAL_SUBSIDY)
+	virtue_restrictions = list(/datum/virtue/utility/skilled, /datum/virtue/utility/apprentice) //Commerce role, not a craftsman.
 	job_subclasses = list(
 		/datum/advclass/clerk
 	)
+	has_subprefs = FALSE // only one subclass
 
 
 /datum/advclass/clerk
@@ -70,4 +73,8 @@
 	backr = /obj/item/storage/backpack/rogue/satchel
 	id = /obj/item/scomstone/bad
 	if(H.mind)
-		SStreasury.give_money_account(ECONOMIC_UPPER_MIDDLE_CLASS, H, "Savings.")
+		SStreasury.grant_savings(ECONOMIC_UPPER_MIDDLE_CLASS, H)
+	backpack_contents = list(
+		/obj/item/mini_flagpole/steward = 1,
+		/obj/item/recipe_book/treasury_primer = 1,
+	)

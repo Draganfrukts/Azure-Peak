@@ -1,12 +1,11 @@
 /**
- # Rite of Lunar Ascension
-
- Noc-themed usurpation rite. 
-
- Design intent: Makes the university a threat and give mage a unique path to usurp the throne without nobility. It requires six mages total (The invoker + 5 more to assent). So technically a full house university plus one can initiate a coup but good luck holding it. Its  existence and implicit threat may lend some weight to displeasing the university, and perhaps encourage in town conflict over magical law as couping to declare a magocracy is now a theoretical possibility in response to excessive restrictions on magic - especially with outsider / adventurer mage help.
-
- Accessible to outlaws and undead, technically.
- 
+ * Rite of Lunar Ascension
+ *
+ * Noc-themed usurpation rite.
+ *
+ * Design intent: Makes the university a threat and give mage a unique path to usurp the throne without nobility. It requires six mages total (The invoker + 5 more to assent). So technically a full house university plus one can initiate a coup but good luck holding it. Its	existence and implicit threat may lend some weight to displeasing the university, and perhaps encourage in town conflict over magical law as couping to declare a magocracy is now a theoretical possibility in response to excessive restrictions on magic - especially with outsider / adventurer mage help.
+ *
+ * Accessible to outlaws and undead, technically.
  */
 /datum/usurpation_rite/lunar_ascension
 	name = "Rite of Lunar Ascension"
@@ -27,11 +26,11 @@
 		"Will the rule of mages bring about a new golden age, " + \
 		"or will it be a brief, shining moment before the realm burns in arcane fire?"
 
-/// Any mage with T2+ arcyne training can invoke — no noble blood required.
+/// Any mage with arcyne training can invoke — no noble blood required.
 /datum/usurpation_rite/lunar_ascension/can_invoke(mob/living/carbon/human/user)
 	if(!..())
 		return FALSE
-	if(get_user_spell_tier(user) < 2)
+	if(!HAS_TRAIT(user, TRAIT_ARCYNE))
 		return FALSE
 	return TRUE
 
@@ -53,7 +52,7 @@
 	if(mage == invoker)
 		to_chat(mage, span_warning("You cannot assent to your own claim."))
 		return FALSE
-	if(get_user_spell_tier(mage) < 1)
+	if(!HAS_TRAIT(mage, TRAIT_ARCYNE))
 		to_chat(mage, span_warning("Only those trained in the Arcyne arts may speak assent to this rite."))
 		return FALSE
 	if(assenters[mage])

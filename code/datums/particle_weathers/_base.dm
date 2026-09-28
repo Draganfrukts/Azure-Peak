@@ -7,21 +7,21 @@
 
 
 	spawning = 0
-	width                  = 800  // I think this is supposed to be in pixels, but it doesn't match bounds, so idk - 800x800 seems to prevent particle-less edges
-	height                 = 800
-	count                  = 3000 // 3000 particles
+	width					= 800	// I think this is supposed to be in pixels, but it doesn't match bounds, so idk - 800x800 seems to prevent particle-less edges
+	height					= 800
+	count					= 1200 // max live particles rendered per client
 	//Set bounds to rough screensize + some extra on the side and top movement for "wind"
-	bound1                 = list(-500,-256,-10)
-	bound2                 = list(500,500,10)
-	lifespan               = 285   // live for 30s max (fadein + lifespan + fade)
-	fade                   = 10    // 1s fade out
-	fadein				   = 5     // 0.5s fade in
+	bound1					= list(-500,-256,-10)
+	bound2					= list(500,500,10)
+	lifespan				= 285	// live for 30s max (fadein + lifespan + fade)
+	fade					= 10	// 1s fade out
+	fadein					= 5		// 0.5s fade in
 
 	//Obnoxiously 3D -- INCREASE Z level to make them further away
-	transform			   = list( 1, 0, 0,  0  ,
-								   0, 1, 0,  0  ,
-								   0, 0, 1, 1/4, //Get twice as Small every 4 Z
-								   0, 0, 0,  1  )
+	transform				= list( 1, 0, 0,	0	,
+									0, 1, 0,	0	,
+									0, 0, 1, 1/4, //Get twice as Small every 4 Z
+									0, 0, 0,	1	)
 
 //Animate particle effect to a severity
 /particles/weather/proc/animateSeverity(severityMod)
@@ -110,11 +110,16 @@
 	/// In deciseconds, how long the weather lasts once it begins
 	var/weather_duration = 0
 
-	//assoc list of mob=looping_sound
+	/// assoc list of mob=looping_sound
 	var/list/currentSounds = list()
 
-	//assoc list of mob=timestamp -> Next time we can send a message
+	/// assoc list of mob=timestamp -> Next time we can send a message
 	var/list/messagedMobs = list()
+
+	/// How often (deciseconds) the heavy weather_act effect (soak/wash/etc) runs per mob
+	var/weather_act_interval = 3 SECONDS
+	/// assoc list of mob=timestamp -> Next time we may run weather_act on them
+	var/list/actCooldowns = list()
 
 	var/last_message = ""
 
@@ -221,11 +226,14 @@
  * Returns TRUE if the living mob can hear the weather (you might be immune, but you get to listen to the pitter patter)
  */
 /datum/particle_weather/proc/can_weather(mob/living/mob_to_check)
+	var/datum/component/area_ambience/area_amb = mob_to_check.GetComponent(/datum/component/area_ambience)
+	if(area_amb)
+		return area_amb.is_outside
+
 	var/turf/mob_turf = get_turf(mob_to_check)
 
 	if(!mob_turf)
 		return FALSE
-
 	if(!mob_turf.outdoor_effect || mob_turf.outdoor_effect.weatherproof)
 		return FALSE
 
@@ -260,7 +268,9 @@
 
 	weather_sound_effect(L)
 	if(can_weather_effect(L))
-		weather_act(L)
+		if(!actCooldowns[L] || world.time >= actCooldowns[L])
+			actCooldowns[L] = world.time + weather_act_interval
+			weather_act(L)
 		if(!messagedMobs[L] || world.time > messagedMobs[L])
 			weather_message(L) //Try not to spam
 
@@ -278,7 +288,7 @@
 		L.weather = FALSE
 
 //Not using looping_sounds properly. somebody smart should fix this //actually this kind of works, just done a bit backwards
-/datum/particle_weather/proc/weather_sound_effect(mob/living/L, var/outside = TRUE)
+/datum/particle_weather/proc/weather_sound_effect(mob/living/L, outside = TRUE)
 	var/datum/looping_sound/currentSound = currentSounds[L]
 	if(currentSound)
 		//SET VOLUME
@@ -331,7 +341,7 @@
 	return TRUE
 
 /client/proc/run_particle_weather()
-	set category = "-GameMaster-"
+	set category = "Game Master"
 	set name = "Weather - Particle"
 	set desc = "Triggers a particle weather"
 
@@ -339,7 +349,7 @@
 	if(!holder)
 		return
 
-	var/weather_type = input("Choose a weather", "Weather")  as null|anything in sortList(subtypesof(/datum/particle_weather), /proc/cmp_typepaths_asc)
+	var/weather_type = input(usr, "Choose a weather", "Weather")	as null|anything in sortList(subtypesof(/datum/particle_weather), /proc/cmp_typepaths_asc)
 	if(!weather_type)
 		return
 
@@ -350,7 +360,7 @@
 	SSblackbox.record_feedback("tally", "admin_verb", 1, "Run Particle Weather")
 
 /client/proc/run_custom_particle_weather()
-	set category = "-GameMaster-"
+	set category = "Game Master"
 	set name = "Weather - Color Particle"
 	set desc = "Triggers a particle weather"
 
@@ -359,7 +369,7 @@
 	if(!holder)
 		return
 
-	var/weather_type = input("Choose a weather", "Weather")  as null|anything in sortList(subtypesof(/datum/particle_weather), /proc/cmp_typepaths_asc)
+	var/weather_type = input(usr, "Choose a weather", "Weather")	as null|anything in sortList(subtypesof(/datum/particle_weather), /proc/cmp_typepaths_asc)
 	if(!weather_type)
 		return
 
@@ -374,7 +384,7 @@
 	"Gold" = "#f9a602"
 	)
 
-	var/color = input("Choose a weather color", "Weather")  as null|anything in selectable_colors
+	var/color = input(usr, "Choose a weather color", "Weather")	as null|anything in selectable_colors
 	if(!color )
 		color = "#ccffff" //base rain color
 
@@ -383,32 +393,3 @@
 	message_admins("[key_name_admin(usr)] started weather of type [weather_type].")
 	log_admin("[key_name(usr)] started weather of type [weather_type].")
 	SSblackbox.record_feedback("tally", "admin_verb", 1, "Run Custom Particle Weather")
-
-/turf/Exit(atom/movable/AM, atom/newLoc)
-	. = ..()
-
-	if(!isturf(newLoc))
-		return
-	if(!ishuman(AM))
-		return
-
-	var/mob/living/victim = AM
-
-	if(!victim.mind)
-		return
-	if(!SSParticleWeather.runningWeather)
-		return
-	if(!SSParticleWeather.runningWeather.running)
-		return
-
-	var/turf/current_turfarea = loc
-	var/turf/next_turfarea = newLoc.loc
-
-	if(current_turfarea.type == next_turfarea.type)
-		return
-
-	if(
-		istype(current_turfarea, /area/rogue/indoors) && istype(next_turfarea, /area/rogue/outdoors) || \
-		istype(next_turfarea, /area/rogue/indoors) && istype(current_turfarea, /area/rogue/outdoors)
-	)
-		SSParticleWeather.runningWeather.stop_weather_sound_effect(victim)

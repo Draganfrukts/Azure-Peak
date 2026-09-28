@@ -1,4 +1,4 @@
-/datum/config_entry/flag/autoadmin  // if autoadmin is enabled
+/datum/config_entry/flag/autoadmin	// if autoadmin is enabled
 	protection = CONFIG_ENTRY_LOCKED
 
 /datum/config_entry/string/autoadmin_rank	// the rank for autoadmins
@@ -28,7 +28,7 @@
 /datum/config_entry/string/stationname	// station name (the name of the station in-game)
 
 /datum/config_entry/number/lobby_countdown	// In between round countdown.
-	config_entry_value = 120
+	config_entry_value = 600
 	integer = FALSE
 	min_val = 0
 
@@ -46,6 +46,8 @@
 /datum/config_entry/flag/log_access	// log login/logout
 
 /datum/config_entry/flag/log_say	// log client say
+
+/datum/config_entry/flag/log_npc_say	// log NPC say
 
 /datum/config_entry/flag/log_admin	// log admin actions
 	protection = CONFIG_ENTRY_LOCKED
@@ -85,8 +87,6 @@
 
 /datum/config_entry/flag/log_job_debug	// log roundstart divide occupations debug information to a file
 
-/datum/config_entry/flag/allow_admin_ooccolor	// Allows admins with relevant permissions to have their own ooc colour
-
 /datum/config_entry/flag/allow_admin_asaycolor //Allows admins with relevant permissions to have a personalized asay color
 
 /datum/config_entry/flag/allow_vote_restart	// allow votes to restart
@@ -100,7 +100,7 @@
 	integer = FALSE
 	min_val = 0
 
-/datum/config_entry/number/vote_period  // length of voting period (deciseconds, default 1 minute)
+/datum/config_entry/number/vote_period	// length of voting period (deciseconds, default 1 minute)
 	config_entry_value = 600
 	integer = FALSE
 	min_val = 0
@@ -117,7 +117,7 @@
 	config_entry_value = 20
 	integer = FALSE
 	min_val = 1
-	max_val = 100   //byond will start crapping out at 50, so this is just ridic
+	max_val = 100	//byond will start crapping out at 50, so this is just ridic
 	var/sync_validate = FALSE
 
 /datum/config_entry/number/fps/ValidateAndSet(str_val)
@@ -284,14 +284,6 @@
 	min_val = 0
 	integer = FALSE
 
-/datum/config_entry/flag/maprotation
-
-/datum/config_entry/number/maprotatechancedelta
-	config_entry_value = 0.75
-	min_val = 0
-	max_val = 1
-	integer = FALSE
-
 /datum/config_entry/number/soft_popcap
 	config_entry_value = null
 	min_val = 0
@@ -357,6 +349,7 @@
 	config_entry_value = "check.getipintel.net"
 
 /datum/config_entry/flag/aggressive_changelog
+	config_entry_value = TRUE
 
 /datum/config_entry/flag/autoconvert_notes	//if all connecting player's notes should attempt to be converted to the database
 	protection = CONFIG_ENTRY_LOCKED
@@ -368,14 +361,6 @@
 /datum/config_entry/flag/announce_admin_logout
 
 /datum/config_entry/flag/announce_admin_login
-
-/datum/config_entry/flag/allow_map_voting
-	deprecated_by = /datum/config_entry/flag/preference_map_voting
-
-/datum/config_entry/flag/allow_map_voting/DeprecationUpdate(value)
-	return value
-
-/datum/config_entry/flag/preference_map_voting
 
 /datum/config_entry/number/client_warn_version
 	config_entry_value = null
@@ -509,3 +494,45 @@
 
 /datum/config_entry/flag/reopen_roundstart_suicide_roles_command_report
 
+/datum/config_entry/flag/auto_profile
+
+/datum/config_entry/flag/profile_clear_on_dump
+
+/datum/config_entry/number/profiler_interval
+	config_entry_value = 0
+
+/datum/config_entry/number/drift_dump_threshold
+	config_entry_value = 4 SECONDS
+
+/datum/config_entry/number/drift_profile_delay
+	config_entry_value = 15 SECONDS
+
+/datum/config_entry/number/sustained_td_threshold_pct
+	config_entry_value = 0
+	integer = FALSE
+
+/datum/config_entry/number/sustained_td_duration
+	config_entry_value = 20 SECONDS
+
+/datum/config_entry/number/sustained_td_delay
+	config_entry_value = 120 SECONDS
+
+/datum/config_entry/flag/hard_deletes_enabled
+	config_entry_value = TRUE
+
+/datum/config_entry/number/hard_deletes_overrun_threshold
+	config_entry_value = 0.5
+	integer = FALSE
+	min_val = 0
+
+/datum/config_entry/number/hard_deletes_overrun_limit
+	config_entry_value = 1
+	min_val = 0
+
+/// Log json versions of log entries
+/datum/config_entry/flag/log_as_json
+	default = TRUE
+
+/// Log human readable versions of log entries
+/datum/config_entry/flag/log_as_human_readable
+	default = TRUE

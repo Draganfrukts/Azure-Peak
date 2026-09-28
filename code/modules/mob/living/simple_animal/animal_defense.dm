@@ -1,25 +1,48 @@
+/mob/living/simple_animal/proc/resolve_melee_zone(mob/living/user, obj/item/I, datum/intent/attack_intent)
+	if(!user || user.zone_selected == BODY_ZONE_CHEST)
+		return BODY_ZONE_CHEST
+	var/zone = melee_accuracy_check(user.zone_selected, user, src, I ? null : /datum/skill/combat/unarmed, attack_intent || user.used_intent, I) || BODY_ZONE_CHEST
+	return resolve_reachable_zone(zone, user)
+
 /mob/living/simple_animal/attacked_by(obj/item/I, mob/living/user)
 	if(I.force_dynamic < force_threshold || I.damtype == STAMINA)
 		playsound(loc, 'sound/blank.ogg', I.get_clamped_volume(), TRUE, -1)
 	else
-		var/hitlim = simple_limb_hit(user.zone_selected)
+		var/selzone = resolve_melee_zone(user, I)
+		var/hitlim = simple_limb_hit(selzone)
 		I.funny_attack_effects(src, user)
 		if(I.force_dynamic)
 			var/newforce = get_complex_damage(I, user)
-			var/haha = user.used_intent.blade_class
+			var/pen = user.used_intent.penfactor
+			if(user.used_intent.out_of_effective_range(src, user))
+				pen = PEN_NONE
+				newforce *= EFF_RANGE_MISS_DAMFACTOR
+			var/haha = user.used_intent.item_d_type
 			var/armor = run_armor_check(null, haha, armor_penetration = I.armor_penetration, damage = newforce, used_weapon = I)
 			var/nodmg = FALSE
 			next_attack_msg.Cut()
 			if(armor > 0)
 				nodmg = TRUE
 				next_attack_msg += VISMSG_ARMOR_BLOCKED
+			// Exposed/vulnerable bonus damage against simple animals
+			if(has_status_effect(/datum/status_effect/debuff/exposed))
+				newforce *= EXPOSED_INTEG_MOD
+				playsound(src, 'sound/combat/exposed_pop.ogg', 100, TRUE)
+				visible_message(span_danger("[src] suffers a savage blow while exposed!"))
+				remove_status_effect(/datum/status_effect/debuff/exposed)
+			else if(has_status_effect(/datum/status_effect/debuff/vulnerable))
+				newforce *= VULN_INTEG_MOD
+				playsound(src, 'sound/combat/vulnerable_pop.ogg', 100, TRUE)
+				visible_message(span_biginfo("[src] is struck while vulnerable!"))
+				remove_status_effect(/datum/status_effect/debuff/vulnerable)
+			newforce *= weakpoint_damage_mod(selzone)
 			apply_damage(newforce, I.damtype, hitlim, armor)
 			I.remove_bintegrity(1)
 			if(I.damtype == BRUTE && !nodmg)
 				if(HAS_TRAIT(src, TRAIT_SIMPLE_WOUNDS))
-					if(I.is_silver && HAS_TRAIT(src, TRAIT_SILVER_WEAK))
+					if((I.is_silver || (I.is_even_lesser_silver && is_npc(src))) && HAS_TRAIT(src, TRAIT_SILVER_WEAK))
 						newforce *= SILVER_SIMPLEMOB_DAM_MULT
-					simple_woundcritroll(user.used_intent.blade_class, newforce, user, hitlim)
+					simple_woundcritroll(user.used_intent.blade_class, newforce, user, selzone, weapon = I, penfactor = pen, part_mult = user.used_intent.get_part_damage_factor())
 				if(newforce > 5)
 					if(haha != BCLASS_BLUNT)
 						I.add_mob_blood(src)
@@ -38,11 +61,11 @@
 							user.add_mob_blood(src)
 		send_item_attack_message(I, user, hitlim)
 		next_attack_msg.Cut()
+		I.do_special_attack_effect(user, null, null, src, null)
 		if(I.force_dynamic)
 			return TRUE
-		I.do_special_attack_effect(user, null, null, src, null)
 
-/mob/living/simple_animal/getarmor(def_zone, type, damage, armor_penetration, blade_dulling, peeldivisor, intdamfactor = 1, used_weapon)
+/mob/living/simple_animal/getarmor(def_zone, type, damage, armor_penetration, blade_dulling, intdamfactor = 1, used_weapon)
 	if(!type)
 		return 0
 	var/armorval = 0
@@ -103,13 +126,19 @@
 			playsound(loc, attacked_sound, 25, TRUE, -1)
 			var/damage = M.get_punch_dmg()
 			next_attack_msg.Cut()
-			attack_threshold_check(damage)
+			var/selzone = resolve_melee_zone(M)
+			var/hitlim = simple_limb_hit(selzone)
+			var/haha = M.used_intent.item_d_type
+			var/armor = run_armor_check(null, haha, armor_penetration = M.used_intent.penfactor, damage = damage)
+			if(armor > 0)
+				next_attack_msg += VISMSG_ARMOR_BLOCKED
+			damage *= weakpoint_damage_mod(selzone)
+			attack_threshold_check(damage, hitlim, armorcheck = armor)
 			log_combat(M, src, "attacked")
 			updatehealth()
-			var/hitlim = simple_limb_hit(M.zone_selected)
-			simple_woundcritroll(M.used_intent.blade_class, damage, M, hitlim)
-			visible_message(span_danger("[M] [atk_verb] [src]![next_attack_msg.Join()]"),\
-							span_danger("[M] [atk_verb] me![next_attack_msg.Join()]"), null, COMBAT_MESSAGE_RANGE)
+			simple_woundcritroll(M.used_intent.blade_class, damage, M, selzone, penfactor = M.used_intent.penfactor, part_mult = M.used_intent.get_part_damage_factor())
+			visible_message(span_danger("[M] [atk_verb] [src] in the [span_combatsecondarybp(hitlim)]![next_attack_msg.Join()]"),\
+							span_danger("[M] [atk_verb] me in the [span_userdanger(hitlim)]![next_attack_msg.Join()]"), null, COMBAT_MESSAGE_RANGE)
 			next_attack_msg.Cut()
 			return TRUE
 
@@ -192,47 +221,46 @@
 		playsound(loc, attacked_sound, 25, TRUE, -1)
 		var/damage = M.get_punch_dmg()
 		next_attack_msg.Cut()
-		attack_threshold_check(damage)
+		var/selzone = resolve_melee_zone(M)
+		var/hitlim = simple_limb_hit(selzone)
+		var/haha = M.used_intent.item_d_type
+		var/armor = run_armor_check(null, haha, armor_penetration = M.used_intent.penfactor, damage = damage)
+		if(armor > 0)
+			next_attack_msg += VISMSG_ARMOR_BLOCKED
+		damage *= weakpoint_damage_mod(selzone)
+		attack_threshold_check(damage, hitlim, armorcheck = armor)
 		log_combat(M, src, "attacked")
 		updatehealth()
-		var/hitlim = simple_limb_hit(M.zone_selected)
-		simple_woundcritroll(M.used_intent.blade_class, damage, M, hitlim)
-		visible_message(span_danger("[M] [atk_verb] [src]![next_attack_msg.Join()]"),\
-						span_danger("[M] [atk_verb] me![next_attack_msg.Join()]"), null, COMBAT_MESSAGE_RANGE)
+		simple_woundcritroll(M.used_intent.blade_class, damage, M, selzone, part_mult = M.used_intent.get_part_damage_factor())
+		visible_message(span_danger("[M] [atk_verb] [src] in the [span_combatsecondarybp(hitlim)]![next_attack_msg.Join()]"),\
+						span_danger("[M] [atk_verb] me in the [span_userdanger(hitlim)]![next_attack_msg.Join()]"), null, COMBAT_MESSAGE_RANGE)
 		next_attack_msg.Cut()
 		return TRUE
-
-/mob/living/simple_animal/attack_paw(mob/living/carbon/monkey/M)
-	if(..()) //successful monkey bite.
-		if(stat != DEAD)
-			var/damage = rand(1, 3)
-			attack_threshold_check(damage)
-			return 1
-	if (M.used_intent.type == INTENT_HELP)
-		if (health > 0)
-			visible_message(span_notice("[M.name] [response_help_continuous] [src]."), \
-							span_notice("[M.name] [response_help_continuous] you."), null, COMBAT_MESSAGE_RANGE, M)
-			to_chat(M, span_notice("I [response_help_simple] [src]."))
-			playsound(loc, 'sound/blank.ogg', 50, TRUE, -1)
-
 
 /mob/living/simple_animal/attack_animal(mob/living/simple_animal/M)
 	. = ..()
 	if(.)
 		next_attack_msg.Cut()
+		var/selzone = resolve_melee_zone(M, null, M.a_intent)
+		var/hitlim = simple_limb_hit(selzone)
 		var/damage = rand(M.melee_damage_lower, M.melee_damage_upper)
-		var/hitlim = simple_limb_hit(M.zone_selected)
-		attack_threshold_check(damage, M.melee_damage_type)
-		simple_woundcritroll(M.a_intent.blade_class, damage, M, hitlim)
-		visible_message(span_danger("\The [M] [pick(M.a_intent.attack_verb)] [src]![next_attack_msg.Join()]"), \
-					span_danger("\The [M] [pick(M.a_intent.attack_verb)] me![next_attack_msg.Join()]"), null, COMBAT_MESSAGE_RANGE)
+		var/haha = M.d_type
+		var/armor = run_armor_check(null, haha, armor_penetration = M.armor_penetration, damage = damage)
+		if(armor > 0)
+			next_attack_msg += VISMSG_ARMOR_BLOCKED
+		damage *= weakpoint_damage_mod(selzone)
+		attack_threshold_check(damage, hitlim, M.melee_damage_type, armor)
+		simple_woundcritroll(M.a_intent.blade_class, damage, M, selzone, penfactor = M.a_intent.penfactor, part_mult = M.a_intent.get_part_damage_factor())
+		var/attack_verb = pick(M.a_intent.attack_verb)
+		visible_message(span_danger("\The [M] [attack_verb] [src] in the [span_combatsecondarybp(hitlim)]![next_attack_msg.Join()]"), \
+					span_danger("\The [M] [attack_verb] me in the [span_userdanger(hitlim)]![next_attack_msg.Join()]"), null, COMBAT_MESSAGE_RANGE)
 		next_attack_msg.Cut()
 
 /mob/living/simple_animal/onbite(mob/living/carbon/human/user)
 	var/damage = 10*(user.STASTR/20)
 	if(HAS_TRAIT(user, TRAIT_STRONGBITE))
 		damage = damage*2
-	playsound(user.loc, "smallslash", 100, FALSE, -1)
+	playsound(user.loc, "smallslash", vol = 50, vary = FALSE, extrarange = -1, ignore_walls = FALSE, quiet = TRUE)
 	user.next_attack_msg.Cut()
 	if(stat == DEAD)
 		if(user.has_status_effect(/datum/status_effect/fire_handler/fire_stacks/sunder))
@@ -259,7 +287,7 @@
 				else
 					user.visible_message(span_warning("[user] drinks from [vampire_victim]!"),\
 					span_warning("I drink from [vampire_victim]!"))
-					playsound(user.loc, 'sound/misc/drink_blood.ogg', 100, FALSE, -4)
+					playsound(user.loc, 'sound/misc/drink_blood.ogg', vol = 50, vary = FALSE, extrarange = -4, ignore_walls = FALSE, quiet = TRUE)
 					vampire_victim.blood_volume -= 100
 					if(bloodleft < 100)
 						vampire_victim.blood_volume = 0
@@ -267,11 +295,16 @@
 					user.add_stress(/datum/stressevent/drankrat)
 				return
 		return
-	if(src.apply_damage(damage, BRUTE))
+	var/hitlim = simple_limb_hit(user.zone_selected)
+	var/armor = run_armor_check(null, "stab", armor_penetration = 0, damage = damage)
+	if(armor > 0)
+		user.next_attack_msg += VISMSG_ARMOR_BLOCKED
+	if(src.apply_damage(damage, BRUTE, hitlim, armor))
 		if(istype(user, /mob/living/carbon/human/species/werewolf))
 			visible_message(span_danger("The werewolf bites into [src] and thrashes!"))
 		else
 			visible_message(span_danger("[user] bites [src]! What is wrong with them?"))
+	user.next_attack_msg.Cut()
 
 /mob/living/simple_animal/onkick(mob/M)
 	var/mob/living/simple_animal/target = src
@@ -283,7 +316,7 @@
 		return FALSE
 	if(user == target)
 		return FALSE
-	if(!HAS_TRAIT(user, TRAIT_GARROTED))	
+	if(!HAS_TRAIT(user, TRAIT_GARROTED))
 		if(user.check_leg_grabbed(1) || user.check_leg_grabbed(2))
 			to_chat(user, span_notice("I can't move my leg!"))
 			return
@@ -313,7 +346,7 @@
 			target.mind.attackedme[user.real_name] = world.time
 		user.stamina_add(15)
 
-/mob/living/simple_animal/proc/attack_threshold_check(damage, damagetype = BRUTE, armorcheck = d_type)
+/mob/living/simple_animal/proc/attack_threshold_check(damage, bodypart = null, damagetype = BRUTE, armorcheck = 0)
 	var/temp_damage = damage
 	if(!damage_coeff[damagetype])
 		temp_damage = 0
@@ -324,7 +357,7 @@
 		visible_message(span_warning("[src] looks unharmed!"))
 		return FALSE
 	else
-		apply_damage(damage, damagetype, null, getarmor(null, armorcheck))
+		apply_damage(damage, damagetype, bodypart, armorcheck)
 		return TRUE
 
 /mob/living/simple_animal/ex_act(severity, target, epicenter, devastation_range, heavy_impact_range, light_impact_range, flame_range)
@@ -362,10 +395,61 @@
 
 	take_overall_damage(brute_loss,burn_loss)
 
-/mob/living/simple_animal/do_attack_animation(atom/A, visual_effect_icon, used_item, no_effect, used_intent = null, simplified = TRUE)
+/mob/living/simple_animal/proc/get_attack_zone(mob/living/target)
+	if(target && !(target.mobility_flags & MOBILITY_STAND))
+		return pickweight(list(
+			BODY_ZONE_CHEST = 34,
+			BODY_ZONE_HEAD = 24,
+			BODY_ZONE_L_ARM = 11,
+			BODY_ZONE_R_ARM = 11,
+			BODY_ZONE_L_LEG = 10,
+			BODY_ZONE_R_LEG = 10,
+		))
+	if(length(attack_zone_weights))
+		return pickweight(attack_zone_weights)
+	switch(attack_aim)
+		if(MOB_AIM_GROUND)
+			return pickweight(list(
+				BODY_ZONE_L_LEG = 35,
+				BODY_ZONE_R_LEG = 35,
+				BODY_ZONE_L_ARM = 9,
+				BODY_ZONE_R_ARM = 9,
+				BODY_ZONE_CHEST = 10,
+				BODY_ZONE_HEAD = 2,
+			))
+		if(MOB_AIM_LOW)
+			return pickweight(list(
+				BODY_ZONE_L_LEG = 21,
+				BODY_ZONE_R_LEG = 21,
+				BODY_ZONE_CHEST = 22,
+				BODY_ZONE_L_ARM = 15,
+				BODY_ZONE_R_ARM = 15,
+				BODY_ZONE_HEAD = 6,
+			))
+		if(MOB_AIM_HIGH)
+			return pickweight(list(
+				BODY_ZONE_CHEST = 32,
+				BODY_ZONE_HEAD = 20,
+				BODY_ZONE_L_ARM = 16,
+				BODY_ZONE_R_ARM = 16,
+				BODY_ZONE_L_LEG = 8,
+				BODY_ZONE_R_LEG = 8,
+			))
+	return pickweight(list(
+		BODY_ZONE_CHEST = 27,
+		BODY_ZONE_L_ARM = 16,
+		BODY_ZONE_R_ARM = 16,
+		BODY_ZONE_HEAD = 17,
+		BODY_ZONE_L_LEG = 12,
+		BODY_ZONE_R_LEG = 12,
+	))
+
+/mob/living/simple_animal/do_attack_animation(atom/A, visual_effect_icon, obj/item/used_item, no_effect, item_animation_override = null, datum/intent/used_intent = null, simplified = TRUE)
 	if(!no_effect && !visual_effect_icon && melee_damage_upper)
 		if(melee_damage_upper < 10)
 			visual_effect_icon = ATTACK_EFFECT_PUNCH
 		else
 			visual_effect_icon = ATTACK_EFFECT_SMASH
-	..()
+	. = ..()
+	if(simplified && !used_item && !get_active_held_item())
+		do_attack_animation_simple(A, visual_effect_icon, used_intent = used_intent)

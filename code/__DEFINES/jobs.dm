@@ -19,6 +19,8 @@
 
 #define JOB_DISPLAY_ORDER_DEFAULT 0
 
+#define HOMESTEADER_TITLE_COOLDOWN (15 MINUTES)
+
 #define NOBLEMEN			(1<<0)
 
 #define LORD		(1<<0)
@@ -30,7 +32,7 @@
 #define HAND		(1<<0)
 #define STEWARD		(1<<1)
 #define COUNCILLOR	(1<<2)
-#define CLERK 		(1<<4)
+#define CLERK		(1<<4)
 #define JESTER		(1<<5)
 #define WIZARD		(1<<6)
 #define ARCHIVIST	(1<<7)
@@ -55,29 +57,28 @@
 #define BISHOP		(1<<0)
 #define MARTYR		(1<<1)
 #define TEMPLAR		(1<<2)
-#define KEEPER		(1<<3)
-#define DRUID		(1<<4)
-#define ACOLYTE		(1<<5)
-#define SEXTON		(1<<6)
+#define DRUID		(1<<3)
+#define ACOLYTE		(1<<4)
+#define SEXTON		(1<<5)
+#define PAINTER		(1<<6)
 
 #define BURGHERS			(1<<5)
 
 #define MERCHANT	(1<<0)
 #define GUILDMASTER (1<<1)
-#define GUILDSMAN  	(1<<2)
+#define GUILDSMAN		(1<<2)
 #define TAILOR		(1<<3)
-#define PHYSICIAN 	(1<<4)
+#define PHYSICIAN	(1<<4)
 #define APOTHECARY	(1<<5)
 #define INNKEEPER	(1<<6)
 #define BATHMASTER	(1<<7)
-#define CRIER		(1<<8)
 #define APPRENTICE	(1<<9) //Readd the mage part if you are going to add any other role that uses this tag or use ASSOCIATE to avoid weird spacing.
 
 #define PEASANTS			(1<<6)
 
 #define BATHWORKER	(1<<0)
 #define COOK		(1<<1)
-#define TAPSTER 	(1<<2)
+#define TAPSTER	(1<<2)
 #define SERVANT		(1<<3)
 #define SHOPHAND	(1<<4)
 #define SOILSON		(1<<5)
@@ -91,6 +92,7 @@
 #define PILGRIM		(1<<3)
 #define MERCENARY	(1<<4)
 #define VETERAN		(1<<5)
+#define KEEPER		(1<<6) // Here now that they aren't attached to the church anymore.
 
 #define WANDERERS			(1<<8)
 
@@ -109,29 +111,50 @@
 #define ASSASSIN		(1<<0)
 #define BANDIT			(1<<1)
 #define WRETCH			(1<<2)
-#define DEATHKNIGHT 	(1<<3)
+#define DEATHKNIGHT	(1<<3)
 #define SKELETON		(1<<4)
 #define GOBLIN			(1<<5)
 #define VAMPIRE_SERVANT (1<<6)
-#define VAMPIRE_GUARD 	(1<<7)
-#define VAMPIRE_SPAWN 	(1<<8)
+#define VAMPIRE_GUARD	(1<<7)
+#define VAMPIRE_SPAWN	(1<<8)
 #define GNOLL			(1<<9)
+#define HAG				(1<<10)
 
 #define SLOP				(1<<11)
 
+#define ATC					(1<<12)
+
 #define TESTER		(1<<0)
 
-#define JCOLOR_NOBLE  "#007fff"
+
+#define JCOLOR_NOBLE	"#007fff"
 #define JCOLOR_COURTIER "#aa83b9"
 #define JCOLOR_RETINUE "#597fb9"
 #define JCOLOR_GARRISON "#173266"
 #define JCOLOR_CHURCH "#b0955d"
 #define JCOLOR_BURGHER "#759259"
+#define JCOLOR_GUILD "#91a77d"
+#define JCOLOR_ATC "#5b9bd5"
 #define JCOLOR_PEASANT "#685542"
 #define JCOLOR_SIDEFOLK "#aea176"
-#define JCOLOR_WANDERER  "#23763a"
+#define JCOLOR_WANDERER	"#23763a"
 #define JCOLOR_INQUISITION "#6c6c6c"
 #define JCOLOR_ANTAGONIST  "#b8252c"
+
+/// Key value for taking the department's string and getting a color back
+#define JCOLOR_BY_DEPARTMENT list(\
+	"Noblemen" = JCOLOR_NOBLE,\
+	"Courtiers" = JCOLOR_COURTIER,\
+	"Retinue" = JCOLOR_RETINUE,\
+	"Garrison" = JCOLOR_GARRISON,\
+	"Church" = JCOLOR_CHURCH,\
+	"Inquisition" = JCOLOR_INQUISITION,\
+	"Burghers" = JCOLOR_BURGHER,\
+	"Guildsmen" = JCOLOR_GUILD,\
+	"Peasants" = JCOLOR_PEASANT,\
+	"Sidefolk" = JCOLOR_SIDEFOLK,\
+	"Wanderers" = JCOLOR_WANDERER,\
+)
 // PUT THESE ON THE FIRST ROLE IN THE LIST BELOW (IE NOBLE ON LORD) TO GET DESIRED COLOUR OF THE DEPARTMENT SELECT
 // job display orders //
 
@@ -166,13 +189,16 @@
 #define JDO_BISHOP 5
 #define JDO_MARTYR 5.1
 #define JDO_TEMPLAR 5.2
-#define JDO_KEEPER 5.3
-#define JDO_DRUID 5.4
-#define JDO_ACOLYTE 5.5
-#define JDO_SEXTON 5.6
+#define JDO_DRUID 5.3
+#define JDO_ACOLYTE 5.4
+#define JDO_SEXTON 5.5
+#define JDO_PAINTER 5.6
+
+// Azurian Trading Company
+#define JDO_MERCHANT 6
+#define JDO_SHOPHAND 6.05
 
 // Town Burghers
-#define JDO_MERCHANT 6
 #define JDO_GUILDMASTER 6.1
 #define JDO_GUILDSMAN 6.2
 #define JDO_TAILOR 6.3
@@ -180,7 +206,6 @@
 #define JDO_APOTHECARY 6.5
 #define JDO_INNKEEPER 6.6
 #define JDO_BATHMASTER 6.7
-#define JDO_CRIER 6.8
 #define JDO_APPRENTICE 6.9
 
 // Town Serfs - Peasants
@@ -188,7 +213,6 @@
 #define JDO_COOK 7.1
 #define JDO_TAPSTER 7.2
 #define JDO_SERVANT 7.3
-#define JDO_SHOPHAND 7.4
 #define JDO_SOILSON 7.5
 #define JDO_VILLAGER 7.6
 
@@ -199,6 +223,7 @@
 #define JDO_PILGRIM 8.3
 #define JDO_MERCENARY 8.4
 #define JDO_VETERAN 8.5
+#define JDO_KEEPER 8.6
 
 // Wanderers
 #define JDO_ADVENTURER 9
@@ -215,13 +240,29 @@
 #define JDO_BANDIT 11.1
 #define JDO_WRETCH 11.2
 #define JDO_GNOLL 11.3
+#define JDO_HAG 11.4
 
 #define BITFLAG_HOLY_WARRIOR (1<<0)
 #define BITFLAG_ROYALTY (1<<1)
 #define BITFLAG_CONSTRUCTOR (1<<2)
 #define BITFLAG_GARRISON (1<<3)
+#define BITFLAG_HALF_COMBATANT (1<<4) // For acolytes only, who are counted as half combatant for the purposes of wretch / antagonist scaling
 
-// START OF THE ECONOMY SECTION 
+#define ANNOUNCE_ON_FAR_TRAVEL_ROLES list( \
+	"Grand Duke", \
+	"Marshal", \
+	"Merchant", \
+	"Bathmaster", \
+	"Court Magician", \
+	"Steward", \
+	"Guildsman", \
+	"Guildmaster", \
+	"Hand", \
+	"Bishop", \
+	"Martyr", \
+)
+
+// START OF THE ECONOMY SECTION
 #define ECONOMIC_RICH rand(120, 140)
 #define ECONOMIC_UPPER_CLASS rand(100, 120)
 #define ECONOMIC_UPPER_MIDDLE_CLASS rand(80, 100)
@@ -231,3 +272,5 @@
 #define ECONOMIC_DESTITUTE rand(0, 6)
 #define ECONOMIC_LETSGOGAMBLING pick(ECONOMIC_DESTITUTE, ECONOMIC_DESTITUTE, ECONOMIC_DESTITUTE, ECONOMIC_WORKING_CLASS, ECONOMIC_WORKING_CLASS, ECONOMIC_WORKING_CLASS, ECONOMIC_WORKING_CLASS, ECONOMIC_RICH)
 // END OF THE ECONOMY SECTION
+
+#define JOB_SUBPREFS_WINDOW_ID "job_subprefs"

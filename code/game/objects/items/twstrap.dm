@@ -12,7 +12,6 @@
 	equip_delay_self = 5 SECONDS
 	unequip_delay_self = 5 SECONDS
 	max_integrity = 0
-	sellprice = 15
 	pixel_y = -16
 	pixel_x = -16
 	inhand_x_dimension = 64
@@ -21,21 +20,41 @@
 	equip_sound = 'sound/blank.ogg'
 	bloody_icon_state = "bodyblood"
 	alternate_worn_layer = UNDER_CLOAK_LAYER
-	strip_delay = 20
+	strip_delay = STRIP_DELAY_FAST
 	var/max_storage = 10
 	var/list/tweps = list()
 	sewrepair = TRUE
+	var/list/storable_types = list(
+		/obj/item/throwing_star,
+		/obj/item/rogueweapon/huntingknife
+	)
 
 /obj/item/twstrap/attackby(obj/A, mob/living/carbon/user, params)
-	if(istype(A, /obj/item/throwing_star) || istype(A, /obj/item/rogueweapon/huntingknife))
-		if(tweps.len < max_storage)
-			user.transferItemToLoc(A, tweps)
-			tweps += A
-			update_icon()
-		else
-			to_chat(loc, span_warning("Full!"))
-		return
-	..()
+	var/obj/item/I = A
+	if(!I)
+		return ..()
+
+	var/can_store = FALSE
+	for(var/typepath in storable_types)
+		if(istype(I, typepath))
+			can_store = TRUE
+			break
+
+	if(!can_store)
+		return ..()
+
+	if(length(tweps) >= max_storage)
+		to_chat(user, span_warning("Full!"))
+		return TRUE
+
+	if(!user.transferItemToLoc(I, src))
+		return TRUE
+
+	if(!(I in tweps))
+		tweps += I
+
+	update_icon()
+	return TRUE
 
 /obj/item/twstrap/MiddleClick(mob/living/user)
 	if(!length(tweps))
@@ -136,7 +155,17 @@
 		else
 			icon_state = "[item_state]0"
 
-/obj/item/twstrap/Initialize()
+/obj/item/twstrap/ai_get_custom_inventory()
+	return tweps
+
+/obj/item/twstrap/ai_withdraw_item(obj/item/it, mob/living/user)
+	if(it in tweps)
+		tweps -= it
+		update_icon()
+		return TRUE
+	return FALSE
+
+/obj/item/twstrap/Initialize(mapload)
 	. = ..()
 
 /obj/item/twstrap/bombstrap
@@ -144,20 +173,15 @@
 	desc = ""
 	icon_state = "bombstrap0"
 	item_state = "bombstrap"
-	strip_delay = 20
+	strip_delay = STRIP_DELAY_FAST
 	max_storage = 10
 	var/list/fill_list = list() //use for custome fill that
+	storable_types = list(
+		/obj/item/bomb,
+		/obj/item/tntstick,
+		/obj/item/impact_grenade
+	)
 
-/obj/item/twstrap/bombstrap/attackby(obj/A, mob/living/carbon/user, params)
-	if(istype(A, /obj/item/bomb) || istype(A, /obj/item/tntstick) || istype(A, /obj/item/impact_grenade))
-		if(tweps.len < max_storage)
-			user.transferItemToLoc(A, tweps)
-			tweps += A
-			update_icon()
-		else
-			to_chat(loc, span_warning("Full!"))
-		return
-	..()
 
 /obj/item/twstrap/bombstrap/attack_turf(turf/T, mob/living/user)
 	if(tweps.len >= max_storage)
@@ -211,7 +235,7 @@
 				update_icon()
 		return TRUE
 
-/obj/item/twstrap/bombstrap/bomb_and_fire/Initialize()
+/obj/item/twstrap/bombstrap/bomb_and_fire/Initialize(mapload)
 	..()
 	fill_list = list(/obj/item/bomb,
 	/obj/item/bomb,
@@ -233,7 +257,7 @@
 		tweps += I
 	update_icon()
 
-/obj/item/twstrap/bombstrap/firebomb/Initialize()
+/obj/item/twstrap/bombstrap/firebomb/Initialize(mapload)
 	..()
 	for(var/i in 1 to max_storage)
 		var/obj/item/bomb/I = new(src)

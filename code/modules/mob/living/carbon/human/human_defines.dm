@@ -11,6 +11,14 @@
 	can_buckle = TRUE
 	buckle_lying = FALSE
 	mob_biotypes = MOB_ORGANIC|MOB_HUMANOID
+	var/taints_loot = FALSE
+	/// Whether this character has spent their one-time natural-claw appearance choice.
+	var/cosmetic_claws_configured = FALSE
+	/// Cosmetic claw presentation copied onto an ordinary punch intent. Keeping INTENT_HARM's exact type to safekeep every hand interaction.
+	var/cosmetic_claw_intent
+	/// Selected hit and miss sounds for the cosmetic claw-punch intent.
+	var/cosmetic_claw_hitsound = "bluntwooshmed"
+	var/cosmetic_claw_miss_sound = "bluntwooshmed"
 
 	ambushable = 1
 
@@ -31,27 +39,24 @@
 	//Eye colour
 	var/eye_color = "000"
 
-	var/voice_color = "a0a0a0"
+	var/voice_color = "#a0a0a0"
 	var/nickname = "Please Change Me"
 	var/highlight_color = "#FF0000"
 	var/detail_color = "000"
 
-	var/skin_tone = "caucasian1"	//Skin tone
+	/// This is your skin tone, uses words such as 'caucasian1', but also accepts hexcode strings (without #).
+	var/skin_tone = "caucasian1"
+	/// This is an adaptable backup of skin_tone, because rotting was bugging out. Default value should be null, and only filled if we are rotted.
+	var/original_skin_tone
 
 	var/lip_style = null	//no lipstick by default- arguably misleading, as it could be used for general makeup
 	var/lip_color = "white"
 
 	var/age = "Adult"		//Player's age
 
-	var/accessory = "None"
-	var/detail = "None"
-	var/marking = "None"
-	
 	var/shavelevel = 0
 	var/breathe_tick = 0 // Used for gas mask delays.
 	var/socks = "Nude" //Which socks the player wants
-	var/backpack = DBACKPACK		//Which backpack type the player has chosen.
-	var/jumpsuit_style = PREF_SUIT		//suit/skirt
 
 	//Equipment slots
 	var/obj/item/clothing/skin_armor = null
@@ -68,6 +73,12 @@
 	var/obj/item/cloak = null
 	var/obj/item/clothing/wear_shirt = null
 
+	var/cached_worn_ac = ARMOR_CLASS_NONE
+	var/cached_head_ac = ARMOR_CLASS_NONE
+	var/cached_hands_ac = ARMOR_CLASS_NONE
+	var/cached_body_ac = ARMOR_CLASS_NONE
+	var/worn_ac_dirty = TRUE
+
 	var/special_voice = "" // For changing our voice. Used by a symptom.
 
 	var/name_override //For temporary visible name changes
@@ -82,7 +93,6 @@
 	var/static/list/can_ride_typecache = typecacheof(list(/mob/living/carbon/human))
 	var/lastpuke = 0
 	var/last_fire_update
-	var/account_id
 
 	canparry = TRUE
 	candodge = TRUE
@@ -113,6 +123,8 @@
 	var/headshot_link = null
 	var/standard_headshot_link = null //used to store headshots when swapping for antag ones
 	var/flavortext = null
+	/// For setpose
+	var/pose_text = ""
 	var/ooc_notes = null
 	var/ooc_extra
 	var/rumour = null
@@ -128,9 +140,16 @@
 	var/nsfwflavortext_cached = ""
 	var/ooc_notes_cached = ""
 	var/erpprefs_cached = ""
+	var/rumour_cached = ""
+	var/noble_gossip_cached = ""
 
+	/// Per-character theme override for examine panel viewers
+	var/examine_theme
 	var/list/img_gallery = list()
-	
+	var/list/nsfw_img_gallery = list()
+
+	var/ooc_extra_img
+	var/nsfw_ooc_extra_img
 
 	possible_rmb_intents = list(/datum/rmb_intent/feint,\
 	/datum/rmb_intent/aimed,\
@@ -149,7 +168,8 @@
 	var/vampire_skin = null
 	var/vampire_eyes = null
 	var/vampire_hair = null
-	//An alternative headshot link that can be used when users want to use it for a special role like while a vampire, werewolf, bandit, etc.
+	var/vampire_ears = null
+	///An alternative headshot link that can be used when users want to use it for a special role like while a vampire, werewolf, bandit, etc.
 	var/vampire_headshot_link
 	var/lich_headshot_link
 	//setting up the hooks for this, but not shown yet
@@ -160,12 +180,17 @@
 
 	/// Whether our job title is adaptive to our skills.
 	var/adaptive_name
+	/// Fixed title to show instead of composing every expert skill into the adaptive name. Resulting into a MESS.
+	var/adaptive_name_title
+	/// Next world.time where Homesteaders can change their chosen title.
+	var/next_homesteader_title_change = 0
 
 	/// Ref to orison-like sunder object
 	var/sunder_light_obj = null
 
-	/// Assoc list of culinary preferences of the mob
-	var/list/culinary_preferences = list()
+	var/favorite_cuisine = NONE
+	var/favorite_dish = NONE
+	var/favorite_drink = NONE
 
 	/// List of mobs that have attacked us. Only relevant to someone with TRAIT_TEMPO.
 	var/list/tempo_attackers = list()
@@ -175,29 +200,34 @@
 
 	var/list/charflaws = list()
 
-	// curse list and cooldown
+	var/list/feint_list = list()
+
+	/// curse list and cooldown
 	var/list/curses = list()
 	COOLDOWN_DECLARE(priest_announcement)
 	COOLDOWN_DECLARE(guildmaster_announcement) //This is not for priest but if you are looking for GUILDMASTER announcements it's here, more so convinence than anything.
-	COOLDOWN_DECLARE(crier_announcement)
 	COOLDOWN_DECLARE(priest_sermon)
 	COOLDOWN_DECLARE(priest_apostasy)
 	COOLDOWN_DECLARE(priest_excommunicate)
 	COOLDOWN_DECLARE(priest_curse)
 	COOLDOWN_DECLARE(priest_change_miracles)
+	COOLDOWN_DECLARE(hag_transform_lockout)
 
-	// bait stacks for aimed intent
+	/// bait stacks for aimed intent
 	var/bait_stacks
 
-	// werewolf mob storage (this is bad and probably causes hard dels)
+	/// werewolf mob storage (this is bad and probably causes hard dels)
 	var/mob/stored_mob = null
 
 	var/mob/living/carbon/human/hostagetaker //Stores the person that took us hostage in a var, allows us to force them to attack the mob and such
 	var/mob/living/carbon/human/hostage //What hostage we have
 
-	// Boolean. Usually set only to TRUE for non-Eoran church roles.
+	/// Boolean. Usually set only to TRUE for non-Eoran church roles.
 	var/virginity = FALSE
-	// Used to prevent certain antag from having sex
+	/// Used to prevent certain antag from having sex
 	var/can_do_sex = TRUE
-
+	/// For vision cone, check out mobs.dm defines for values
 	fovangle = FOV_DEFAULT
+
+	/// Guarded Virtue (TRAIT_DECEIVING_MEEKNESS) exclusive variable for filtering out our descriptors from examine.
+	var/show_descriptors = TRUE

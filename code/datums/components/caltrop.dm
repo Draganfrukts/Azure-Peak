@@ -6,7 +6,7 @@
 
 	var/cooldown = 0
 
-/datum/component/caltrop/Initialize(_min_damage = 0, _max_damage = 0, _probability = 100,  _flags = NONE)
+/datum/component/caltrop/Initialize(_min_damage = 0, _max_damage = 0, _probability = 100,	_flags = NONE)
 	min_damage = _min_damage
 	max_damage = max(_min_damage, _max_damage)
 	probability = _probability
@@ -23,7 +23,7 @@
 	if(ishuman(AM))
 		var/mob/living/carbon/human/H = AM
 		var/is_taur = !!H.get_taur_tail()
-		if(HAS_TRAIT(H, TRAIT_PIERCEIMMUNE) || is_taur)
+		if(HAS_TRAIT(H, TRAIT_PIERCEIMMUNE) || HAS_TRAIT(H, TRAIT_HARDSOLE) || is_taur)
 			return
 
 		if((flags & CALTROP_IGNORE_WALKERS) && H.m_intent == MOVE_INTENT_WALK)

@@ -5,6 +5,8 @@
 // MULTIBAR SMELTING WAS DISABLED FOR BALANCE REASONS
 // DO NOT RE-ENABLE IT UNTIL FURTHER NOTICE
 
+
+
 /obj/machinery/light/rogue/smelter
 	icon = 'icons/roguetown/misc/forge.dmi'
 	name = "stone furnace"
@@ -29,7 +31,7 @@
 	var/smelting_progress = 0
 
 	/// How many ticks of smelting necessary to get the finished product
-	var/smelting_ticks = 20
+	var/smelting_ticks = 10
 
 	/// Are we currently smelting?
 	var/actively_smelting = FALSE
@@ -40,6 +42,8 @@
 	fueluse = 30 MINUTES
 	crossfire = FALSE
 
+	var/smelt_sfx = 'sound/misc/smelter_sound.ogg'
+
 /obj/machinery/light/rogue/smelter/examine(mob/user, params)
 	. = ..()
 	. += span_info("It can hold up to <b>[max_contained_items] ores at a time</b>.")
@@ -48,6 +52,13 @@
 		. += span_notice("Peeking inside, you can see:")
 		for(var/obj/item/item as anything in contained_items)
 			. += span_info("- [item]")
+
+
+/obj/machinery/light/rogue/smelter/Initialize(mapload)
+	. = ..()
+	smelt_sfx = pick('sound/misc/smelter_sound1.ogg', 'sound/misc/smelter_sound2.ogg', 'sound/misc/smelter_sound3.ogg', 'sound/misc/smelter_sound4.ogg')
+	if(prob(10))
+		smelt_sfx = 'sound/misc/smelter_sound.ogg'
 
 /obj/machinery/light/rogue/smelter/attackby(obj/item/attacking_item, mob/living/user, params)
 	if(istype(attacking_item, /obj/item/rogueweapon/tongs))
@@ -66,20 +77,37 @@
 			if(!length(contained_items))
 				to_chat(user, span_warn("Nothing to retrieve from inside."))
 				return
-			var/obj/item/item_to_remove = contained_items[contained_items.len]
-			contained_items -= item_to_remove
-			item_to_remove.forceMove(tongs)
-			tongs.hingot = item_to_remove
-			if(user.mind && isliving(user) && tongs.hingot?.smeltresult) // Prevents an exploit with coal and runtimes with everything else
-				if(!istype(tongs.hingot, /obj/item/rogueore) && tongs.hingot?.smelted) // Burning items to ash won't level smelting.
-					var/mob/living/L = user
-					user.mind.add_sleep_experience(/datum/skill/craft/smelting, L.STAINT * 2, FALSE)// Smelting is already a timesink, this is justified to accelerate levelling
-			user.visible_message(span_info("[user] retrieves \the [item_to_remove] from \the [src]."), span_info("You retrieve \the [item_to_remove] from \the [src]."))
-			if(on)
-				var/tyme = world.time
-				tongs.hott = tyme
-				addtimer(CALLBACK(tongs, TYPE_PROC_REF(/obj/item/rogueweapon/tongs, make_unhot), tyme), 20 SECONDS)
-			tongs.update_icon()
+			if(length(contained_items) > 1 && tongs.auto_collect)
+				for(var/obj/item/I in contained_items)
+					var/delay = 1 SECONDS
+					delay -= (user.STASPD - 10)
+					delay -= (user.STASTR - 10)
+					delay = max(0.2 SECONDS, delay)
+					if(do_after(user, delay, TRUE, src))
+						user.visible_message(span_info("[user] retrieves \the [I] from \the [src]."), span_info("You retrieve \the [I] from \the [src]."))
+						LAZYREMOVE(contained_items, I)
+						I.forceMove(get_turf(user))
+						playsound(user, pick('sound/items/ingot_collect1.ogg', 'sound/items/ingot_collect2.ogg'), 100, TRUE)
+					if(user.mind && isliving(user) && istype(I, /obj/item/ingot))
+						var/obj/item/ingot/ING = I
+						if(ING.smelted && ING.smeltresult)
+							var/mob/living/L = user
+							user.mind.add_sleep_experience(/datum/skill/craft/smelting, L.STAINT * 2, FALSE)
+			else
+				var/obj/item/item_to_remove = contained_items[contained_items.len]
+				contained_items -= item_to_remove
+				item_to_remove.forceMove(tongs)
+				tongs.hingot = item_to_remove
+				if(user.mind && isliving(user) && tongs.hingot?.smeltresult) // Prevents an exploit with coal and runtimes with everything else
+					if(!istype(tongs.hingot, /obj/item/rogueore) && tongs.hingot?.smelted) // Burning items to ash won't level smelting.
+						var/mob/living/L = user
+						user.mind.add_sleep_experience(/datum/skill/craft/smelting, L.STAINT * 2, FALSE)// Smelting is already a timesink, this is justified to accelerate levelling
+				user.visible_message(span_info("[user] retrieves \the [item_to_remove] from \the [src]."), span_info("You retrieve \the [item_to_remove] from \the [src]."))
+				if(on)
+					var/tyme = world.time
+					tongs.hott = tyme
+					addtimer(CALLBACK(tongs, TYPE_PROC_REF(/obj/item/rogueweapon/tongs, make_unhot), tyme), 20 SECONDS)
+				tongs.update_icon()
 		return
 
 	if(istype(attacking_item, /obj/item/rogueweapon/hammer))
@@ -98,7 +126,7 @@
 
 	if(attacking_item.firefuel)
 		. = ..()
-		if(!.) //False/null if using the item as fuel. If true, we want to try smelt it so go onto next segment.
+		if(!attacking_item || QDELING(attacking_item) || attacking_item.loc != user) //Tries to use the item as fuel. ..() returns true even if it does get consumed so we have to loc check.
 			return
 
 	if(attacking_item.smeltresult)
@@ -108,13 +136,20 @@
 	to_chat(user, span_warning("\The [attacking_item] cannot be smelted."))
 
 /obj/machinery/light/rogue/smelter/attack_right(mob/user)
-	var/obj/item/held_item = user.get_active_held_item()
-	if(istype(held_item, /obj/item/rogueweapon/tongs))
-		attackby(held_item, user)
+	if(!ishuman(user))
+		return ..()
+
+	var/held = user.get_active_held_item()
+
+	if(istype(held, /obj/item/rogueweapon/tongs))
+		attackby(held, user)
 		return
 
-	if(held_item?.smeltresult)
-		add_item(held_item, user)
+	if(istype(held, /obj/item))
+		var/obj/item/I = held
+		if(I.smeltresult)
+			add_item(I, user)
+			return
 
 	return ..()
 
@@ -157,13 +192,13 @@
 			contained_items[smelting_item] = 6 // Guarantees a return of 6 no matter how extra experience past 3000 you have.
 		/*
 		RANDOMLY PICKED NUMBER ACCORDING TO SMELTER SKILL:
-			NO SKILL: 		between 10 and 30
-			NOVICE:	 		between 25 and 30
-			APPRENTICE:	 	between 40 and 50
-			JOURNEYMAN: 	between 55 and 75
-			EXPERT: 		between 70 and 100
-			MASTER: 		between 85 and 125
-			LEGENDARY: 		between 100 and 150
+			NO SKILL:		between 10 and 30
+			NOVICE:				between 25 and 30
+			APPRENTICE:			between 40 and 50
+			JOURNEYMAN:	between 55 and 75
+			EXPERT:		between 70 and 100
+			MASTER:		between 85 and 125
+			LEGENDARY:		between 100 and 150
 
 		PICKED NUMBER GETS DIVIDED BY 25 AND ROUNDED DOWN TO CLOSEST INTEGER, +1.
 		RESULT DETERMINES QUALITY OF BAR. SEE code/__DEFINES/skills.dm
@@ -185,7 +220,7 @@
 
 	if(smelting_progress < smelting_ticks)
 		smelting_progress++
-		playsound(src.loc,'sound/misc/smelter_sound.ogg', 50, FALSE)
+		playsound(src.loc, smelt_sfx, ((smelt_sfx == 'sound/misc/smelter_sound.ogg') ? 50 : 100), FALSE)
 		actively_smelting = TRUE
 		return
 
@@ -194,16 +229,27 @@
 
 	handle_smelting()
 
+/obj/machinery/light/rogue/smelter/proc/counts_for_economy()
+	var/area/A = get_area(src)
+	return A && is_type_in_typecache(A, GLOB.roguetown_areas_typecache)
+
+/obj/machinery/light/rogue/smelter/proc/smelt_into(path, quality, obj/item/source)
+	if((!source || source.type != path) && counts_for_economy())
+		record_material_flow(MATERIAL_FLOW_IN, MATERIAL_SOURCE_DOMESTIC, path, 1)
+		if(source)
+			record_material_flow(MATERIAL_FLOW_OUT, MATERIAL_SOURCE_SMELTING, source.type, 1)
+	return new path(src, quality)
+
 /obj/machinery/light/rogue/smelter/proc/handle_smelting()
 	for(var/obj/item/item as anything in contained_items)
 		if(item.smeltresult)
 			// disabled for now, balance reasons
 			// while(item.smelt_bar_num)
-			// 	item.smelt_bar_num--
-			// 	var/obj/item/result = new item.smeltresult(src, contained_items[item])
-			// 	contained_items += result
+			//	item.smelt_bar_num--
+			//	var/obj/item/result = smelt_into(item.smeltresult, contained_items[item], item)
+			//	contained_items += result
 			// contained_items -= item
-			var/obj/item/result = new item.smeltresult(src, contained_items[item])
+			var/obj/item/result = smelt_into(item.smeltresult, contained_items[item], item)
 			contained_items -= item
 			contained_items += result
 			qdel(item)
@@ -226,7 +272,7 @@
 	anchored = TRUE
 	density = TRUE
 	max_contained_items = 4
-	smelting_ticks = 30
+	smelting_ticks = 15
 	climbable = FALSE
 
 /obj/machinery/light/rogue/smelter/great/handle_smelting()
@@ -280,16 +326,18 @@
 		for(var/obj/item/item in contained_items)
 			floor_mean_quality += contained_items[item]
 			ore_deleted += 1
+			if(counts_for_economy())
+				record_material_flow(MATERIAL_FLOW_OUT, MATERIAL_SOURCE_SMELTING, item.type, 1)
 			contained_items -= item
 			qdel(item)
 		floor_mean_quality = floor(floor_mean_quality/ore_deleted)
 		for(var/i in 1 to max_contained_items)
-			var/obj/item/result = new alloy(src, floor_mean_quality)
+			var/obj/item/result = smelt_into(alloy, floor_mean_quality)
 			contained_items += result
 	else
 		for(var/obj/item/item in contained_items)
 			if(item.smeltresult)
-				var/obj/item/result = new item.smeltresult(src, contained_items[item])
+				var/obj/item/result = smelt_into(item.smeltresult, contained_items[item], item)
 				contained_items -= item
 				contained_items += result
 				qdel(item)
@@ -309,7 +357,7 @@
 	anchored = TRUE
 	density = TRUE
 	max_contained_items = 4
-	smelting_ticks = 40
+	smelting_ticks = 20
 	climbable = FALSE
 
 /obj/machinery/light/rogue/smelter/bronze/handle_smelting()
@@ -333,16 +381,18 @@
 		for(var/obj/item/item in contained_items)
 			floor_mean_quality += contained_items[item]
 			ore_deleted += 1
+			if(counts_for_economy())
+				record_material_flow(MATERIAL_FLOW_OUT, MATERIAL_SOURCE_SMELTING, item.type, 1)
 			contained_items -= item
 			qdel(item)
 		floor_mean_quality = floor(floor_mean_quality/ore_deleted)
 		for(var/i in 1 to max_contained_items)
-			var/obj/item/result = new alloy(src, floor_mean_quality)
+			var/obj/item/result = smelt_into(alloy, floor_mean_quality)
 			contained_items += result
 	else
 		for(var/obj/item/item in contained_items)
 			if(item.smeltresult)
-				var/obj/item/result = new item.smeltresult(src, contained_items[item])
+				var/obj/item/result = smelt_into(item.smeltresult, contained_items[item], item)
 				contained_items -= item
 				contained_items += result
 				qdel(item)
@@ -362,5 +412,5 @@
 	anchored = TRUE
 	density = TRUE
 	max_contained_items = 6
-	smelting_ticks = 45
+	smelting_ticks = 22
 	climbable = FALSE

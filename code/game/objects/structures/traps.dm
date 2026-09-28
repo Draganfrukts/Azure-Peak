@@ -15,14 +15,19 @@
 	var/trap_damage = 50 // baseline trap damage, reduced by armor checks. Wear your PPE in dungeons
 	var/def_zone = BODY_ZONE_CHEST //
 	var/used_time = 14 // interaction time for disabling traps, scales down with trap skill
- 
 
-	var/list/static/ignore_typecache
+
+	var/static/list/ignore_typecache
 	var/list/mob/immune_minds = list() //unused and a bit weird, helpful for making mobs immune to the traps without TRAIT_LIGHT_STEP
 
 	var/sparks = TRUE
 	var/datum/effect_system/spark_spread/spark_system
 	var/scraptype = /obj/item/scrap
+
+/obj/structure/trap/get_mechanics_examine(mob/user)
+	. = ..()
+	. += span_info("Right-clicking the eye on your HUD allows you to check your surroundings for hidden threats, traps, and ambushes. The chance to spot each instance scales with your character's Perception.")
+	. += span_info("Most traps are almost completely invisible. Examining an adjacent trap by shift-clicking it will momentarily dispell the invisiblity, and temporarily disables it.")
 
 /obj/structure/trap/Initialize(mapload)
 	. = ..()
@@ -110,7 +115,7 @@
 	if(iscarbon(user) && armed && isturf(loc))
 		if(!BP)
 			return FALSE
-		if(C.get_skill_level(/datum/skill/craft/traps) >= 4 || HAS_TRAIT(C, TRAIT_EXPLOSIVE_SUPPLY)) //Expert or TRAIT_BOMBER_EXPERT (Bomb main classes). 
+		if(C.get_skill_level(/datum/skill/craft/traps) >= 4 || HAS_TRAIT(C, TRAIT_EXPLOSIVE_SUPPLY)) //Expert or TRAIT_BOMBER_EXPERT (Bomb main classes).
 			used_time = 14 SECONDS
 			if(C.mind)
 				used_time -= max((C.get_skill_level(/datum/skill/craft/traps) * 2 SECONDS), 2 SECONDS)
@@ -184,7 +189,7 @@
 	icon_state = "bounty_trap_on"
 	stun_time = 200
 	sparks = FALSE //the item version gives them off to prevent runtimes (see Destroy())
-	checks_antimagic  = FALSE
+	checks_antimagic	= FALSE
 	var/obj/item/bountytrap/stored_item
 	var/caught = FALSE
 
@@ -283,7 +288,7 @@
 	density = TRUE
 	time_between_triggers = 1200 //Exists for 2 minutes
 
-/obj/structure/trap/ward/Initialize()
+/obj/structure/trap/ward/Initialize(mapload)
 	. = ..()
 	QDEL_IN(src, time_between_triggers)
 
@@ -297,7 +302,7 @@
 /obj/structure/trap/saw_blades/trap_effect(mob/living/L)
 	to_chat(L, span_danger("<B>A whirling blade erupts from beneath your feet!</B>"))
 	def_zone = pick(BODY_ZONE_L_LEG, BODY_ZONE_R_LEG)
-	L.apply_damage(trap_damage, BRUTE, def_zone, L.run_armor_check(def_zone, "stab", damage = trap_damage))
+	L.apply_damage(trap_damage, BRUTE, def_zone, L.run_armor_check(def_zone, "stab", armor_penetration = PEN_NONE, damage = trap_damage))
 	playsound(src, 'sound/gore/flesh_eat_01.ogg', 70, TRUE)
 	var/obj/structure/sawblade_trap/saw = new(get_turf(src))
 	last_trigger = 0 // override to keep slicing you every time you step onto the trap
@@ -395,7 +400,7 @@
 /obj/projectile/magic/frostbolt/wall_projectile
 	speed = 6
 	damage = 20
-	armor_penetration = 5
+	armor_penetration = PEN_NONE
 
 /obj/structure/trap/wall_projectile/acidsplash
 	name = "acid plate trap"
@@ -415,7 +420,7 @@
 /obj/structure/trap/rock_fall/trap_effect(mob/living/L)
 	to_chat(L, span_danger("<B>The ground above you shakes violently!</B>"))
 	def_zone = BODY_ZONE_HEAD
-	L.apply_damage(trap_damage, BRUTE, def_zone, L.run_armor_check(def_zone, "stab", damage = trap_damage))
+	L.apply_damage(trap_damage, BRUTE, def_zone, L.run_armor_check(def_zone, "stab", armor_penetration = PEN_NONE, damage = trap_damage))
 	playsound(src, 'sound/foley/smash_rock.ogg', 70, TRUE)
 	L.set_blurriness(10)
 	var/obj/structure/flora/rock/giant_rock = new(get_turf(src))
@@ -458,7 +463,7 @@
 	to_chat(L, span_danger("<B>A cruel joke has been played on you!</B>"))
 	L.add_stress(/datum/stressevent/thefool)
 	playsound(src, 'sound/magic/mockery.ogg', 60, TRUE)
-	L.apply_status_effect(/datum/status_effect/debuff/viciousmockery)
+	L.apply_status_effect(/datum/status_effect/debuff/mockery_stack)
 
 /datum/stressevent/thefool
 	timer = 10 MINUTES
@@ -502,8 +507,8 @@
 	if(!H || !H.mind)
 		return FALSE
 
-	var/assigned = lowertext("[H.mind.assigned_role]")
-	var/special  = lowertext("[H.mind.special_role]")
+	var/assigned = LOWER_TEXT("[H.mind.assigned_role]")
+	var/special	= LOWER_TEXT("[H.mind.special_role]")
 
 	if(assigned == "bandit" || special == "bandit")
 		return TRUE
@@ -522,7 +527,7 @@
 /obj/structure/trap/bogtrap/proc/has_required_trigger_trait(mob/living/H)
 	if(!H) return FALSE
 	if(HAS_TRAIT(H, TRAIT_MEDIUMARMOR)) return TRUE
-	if(HAS_TRAIT(H, TRAIT_HEAVYARMOR))  return TRUE
+	if(HAS_TRAIT(H, TRAIT_HEAVYARMOR))	return TRUE
 	if(HAS_TRAIT(H, TRAIT_DODGEEXPERT)) return TRUE
 	if(HAS_TRAIT(H, TRAIT_CRITICAL_RESISTANCE)) return TRUE
 
@@ -539,8 +544,8 @@
 /obj/structure/trap/bogtrap/proc/is_exempt_viewer(mob/living/H)
 	if(!H || !H.mind)
 		return FALSE
-	var/assigned = lowertext("[H.mind.assigned_role]")
-	var/special  = lowertext("[H.mind.special_role]")
+	var/assigned = LOWER_TEXT("[H.mind.assigned_role]")
+	var/special	= LOWER_TEXT("[H.mind.special_role]")
 
 	return (assigned == "bandit" || special == "bandit" \
 		|| assigned == "bogguard" \
@@ -587,14 +592,14 @@
 	. = ..()
 
 /obj/structure/trap/bogtrap/freeze
-    name = "trapbog (frost)"
-    checks_antimagic = FALSE
+	name = "trapbog (frost)"
+	checks_antimagic = FALSE
 
 /obj/structure/trap/bogtrap/freeze/trap_effect(mob/living/L)
-    to_chat(L, span_danger("<B>You're frozen solid!</B>"))
-    L.Paralyze(50)
-    L.adjust_bodytemperature(-300)
-    playsound(src, 'sound/misc/explode/bottlebomb (1).ogg', 60, TRUE)
+	to_chat(L, span_danger("<B>You're frozen solid!</B>"))
+	L.Paralyze(50)
+	L.adjust_bodytemperature(-300)
+	playsound(src, 'sound/misc/explode/bottlebomb (1).ogg', 60, TRUE)
 
 
 /obj/structure/trap/bogtrap/bomb
@@ -625,7 +630,7 @@
 				continue
 			new /obj/structure/glowshroom(T)
 
- //Poison tr*p
+//Poison tr*p
 
 /obj/structure/trap/bogtrap/poison
 	name = "trapbog (toxic)"

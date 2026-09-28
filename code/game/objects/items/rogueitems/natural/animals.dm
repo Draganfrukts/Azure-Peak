@@ -10,8 +10,16 @@
 	resistance_flags = FLAMMABLE
 	drop_sound = 'sound/foley/dropsound/cloth_drop.ogg'
 	sellprice = 8
+	dropshrink = 0.9
 
-/obj/item/natural/hide/Initialize()
+/obj/item/natural/hide/get_mechanics_examine(mob/user)
+	. = ..()
+	. += span_info("Hide is chiefly obtained by butchering most animals. To butcher an animal, middle-click it with a knife without any miracles, spells, or special intents selected. The higher your Butchering skill, the more you'll carve.")
+	. += span_info("Left-click a drying rack with hide to prepare it for curing. Drying racks can be crafted together from a couple sticks.")
+	. += span_info("Once prepared, left-clicking the hide with a knife will allow you to turn it into cured leather. The amount of cured leather that skinning the hide'll give scales with your Skincrafting skills.")
+	. += span_info("Hide and cured leather can be used to craft a wide variety of equipment, armor, and clothing. Likewise, it can also fetch a fine price from the Merchants and Stockpile.")
+
+/obj/item/natural/hide/Initialize(mapload)
 	. = ..()
 	var/static/list/slapcraft_recipe_list = list(
 		/datum/crafting_recipe/roguetown/survival/woodshield,
@@ -35,54 +43,61 @@
 	resistance_flags = FLAMMABLE
 	drop_sound = 'sound/foley/dropsound/cloth_drop.ogg'
 	color = "#5c5243"
-	sellprice = 18
+	experimental_inhand = TRUE
+	dropshrink = 0.9
 
 /obj/item/natural/fur/goat
-	desc = "from a gote."
+	desc = "Fur from a humble gote."
 	icon_state = "pelt_gote"
 	color = null
 
 /obj/item/natural/fur/wolf
-	desc = "from a volf."
+	desc = "Fur from a fearsome volf."
 	icon_state = "pelt_volf"
 	color = null
 
 /obj/item/natural/fur/fox
-	desc = "from a venard."
+	desc = "Fur from a nimble venard."
 	icon_state = "pelt_fox"
 	color = null
 
 /obj/item/natural/fur/bobcat
-	desc = "from a lynx."
+	desc = "Fur from a vexing lynx."
 	icon_state = "pelt_bobcat"
 	color = null
 
 /obj/item/natural/fur/mole
-	desc = "from a mole."
+	desc = "Fur from a plump mole."
 	icon_state = "pelt_mole"
 	color = null
+	sellprice = 28
 
 /obj/item/natural/fur/rat
-	desc = "from a rous."
+	desc = "Fur from a scheming rous."
 	icon_state = "pelt_rous"
 	color = null
 
 /obj/item/natural/fur/direbear
-	desc = "fur from one of Dendor's mightiest creachers."
+	desc = "Fur from one of Dendor's mightiest creachers."
 	icon_state = "pelt_direbear"
 	color = "#33302b"
 	sellprice = 28
 
 /obj/item/natural/fur/rabbit
-	desc = "from a cabbit."
+	desc = "Fur from an unlucky cabbit."
 	icon_state = "wool2"
 	color = "#cecac4"
 
-/obj/item/natural/fur/raccoon	
-	desc = "from a raccoon."
+/obj/item/natural/fur/raccoon
+	desc = "Fur from a ferocious raccoon."
 	icon_state = "pelt_raccoon"
 	color = null
 	sellprice = 12
+
+/obj/item/natural/fur/get_mechanics_examine(mob/user)
+	. = ..()
+	. += span_info("Fur is chiefly obtained by butchering most animals. To butcher an animal, middle-click it with a knife without any miracles, spells, or special intents selected. The higher your Butchering skill, the more you'll carve.")
+	. += span_info("Hide and cured leather can be used to craft a wide variety of equipment, armor, and clothing. Likewise, it can also fetch a fine price from the Merchants and Stockpile.")
 
 //RTD make this a storage item and make clickign on animals with things put it in storage
 /obj/item/natural/saddle
@@ -96,10 +111,9 @@
 	resistance_flags = FIRE_PROOF
 	force = 0
 	throwforce = 0
-	sellprice = 10
 	var/storage_type = /datum/component/storage/concrete/roguetown/saddle
 
-/obj/item/natural/saddle/Initialize()
+/obj/item/natural/saddle/Initialize(mapload)
 	. = ..()
 	AddComponent(storage_type)
 
@@ -121,16 +135,19 @@
 	..()
 
 /obj/item/natural/saddle/get_mechanics_examine(mob/user)
-    . = ..()
-    . += span_info("Feeding oats or grains to a saiga or fogbeast allows them to be tamed, and tamed saigas or fogbeasts can be turned into mounts by giving them a saddle.")
-    . += span_info("Drag yourself onto a mount to ride them, and press the 'RESIST' hotkey to get off of them.")
-    . += span_info("Activate the 'RUN' button to begin galloping with your mount, after a small delay. Galloping functions similar to running, but with a greatly reduced stamina cost.")
-    . += span_info("Galloping on a mount rewards you with experience towards the Riding skill.")
+	. = ..()
+	. += span_info("Feeding oats or grains to a saiga or fogbeast allows them to be tamed, and tamed saigas or fogbeasts can be turned into mounts by giving them a saddle.")
+	. += span_info("Drag yourself onto a mount to ride them, and press the 'RESIST' hotkey to get off of them.")
+	. += span_info("Activate the 'RUN' button to begin galloping with your mount, after a small delay. Galloping functions similar to running, but with a greatly reduced stamina cost.")
+	. += span_info("Galloping on a mount rewards you with experience towards the Riding skill.")
 
 /mob/living/simple_animal
 	var/can_saddle = FALSE
 	var/obj/item/ssaddle
 	var/simple_detect_bonus = 0 // A flat percentage bonus to our ability to detect sneaking people only. Use in lieu of giving mobs huge STAPER bonuses if you want them to be observant.
+
+/mob/living/simple_animal/can_be_held(mob/by)
+	return mob_size <= MOB_SIZE_SMALL
 
 /obj/item/natural/bone
 	name = "bone"
@@ -147,7 +164,7 @@
 	slot_flags = ITEM_SLOT_MOUTH|ITEM_SLOT_HIP
 	bundletype = /obj/item/natural/bundle/bone
 
-/obj/item/natural/bone/Initialize()
+/obj/item/natural/bone/Initialize(mapload)
 	. = ..()
 	var/static/list/slapcraft_recipe_list = list(
 		/datum/crafting_recipe/roguetown/survival/recurvepartial,
@@ -159,14 +176,17 @@
 		slapcraft_recipes = slapcraft_recipe_list,\
 		)
 
+/obj/item/natural/bone/get_mechanics_examine(mob/user)
+	. = ..()
+	. += span_info("Bones are chiefly obtained by butchering most animals. To butcher an animal, middle-click it with a knife without any miracles, spells, or special intents selected. The higher your Butchering skill, the more you'll carve.")
+
 /obj/item/natural/hide/cured
 	name = "cured leather"
 	icon_state = "leather"
 	desc = "A hide piece that has been cured and may now be worked."
-	sellprice = 7
 	bundletype = /obj/item/natural/bundle/curred_hide
 
-/obj/item/natural/hide/cured/Initialize()
+/obj/item/natural/hide/cured/Initialize(mapload)
 	. = ..()
 	var/static/list/slapcraft_recipe_list = list(
 		/datum/crafting_recipe/roguetown/survival/heatershield,
@@ -190,12 +210,13 @@
 /obj/item/natural/cured/essence
 	name = "essence of wilderness"
 	icon_state = "wessence"
-	desc = "A large drop of mystical sap said to contain Dendor's own energies, \
+	desc = "Drops of mystical sap said to contain Dendor's own energies, \
 	often carried by hunters and other wildsmen as a token of luck. A skilled \
 	tailor can imbue it into certain clothing or leather to provide protection."
 	resistance_flags = FLAMMABLE
 	w_class = WEIGHT_CLASS_SMALL
 	sellprice = 20
+	dropshrink = 0.6
 
 /obj/item/natural/rabbitsfoot
 	name = "rabbit's foot"

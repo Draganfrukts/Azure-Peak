@@ -1,31 +1,38 @@
-/obj/effect/proc_holder/spell/invoked/projectile/fetch
+/datum/action/cooldown/spell/projectile/fetch
 	name = "Fetch"
-	desc = "Shoot out a magical bolt that draws in the target struck towards the caster."
-	clothes_req = FALSE
-	range = 15
+	desc = "Shoot out a magical bolt that draws in a freestanding item towards the caster. Doesn't work on living targets."
+	button_icon = 'icons/mob/actions/roguespells.dmi'
+	button_icon_state = "fetch"
+	sound = 'sound/magic/magnet.ogg'
+	spell_color = GLOW_COLOR_ARCANE
+	glow_intensity = GLOW_INTENSITY_LOW
+
+	click_to_activate = TRUE
+	cast_range = 15
+
+	primary_resource_type = SPELL_COST_STAMINA
+	primary_resource_cost = SPELLCOST_MINOR_PROJECTILE
+
+	invocations = list("Recolligere Minora")
+	invocation_type = INVOCATION_WHISPER
+
+	charge_required = FALSE
+	cooldown_time = 8 SECONDS
+
 	projectile_type = /obj/projectile/magic/fetch
-	sound = list('sound/magic/magnet.ogg')
-	active = FALSE
-	releasedrain = 15
-	chargedrain = 0
-	chargetime = 0
-	recharge_time = 8 SECONDS // 3 seconds base cooldown is ridiculous
-	warnie = "spellwarning"
-	overlay_state = "fetch"
-	no_early_release = TRUE
-	charging_slowdown = 1
-	spell_tier = 2
-	invocations = list("Recolligere")
-	invocation_type = "whisper"
-	hide_charge_effect = TRUE // essential for rogue mage
-	chargedloop = /datum/looping_sound/invokegen
+
 	associated_skill = /datum/skill/magic/arcane
-	cost = 2 // Combat spell, but of slighlty less obvious use
-	xp_gain = TRUE
+	spell_tier = 1
+	spell_impact_intensity = SPELL_IMPACT_LOW
+	point_cost = 1
+
+	spell_requirements = SPELL_REQUIRES_NO_ANTIMAGIC | SPELL_REQUIRES_HUMAN
+	allow_cross_z = FALSE
 
 /obj/projectile/magic/fetch
 	name = "bolt of fetching"
 	icon_state = "cursehand0"
+	flag = "blunt"
 	range = 15
 	cannot_cross_z = TRUE
 
@@ -34,13 +41,13 @@
 	var/atom/throw_target = get_step(firer, get_dir(firer, target))
 	if(isliving(target))
 		var/mob/living/L = target
-		if(L.anti_magic_check() || !firer)
-			L.visible_message(span_warning("[src] vanishes on contact with [target]!"))
-			return BULLET_ACT_BLOCK
-		L.throw_at(throw_target, 200, 4)
+		L.visible_message(span_warning("[src] vanishes on contact with [target]!"))
+		return BULLET_ACT_BLOCK
 	else
 		if(isitem(target))
 			var/obj/item/I = target
+			if(I.anchored || I.move_resist >= MOVE_FORCE_STRONG)
+				return
 			var/mob/living/carbon/human/carbon_firer
 			if (ishuman(firer))
 				carbon_firer = firer

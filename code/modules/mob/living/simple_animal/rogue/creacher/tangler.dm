@@ -3,7 +3,7 @@
 	desc = "Green, spiky and....I think I saw it move!"
 	icon = 'icons/roguetown/mob/monster/tangler.dmi'
 	icon_state = "tangler_hidden"
-	var/faction = list("plants")
+	var/faction = list(FACTION_PLANTS)
 
 /obj/structure/flora/grass/tangler/update_icon()
 	return
@@ -19,7 +19,7 @@
 	var/datum/proximity_monitor/proximity_monitor
 	var/aggroed = TRUE
 
-/obj/structure/flora/grass/tangler/real/Initialize()
+/obj/structure/flora/grass/tangler/real/Initialize(mapload)
 	. = ..()
 	proximity_monitor = new(src, 1)
 

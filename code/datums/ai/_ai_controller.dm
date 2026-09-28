@@ -6,13 +6,13 @@ have ways of interacting with a specific atom and control it. They posses a blac
 	///The atom this controller is controlling
 	var/atom/pawn
 	/**
-	 * This is a list of variables the AI uses and can be mutated by actions.
-	 *
-	 * When an action is performed you pass this list and any relevant keys for the variables it can mutate.
-	 *
-	 * DO NOT set values in the blackboard directly, and especially not if you're adding a datum reference to this!
-	 * Use the setters, this is important for reference handing.
-	 */
+		* This is a list of variables the AI uses and can be mutated by actions.
+		*
+		* When an action is performed you pass this list and any relevant keys for the variables it can mutate.
+		*
+		* DO NOT set values in the blackboard directly, and especially not if you're adding a datum reference to this!
+		* Use the setters, this is important for reference handing.
+		*/
 	var/list/blackboard = list()
 	///Bitfield of traits for this AI to handle extra behavior
 	var/ai_traits
@@ -22,6 +22,8 @@ have ways of interacting with a specific atom and control it. They posses a blac
 	var/list/current_behaviors
 	///Current actions and their respective last time ran as an assoc list.
 	var/list/behavior_cooldowns = list()
+	///Behaviors that are inside a sleeping perform() right now, so we don't re-enter them.
+	var/list/running_behaviors = list()
 	///The idle behavior this AI performs when it has no actions.
 	var/datum/idle_behavior/idle_behavior = null
 	///our current cell grid
@@ -47,9 +49,11 @@ have ways of interacting with a specific atom and control it. They posses a blac
 	// Movement related things here
 	///Reference to the movement datum we use. Is a type on initialize but becomes a ref afterwards.
 	var/datum/ai_movement/ai_movement = /datum/ai_movement/dumb
+	/// this shouldn't be a component tbh but uh reusing code go brrr
+	var/datum/component/ai_inventory_manager/inventory_component
 	///Cooldown until next movement
 	COOLDOWN_DECLARE(movement_cooldown)
-	///Delay between movements. This is on the controller so we can keep the movement datum singleton
+	///Delay between movements. Derived from the pawn's movespeed modifiers, never set directly.
 	var/movement_delay = 0.1 SECONDS
 	///A list for the path we're currently following, if we're using AStar pathing
 	var/list/movement_path
@@ -66,6 +70,12 @@ have ways of interacting with a specific atom and control it. They posses a blac
 	var/can_idle = TRUE
 	///What distance should we be checking for interesting things when considering idling/deidling? Defaults to AI_DEFAULT_INTERESTING_DIST
 	var/interesting_dist = AI_DEFAULT_INTERESTING_DIST
+	///Whether the pathing layer should fall back to climbing climbable structures when blocked.
+	var/can_climb_structures = TRUE
+	///Earliest world.time the controller may attempt another structure climb.
+	var/next_climb_time = 0
+	///Delay between climb attempts so AI doesn't rapidly hop back and forth across fences.
+	var/climb_interval = 10 SECONDS
 	///
 	var/movement_displacement_time = 0
 
@@ -79,20 +89,16 @@ have ways of interacting with a specific atom and control it. They posses a blac
 
 	PossessPawn(new_pawn)
 
-/datum/ai_controller/Destroy(force, ...)
+/datum/ai_controller/Destroy(force)
 	UnpossessPawn(FALSE)
-	if(ai_status)
-		GLOB.ai_controllers_by_status[ai_status] -= src
 	our_cells = null
-	set_movement_target(type, null)
-	if(ai_movement.moving_controllers[src])
-		ai_movement.stop_moving_towards(src)
+	inventory_component = null
 	return ..()
 
 ///Sets the current movement target, with an optional param to override the movement behavior
 /datum/ai_controller/proc/set_movement_target(source, atom/target, datum/ai_movement/new_movement)
 	if(current_movement_target)
-		UnregisterSignal(current_movement_target, list(COMSIG_PARENT_PREQDELETED))
+		UnregisterSignal(current_movement_target, list(COMSIG_MOVABLE_MOVED, COMSIG_PARENT_PREQDELETED))
 	if(!isnull(target) && !isatom(target))
 		stack_trace("[pawn]'s current movement target is not an atom, rather a [target.type]! Did you accidentally set it to a weakref?")
 		CancelActions()
@@ -100,13 +106,69 @@ have ways of interacting with a specific atom and control it. They posses a blac
 	movement_target_source = source
 	current_movement_target = target
 	if(!isnull(current_movement_target))
+		RegisterSignal(current_movement_target, COMSIG_MOVABLE_MOVED, PROC_REF(on_movement_target_move))
 		RegisterSignal(current_movement_target, COMSIG_PARENT_PREQDELETED, PROC_REF(on_movement_target_delete))
 	if(new_movement)
 		change_ai_movement_type(new_movement)
 
+
+/**
+ * Removes a subtree from planning_subtrees by typepath.
+ * Safe to call whether planning_subtrees holds instances or typepaths.
+ */
+/datum/ai_controller/proc/remove_subtree(datum/ai_planning_subtree/subtree_type)
+	for(var/datum/ai_planning_subtree/subtree as anything in planning_subtrees)
+		if(subtree.type == subtree_type)
+			planning_subtrees -= subtree
+			return
+
+/**
+ * Adds a subtree at a given position (1-indexed) by typepath, resolving the singleton instance.
+ * If the subtree is already present it will not be added again.
+ * Position is clamped so 1 = top, length+1 (or any value beyond the list) = bottom.
+ */
+/datum/ai_controller/proc/add_subtree_at(datum/ai_planning_subtree/subtree_type, index = 1)
+	for(var/datum/ai_planning_subtree/subtree as anything in planning_subtrees)
+		if(subtree.type == subtree_type)
+			return // already present, do nothing
+
+	var/datum/ai_planning_subtree/subtree_instance = GLOB.ai_subtrees[subtree_type]
+	if(!subtree_instance)
+		CRASH("add_subtree_at: subtree type [subtree_type] not found in GLOB.ai_subtrees")
+
+	LAZYINITLIST(planning_subtrees)
+	index = clamp(index, 1, length(planning_subtrees) + 1)
+	planning_subtrees.Insert(index, subtree_instance)
+
+/**
+ * Returns the index of a subtree in planning_subtrees by typepath, or 0 if not found.
+ */
+/datum/ai_controller/proc/get_subtree_index(datum/ai_planning_subtree/subtree_type)
+	for(var/i in 1 to length(planning_subtrees))
+		var/datum/ai_planning_subtree/subtree = planning_subtrees[i]
+		if(subtree.type == subtree_type)
+			return i
+	return 0
+
 ///Overrides the current ai_movement of this controller with a new one
 /datum/ai_controller/proc/change_ai_movement_type(datum/ai_movement/new_movement)
+	if(istype(ai_movement) && (src in ai_movement.moving_controllers))
+		ai_movement.stop_moving_towards(src)
 	ai_movement = SSai_movement.movement_types[new_movement]
+
+///Rips this controller out of every movement datum and drops any queued path.
+/datum/ai_controller/proc/halt_movement()
+	for(var/movement_type in SSai_movement.movement_types)
+		var/datum/ai_movement/movement = SSai_movement.movement_types[movement_type]
+		if(src in movement.moving_controllers)
+			movement.stop_moving_towards(src)
+	movement_path = null
+	if(blackboard[BB_FUTURE_MOVEMENT_PATH])
+		clear_blackboard_key(BB_FUTURE_MOVEMENT_PATH)
+	if(current_movement_target)
+		set_movement_target(type, null)
+	if(!QDELETED(pawn) && ismovable(pawn))
+		walk(pawn, 0)
 
 ///Completely replaces the planning_subtrees with a new set based on argument provided, list provided must contain specifically typepaths
 /datum/ai_controller/proc/replace_planning_subtrees(list/typepaths_of_new_subtrees)
@@ -146,18 +208,25 @@ have ways of interacting with a specific atom and control it. They posses a blac
 	if(pawn_turf)
 		GLOB.ai_controllers_by_zlevel[pawn_turf.z] += src
 
-	if(!continue_processing_when_client && istype(new_pawn, /mob))
-		var/mob/possible_client_holder = new_pawn
-		if(possible_client_holder.client)
-			set_ai_status(AI_STATUS_OFF)
-		else
-			set_ai_status(AI_STATUS_ON)
+	var/mob/possible_client_holder = ismob(new_pawn) ? new_pawn : null
+	if(!continue_processing_when_client && possible_client_holder?.client)
+		set_ai_status(AI_STATUS_OFF)
 	else
 		set_ai_status(AI_STATUS_ON)
 
 	RegisterSignal(pawn, COMSIG_MOVABLE_Z_CHANGED, PROC_REF(on_changed_z_level))
-	RegisterSignal(pawn, COMSIG_MOB_LOGIN, PROC_REF(on_sentience_gained))
+	if(possible_client_holder?.client)
+		RegisterSignal(pawn, COMSIG_MOB_LOGOUT, PROC_REF(on_sentience_lost))
+	else
+		RegisterSignal(pawn, COMSIG_MOB_LOGIN, PROC_REF(on_sentience_gained))
 	RegisterSignal(pawn, COMSIG_MOB_STATCHANGE, PROC_REF(on_stat_changed))
+	RegisterSignal(pawn, COMSIG_ATOM_WAS_ATTACKED, PROC_REF(on_pawn_attacked))
+
+	if(isliving(pawn))
+		RegisterSignal(pawn, COMSIG_MOB_MOVESPEED_UPDATED, PROC_REF(on_movespeed_updated))
+		var/mob/living/living_pawn = pawn
+		living_pawn.update_move_intent_slowdown()
+		recalculate_movement_delay()
 
 	our_cells = new(interesting_dist, interesting_dist, 1)
 	set_new_cells()
@@ -170,7 +239,7 @@ have ways of interacting with a specific atom and control it. They posses a blac
 	return !QDELETED(pawn)
 
 ///Interact with objects
-/datum/ai_controller/proc/ai_interact(target, combat_mode, list/modifiers, nextmove = FALSE)
+/datum/ai_controller/proc/ai_interact(target, combat_mode, nextmove = FALSE, list/modifiers)
 	if(!ai_can_interact())
 		return FALSE
 
@@ -178,15 +247,14 @@ have ways of interacting with a specific atom and control it. They posses a blac
 
 	if(QDELETED(final_target))
 		return FALSE
-	var/params = list2params(modifiers)
+
 	var/mob/living/living_pawn = pawn
+	if(final_target == living_pawn)
+		return FALSE
 	if(nextmove && living_pawn.next_move > world.time)
 		return FALSE
 
-	if(!(living_pawn.mobility_flags & MOBILITY_STAND))
-		living_pawn.aimheight_change(rand(1,9))
-	else
-		living_pawn.aimheight_change(rand(10,19))
+	var/params = list2params(modifiers)
 
 	if(isnull(combat_mode))
 		SEND_SIGNAL(living_pawn, COMSIG_HOSTILE_PRE_ATTACKINGTARGET, final_target)
@@ -203,6 +271,22 @@ have ways of interacting with a specific atom and control it. They posses a blac
 /datum/ai_controller/proc/update_grid(datum/source, datum/spatial_grid_cell/new_cell)
 	SIGNAL_HANDLER
 	set_new_cells()
+	if(current_movement_target)
+		check_target_max_distance()
+
+/datum/ai_controller/proc/on_movement_target_move(atom/source)
+	SIGNAL_HANDLER
+	check_target_max_distance()
+
+/datum/ai_controller/proc/check_target_max_distance()
+	if(get_dist_3d(pawn, current_movement_target) <= max_target_distance)
+		return
+	var/last_hit = blackboard["bb_last_ranged_hit_time"] || 0
+	var/mob/last_shooter = blackboard["bb_last_ranged_attacker"]
+	var/commanded_travel = (current_movement_target == blackboard[BB_TRAVEL_DESTINATION])
+	if(commanded_travel || (last_shooter == current_movement_target && (world.time - last_hit < 15 SECONDS)))
+		return
+	CancelActions()
 
 /datum/ai_controller/proc/on_movement_target_delete(atom/source)
 	SIGNAL_HANDLER
@@ -226,6 +310,12 @@ have ways of interacting with a specific atom and control it. They posses a blac
 /datum/ai_controller/proc/should_idle()
 	if(!can_idle)
 		return FALSE
+	var/alert_until = blackboard[BB_AI_ALERT_MODE_UNTIL] || 0
+	if(alert_until > world.time)
+		return FALSE
+	var/list/aggro_table = blackboard?[BB_MOB_AGGRO_TABLE]
+	if(length(aggro_table))
+		return FALSE
 	for(var/datum/spatial_grid_cell/grid as anything in our_cells.member_cells)
 		if(length(grid.client_contents))
 			return FALSE
@@ -235,12 +325,29 @@ have ways of interacting with a specific atom and control it. They posses a blac
 	if(ai_status == AI_STATUS_OFF)
 		return
 	if(should_idle())
-		set_ai_status(AI_STATUS_OFF)
+		set_ai_status(AI_STATUS_IDLE)
 
 /datum/ai_controller/proc/on_client_enter(datum/source, atom/target)
 	SIGNAL_HANDLER
-	if(ai_status == AI_STATUS_OFF || ai_status == AI_STATUS_IDLE)
-		set_ai_status(get_expected_ai_status())
+	// Stamp the hold-open window. Aggressive scanning for 30s after a client enters
+	// our cell; find_aggro_targets already runs every 1s when awake, so the client
+	// gets picked up fast.
+	blackboard[BB_AI_ALERT_MODE_UNTIL] = world.time + 30 SECONDS
+	if(ai_status == AI_STATUS_IDLE)
+		if(ismob(pawn))
+			var/mob/living/mob_pawn = pawn
+			if(mob_pawn.stat >= UNCONSCIOUS)
+				return
+		set_ai_status(AI_STATUS_ON)
+		return
+	// AI_STATUS_OFF can be set when zero clients are on a weatherproof z-level (dungeons,
+	// outposts, contract maps). When a client finally enters our spatial grid cell, that OFF
+	// state is stale - re-evaluate so dungeon mobs actually wake up instead of fluoride staring.
+	// Skip if pawn is unconscious/dead, those should legitimately stay OFF.
+	if(ai_status == AI_STATUS_OFF && ismob(pawn))
+		var/mob/living/mob_pawn = pawn
+		if(mob_pawn.stat < UNCONSCIOUS && (continue_processing_when_client || !mob_pawn.client))
+			reset_ai_status()
 
 /datum/ai_controller/proc/on_client_exit(datum/source, datum/exited)
 	SIGNAL_HANDLER
@@ -249,7 +356,7 @@ have ways of interacting with a specific atom and control it. They posses a blac
 /datum/ai_controller/proc/get_current_turf()
 	var/mob/living/mob_pawn = pawn
 	var/turf/pawn_turf = get_turf(mob_pawn)
-	to_chat(world, "[pawn_turf]")
+	to_world("[pawn_turf]")
 
 ///Called when the AI controller pawn changes z levels, we check if there's any clients on the new one and wake up the AI if there is.
 /datum/ai_controller/proc/on_changed_z_level(atom/source, old_z, new_z, same_z_layer, notify_contents)
@@ -263,32 +370,72 @@ have ways of interacting with a specific atom and control it. They posses a blac
 
 	if(new_z)
 		GLOB.ai_controllers_by_zlevel[new_z] += src
-		var/new_level_clients = SSmobs.clients_by_zlevel[new_z].len
-		if(new_level_clients)
-			set_ai_status(AI_STATUS_IDLE)
+		reset_ai_status()
 
 ///Abstract proc for initializing the pawn to the new controller
 /datum/ai_controller/proc/TryPossessPawn(atom/new_pawn)
 	return
 
+/datum/ai_controller/proc/on_movespeed_updated(mob/living/source)
+	SIGNAL_HANDLER
+	recalculate_movement_delay()
+
+///Keeps the AI's step cadence in lockstep with the movespeed modifiers that drive players and glide size.
+/datum/ai_controller/proc/recalculate_movement_delay()
+	if(!isliving(pawn))
+		return
+	var/mob/living/living_pawn = pawn
+	movement_delay = CEILING(max(living_pawn.cached_multiplicative_slowdown, SIMPLEMOB_MINIMUM_MOVE_DELAY), SSai_movement.wait)
+
+/**
+ * Advances the movement cooldown from its previous deadline rather than from world.time, so a
+ * movement_delay that isn't a whole multiple of SSai_movement's wait averages out instead of
+ * rounding up on every single step. Deadlines that have fallen far behind are rebased to now so a
+ * mob that was blocked or paused doesn't burst to catch up.
+ */
+/datum/ai_controller/proc/advance_movement_cooldown()
+	movement_cooldown += movement_delay
+	if(movement_cooldown < world.time)
+		movement_cooldown = world.time + movement_delay
+
 ///Proc for deinitializing the pawn to the old controller
 /datum/ai_controller/proc/UnpossessPawn(destroy)
-	UnregisterSignal(pawn, list(COMSIG_MOVABLE_Z_CHANGED, COMSIG_MOB_LOGIN, COMSIG_MOB_LOGOUT, COMSIG_MOB_STATCHANGE))
+	UnregisterSignal(pawn, list(COMSIG_MOVABLE_Z_CHANGED, COMSIG_MOB_LOGIN, COMSIG_MOB_LOGOUT, COMSIG_MOB_STATCHANGE, COMSIG_ATOM_WAS_ATTACKED, COMSIG_MOB_MOVESPEED_UPDATED))
 	var/turf/pawn_turf = get_turf(pawn)
 	if(pawn_turf)
 		GLOB.ai_controllers_by_zlevel[pawn_turf.z] -= src
 	if(ai_status)
 		GLOB.ai_controllers_by_status[ai_status] -= src
+	stop_previous_processing()
+	CancelActions()
+	halt_movement()
 	pawn.ai_controller = null
 	pawn = null
 	if(destroy)
 		qdel(src)
-	return
 
 /// Turn the controller on or off based on if you're alive, we only register to this if the flag is present so don't need to check again
 /datum/ai_controller/proc/on_stat_changed(mob/living/source, new_stat)
 	SIGNAL_HANDLER
 	reset_ai_status()
+
+/datum/ai_controller/proc/on_pawn_attacked(mob/living/source, atom/attacker, damage)
+	SIGNAL_HANDLER
+	// Direct write - this fires on every hit on every AI mob, so it stays a bare assignment.
+	blackboard[BB_LAST_HIT_TIME] = world.time
+	wake_for_combat()
+
+/datum/ai_controller/proc/wake_for_combat()
+	if(ai_status == AI_STATUS_ON)
+		return
+	if(ismob(pawn))
+		var/mob/living/mob_pawn = pawn
+		if(mob_pawn.stat >= UNCONSCIOUS)
+			return
+		if(mob_pawn.client && !continue_processing_when_client)
+			return
+	blackboard[BB_AI_ALERT_MODE_UNTIL] = world.time + 30 SECONDS
+	set_ai_status(AI_STATUS_ON)
 
 /// Sets the AI on or off based on current conditions, call to reset after you've manually disabled it somewhere
 /datum/ai_controller/proc/reset_ai_status()
@@ -298,7 +445,9 @@ have ways of interacting with a specific atom and control it. They posses a blac
 	if(QDELETED(pawn))
 		return
 	var/mob/living/living_pawn = pawn
-	if(living_pawn.incapacitated(ignore_restraints = 1))
+	if(living_pawn.client && !continue_processing_when_client)
+		return FALSE
+	if(living_pawn.incapacitated())
 		return FALSE
 	if(ai_traits & STOP_MOVING_WHEN_PULLED && living_pawn.pulledby)
 		return FALSE
@@ -328,6 +477,17 @@ have ways of interacting with a specific atom and control it. They posses a blac
 	if(mob_pawn.stat >= UNCONSCIOUS)
 		return AI_STATUS_OFF
 
+	var/turf/pawn_turf = get_turf(mob_pawn)
+#ifdef TESTING
+	if(!pawn_turf)
+		CRASH("AI controller [src] controlling pawn ([pawn]) is not on a turf.")
+#endif
+	if(!("[pawn_turf?.z]" in GLOB.weatherproof_z_levels))
+		if(SSmapping.level_has_any_trait(pawn_turf?.z, list(ZTRAIT_IGNORE_WEATHER_TRAIT)))
+			GLOB.weatherproof_z_levels |= "[pawn_turf?.z]"
+	if("[pawn_turf?.z]" in GLOB.weatherproof_z_levels)
+		if(!length(SSmobs.clients_by_zlevel[pawn_turf?.z]))
+			return AI_STATUS_OFF
 	if(should_idle())
 		return AI_STATUS_IDLE
 	return AI_STATUS_ON
@@ -336,6 +496,10 @@ have ways of interacting with a specific atom and control it. They posses a blac
 /datum/ai_controller/proc/able_to_run()
 	if(world.time < paused_until)
 		return FALSE
+	if(isliving(pawn))
+		var/mob/living/living_pawn = pawn
+		if(living_pawn.stat >= UNCONSCIOUS)
+			return FALSE
 	return TRUE
 
 /// Generates a plan and see if our existing one is still valid.
@@ -344,34 +508,39 @@ have ways of interacting with a specific atom and control it. They posses a blac
 		walk(pawn, 0) //stop moving
 		return //this should remove them from processing in the future through event-based stuff.
 
+	if(!LAZYLEN(current_behaviors) && ai_status == AI_STATUS_ON && should_idle())
+		set_ai_status(AI_STATUS_IDLE)
+		return
+
 	if(!LAZYLEN(current_behaviors) && idle_behavior)
 		idle_behavior.perform_idle_behavior(delta_time, src) //Do some stupid shit while we have nothing to do
 		return
 
-	if(current_movement_target)
-		if(!isatom(current_movement_target))
-			stack_trace("[pawn]'s current movement target is not an atom, rather a [current_movement_target.type]! Did you accidentally set it to a weakref?")
-			CancelActions()
-			return
-
-		if(get_dist_3d(pawn, current_movement_target) > max_target_distance) //The distance is out of range
-			CancelActions()
-			return
+	SEND_SIGNAL(src, COMSIG_AI_CONTROLLER_PICKED_BEHAVIORS, current_behaviors, planned_behaviors)
 
 	for(var/datum/ai_behavior/current_behavior as anything in current_behaviors)
-		// Convert the current behaviour action cooldown to realtime seconds from deciseconds.current_behavior
-		// Then pick the max of this and the delta_time passed to ai_controller.process()
-		// Action cooldowns cannot happen faster than delta_time, so delta_time should be the value used in this scenario.
-		var/action_delta_time = max(current_behavior.action_cooldown * 0.1, delta_time)
+		if(!(current_behavior.behavior_flags & AI_BEHAVIOR_EXECUTE_ALONGSIDE))
+			continue
+		if(behavior_cooldowns[current_behavior] > world.time)
+			continue
+		ProcessBehavior(max(current_behavior.get_cooldown(src) * 0.1, delta_time), current_behavior)
 
+	for(var/datum/ai_behavior/current_behavior as anything in current_behaviors)
 		if(current_behavior.behavior_flags & AI_BEHAVIOR_REQUIRE_MOVEMENT) //Might need to move closer
-			if(!current_movement_target)
-				current_behavior.finish_action(src, FALSE)
+			if(isnull(current_movement_target))
+				fail_behavior(current_behavior)
 				return //This can cause issues, so don't let these slide.
 
 			///Stops pawns from performing such actions that should require the target to be adjacent.
 			var/mob/living/moving_pawn = pawn
-			var/can_reach = !(current_behavior.behavior_flags & AI_BEHAVIOR_REQUIRE_REACH) || moving_pawn.CanReach(current_movement_target)
+			// Pass active held item to CanReach so reach > 1 weapons (whips, polearms) actually
+			// detect reach correctly on carbon NPCs — without the tool arg, CanReach falls through
+			// to Adjacent() only for carbons.
+			var/obj/item/held_for_reach = null
+			if(iscarbon(moving_pawn))
+				var/mob/living/carbon/carbon_pawn = moving_pawn
+				held_for_reach = carbon_pawn.get_active_held_item()
+			var/can_reach = !(current_behavior.behavior_flags & AI_BEHAVIOR_REQUIRE_REACH) || moving_pawn.CanReach(current_movement_target, held_for_reach)
 
 			if(isliving(current_movement_target))
 				var/mob/living/living_pawn = pawn
@@ -385,7 +554,15 @@ have ways of interacting with a specific atom and control it. They posses a blac
 			if(prob(8))
 				moving_pawn.emote("cidle")
 
-			if(((can_reach && current_behavior.required_distance >= get_dist(moving_pawn, current_movement_target))) || failed_sneak_check > 4) ///Are we close
+			// Account for weapon reach: an AI with a whip/polearm should stop walking once they
+			// can swing, not insist on dist <= 1. iscarbon check matches the held_for_reach scope above.
+			var/effective_required_distance = current_behavior.required_distance
+			if(iscarbon(moving_pawn) && isliving(current_movement_target))
+				var/mob/living/carbon/carbon_pawn = moving_pawn
+				var/intent_reach = carbon_pawn.used_intent?.reach || 1
+				if(intent_reach > effective_required_distance)
+					effective_required_distance = intent_reach
+			if(((can_reach && effective_required_distance >= get_dist(moving_pawn, current_movement_target))) || failed_sneak_check > 4) ///Are we close
 				if(ai_movement.moving_controllers[src] == current_movement_target) //We are close enough, if we're moving stop.
 					ai_movement.stop_moving_towards(src)
 
@@ -395,7 +572,7 @@ have ways of interacting with a specific atom and control it. They posses a blac
 
 				if(behavior_cooldowns[current_behavior] > world.time) //Still on cooldown
 					continue
-				ProcessBehavior(action_delta_time, current_behavior)
+				ProcessBehavior(max(current_behavior.get_cooldown(src) * 0.1, delta_time), current_behavior)
 				return
 
 			else if(ai_movement.moving_controllers[src] != current_movement_target) //We're too far, if we're not already moving start doing it.
@@ -404,12 +581,12 @@ have ways of interacting with a specific atom and control it. They posses a blac
 			if(current_behavior.behavior_flags & AI_BEHAVIOR_MOVE_AND_PERFORM) //If we can move and perform then do so.
 				if(behavior_cooldowns[current_behavior] > world.time) //Still on cooldown
 					continue
-				ProcessBehavior(action_delta_time, current_behavior)
+				ProcessBehavior(max(current_behavior.get_cooldown(src) * 0.1, delta_time), current_behavior)
 				return
 		else //No movement required
 			if(behavior_cooldowns[current_behavior] > world.time) //Still on cooldown
 				continue
-			ProcessBehavior(action_delta_time, current_behavior)
+			ProcessBehavior(max(current_behavior.get_cooldown(src) * 0.1, delta_time), current_behavior)
 			return
 
 ///Determines whether the AI can currently make a new plan
@@ -458,19 +635,35 @@ have ways of interacting with a specific atom and control it. They posses a blac
 		if(AI_STATUS_ON)
 			START_PROCESSING(SSai_behaviors, src)
 		if(AI_STATUS_IDLE)
-			START_PROCESSING(SSidlenpcpool, src)
+			START_PROCESSING(SSidle_ai_behaviors, src)
 		if(AI_STATUS_OFF)
 			CancelActions()
+			halt_movement()
 
 /datum/ai_controller/proc/stop_previous_processing()
 	switch(ai_status)
 		if(AI_STATUS_ON)
 			STOP_PROCESSING(SSai_behaviors, src)
 		if(AI_STATUS_IDLE)
-			STOP_PROCESSING(SSidlenpcpool, src)
+			STOP_PROCESSING(SSidle_ai_behaviors, src)
 
 /datum/ai_controller/proc/PauseAi(time)
 	paused_until = world.time + time
+
+/datum/ai_controller/proc/modify_cooldown(datum/ai_behavior/behavior, new_cooldown)
+	behavior_cooldowns[behavior] = new_cooldown
+
+/datum/ai_controller/proc/nudge_target_scan()
+	// Kick the cooldown on target-acquisition behaviors so they fire on the next tick.
+	for(var/datum/ai_behavior/behavior as anything in behavior_cooldowns)
+		if(istype(behavior, /datum/ai_behavior/find_potential_targets) || istype(behavior, /datum/ai_behavior/find_aggro_targets))
+			behavior_cooldowns[behavior] = world.time
+
+/proc/alert_ai_visibility_change(atom/source, range = 7)
+	for(var/mob/living/L in view(range, source))
+		if(!L.ai_controller)
+			continue
+		L.ai_controller.nudge_target_scan()
 
 ///Call this to add a behavior to the stack.
 /datum/ai_controller/proc/queue_behavior(behavior_type, ...)
@@ -495,35 +688,66 @@ have ways of interacting with a specific atom and control it. They posses a blac
 		behavior_args[behavior_type] = arguments
 	else
 		behavior_args -= behavior_type
+	SEND_SIGNAL(src, AI_CONTROLLER_BEHAVIOR_QUEUED(behavior_type), arguments)
+
+/datum/ai_controller/proc/get_inventory()
+	RETURN_TYPE(/datum/component/ai_inventory_manager)
+	if(!inventory_component)
+		return pawn?.GetComponent(/datum/component/ai_inventory_manager)
+	return inventory_component
 
 /datum/ai_controller/proc/ProcessBehavior(delta_time, datum/ai_behavior/behavior)
+	var/mob/living/liver = pawn
+	if(liver.doing)
+		return
 	var/list/arguments = list(delta_time, src)
 	var/list/stored_arguments = behavior_args[behavior.type]
 	if(stored_arguments)
 		arguments += stored_arguments
-	behavior.perform(arglist(arguments))
+
+	// Plenty of our behaviors sleep inside perform() - swingdelay, try_kick, npc reaction time.
+	// Cooldowns are only applied once perform returns, so without this a sleeping behavior gets
+	// re-entered on every tick of the sleep and the pawn stacks several swings at once.
+	var/entered_at = running_behaviors[behavior]
+	if(entered_at && world.time - entered_at < AI_BEHAVIOR_REENTRY_TIMEOUT)
+		return
+	running_behaviors[behavior] = world.time
+	var/process_flags = behavior.perform(arglist(arguments))
+	running_behaviors -= behavior
+
+	if(process_flags & AI_BEHAVIOR_DELAY)
+		behavior_cooldowns[behavior] = world.time + behavior.get_cooldown(src)
+	if(process_flags & AI_BEHAVIOR_FAILED)
+		arguments[1] = src
+		arguments[2] = FALSE
+		behavior.finish_action(arglist(arguments))
+	else if(process_flags & AI_BEHAVIOR_SUCCEEDED)
+		arguments[1] = src
+		arguments[2] = TRUE
+		behavior.finish_action(arglist(arguments))
 
 /datum/ai_controller/proc/CancelActions()
 	if(!LAZYLEN(current_behaviors))
 		return
-	for(var/i in current_behaviors)
-		var/datum/ai_behavior/current_behavior = i
-		var/list/arguments = list(src, FALSE)
-		var/list/stored_arguments = behavior_args[current_behavior.type]
-		if(stored_arguments)
-			arguments += stored_arguments
-		current_behavior.finish_action(arglist(arguments))
+	for(var/datum/ai_behavior/current_behavior as anything in current_behaviors)
+		fail_behavior(current_behavior)
+
+/datum/ai_controller/proc/fail_behavior(datum/ai_behavior/current_behavior)
+	var/list/arguments = list(src, FALSE)
+	var/list/stored_arguments = behavior_args[current_behavior.type]
+	if(stored_arguments)
+		arguments += stored_arguments
+	current_behavior.finish_action(arglist(arguments))
 
 /datum/ai_controller/proc/on_sentience_gained()
 	UnregisterSignal(pawn, COMSIG_MOB_LOGIN)
 	if(!continue_processing_when_client)
 		set_ai_status(AI_STATUS_OFF) //Can't do anything while player is connected
-	set_ai_status(AI_STATUS_OFF) //Can't do anything while player is connected
 	RegisterSignal(pawn, COMSIG_MOB_LOGOUT, PROC_REF(on_sentience_lost))
 
 /datum/ai_controller/proc/on_sentience_lost()
 	UnregisterSignal(pawn, COMSIG_MOB_LOGOUT)
-	set_ai_status(AI_STATUS_ON) //Can't do anything while player is connected
+	reset_ai_status()
 	RegisterSignal(pawn, COMSIG_MOB_LOGIN, PROC_REF(on_sentience_gained))
 
 /// Use this proc to define how your controller defines what access the pawn has for the sake of pathfinding, this requires they either have a key or you give them the lockids you want them to open
@@ -553,7 +777,12 @@ have ways of interacting with a specific atom and control it. They posses a blac
 	}; \
 	else if(isdatum(tracked_datum)) { \
 		var/datum/_tracked_datum = tracked_datum; \
-		if(!HAS_TRAIT_FROM(_tracked_datum, TRAIT_AI_TRACKING, "[REF(src)]_[key]")) { \
+		if(QDELETED(_tracked_datum)) { \
+			stack_trace("Tried to track a qdeleted datum ([_tracked_datum]) in ai datum blackboard (key: [key])! \
+				Please ensure that we are not doing this by adding handling where necessary."); \
+			return; \
+		}; \
+		else if(!HAS_TRAIT_FROM(_tracked_datum, TRAIT_AI_TRACKING, "[REF(src)]_[key]")) { \
 			RegisterSignal(_tracked_datum, COMSIG_PARENT_QDELETING, PROC_REF(sig_remove_from_blackboard), override = TRUE); \
 			ADD_TRAIT(_tracked_datum, TRAIT_AI_TRACKING, "[REF(src)]_[key]"); \
 		}; \
@@ -596,6 +825,7 @@ have ways of interacting with a specific atom and control it. They posses a blac
 
 	TRACK_AI_DATUM_TARGET(thing, key)
 	blackboard[key] = thing
+	post_blackboard_key_set(key)
 
 /**
  * Sets the key at index thing to the passed value
@@ -609,9 +839,10 @@ have ways of interacting with a specific atom and control it. They posses a blac
 /datum/ai_controller/proc/set_blackboard_key_assoc(key, thing, value)
 	if(!islist(blackboard[key]))
 		CRASH("set_blackboard_key_assoc called on non-list key [key]!")
-	TRACK_AI_DATUM_TARGET(thing, key)
+
 	TRACK_AI_DATUM_TARGET(value, key)
 	blackboard[key][thing] = value
+	post_blackboard_key_set(key)
 
 /**
  * Similar to [proc/set_blackboard_key_assoc] but operates under the assumption the key is a lazylist (so it will create a list)
@@ -626,6 +857,15 @@ have ways of interacting with a specific atom and control it. They posses a blac
 	TRACK_AI_DATUM_TARGET(thing, key)
 	TRACK_AI_DATUM_TARGET(value, key)
 	blackboard[key][thing] = value
+	post_blackboard_key_set(key)
+
+/**
+ * Called after we set a blackboard key, forwards signal information.
+ */
+/datum/ai_controller/proc/post_blackboard_key_set(key)
+	if (isnull(pawn))
+		return
+	SEND_SIGNAL(pawn, COMSIG_AI_BLACKBOARD_KEY_SET(key), key)
 
 /**
  * Adds the passed "thing" to the associated key
@@ -715,6 +955,8 @@ have ways of interacting with a specific atom and control it. They posses a blac
 /datum/ai_controller/proc/clear_blackboard_key(key)
 	CLEAR_AI_DATUM_TARGET(blackboard[key], key)
 	blackboard[key] = null
+	if(pawn)
+		SEND_SIGNAL(pawn, COMSIG_AI_BLACKBOARD_KEY_CLEARED(key))
 
 /**
  * Remove the passed thing from the associated blackboard key
@@ -747,6 +989,11 @@ have ways of interacting with a specific atom and control it. They posses a blac
 			associated_value -= inner_key
 			return
 
+	if(isdatum(thing))
+		var/datum/dthing = thing
+		if(QDELETED(dthing))
+			return
+
 	CRASH("remove_thing_from_blackboard_key called with an invalid \"thing\" argument ([thing]). \
 		(The passed value is not tracked in the passed list.)")
 
@@ -759,24 +1006,30 @@ have ways of interacting with a specific atom and control it. They posses a blac
 	while(index <= length(remove_queue))
 		var/list/next_to_clear = remove_queue[index]
 		for(var/inner_value in next_to_clear)
-			var/associated_value = next_to_clear[inner_value]
-			// We are a lists of lists, add the next value to the queue so we can handle references in there
-			// (But we only need to bother checking the list if it's not empty.)
-			if(islist(inner_value) && length(inner_value))
-				UNTYPED_LIST_ADD(remove_queue, inner_value)
+			if(isnum(inner_value))
+				if(inner_value == source)
+					next_to_clear -= inner_value
+					SEND_SIGNAL(pawn, COMSIG_AI_BLACKBOARD_KEY_CLEARED(inner_value))
+			else
+				var/associated_value = next_to_clear[inner_value]
+				// We are a lists of lists, add the next value to the queue so we can handle references in there
+				// (But we only need to bother checking the list if it's not empty.)
+				if(islist(inner_value) && length(inner_value))
+					UNTYPED_LIST_ADD(remove_queue, inner_value)
 
-			// We found the value that's been deleted. Clear it out from this list
-			else if(inner_value == source)
-				next_to_clear -= inner_value
+				// We found the value that's been deleted. Clear it out from this list
+				else if(inner_value == source)
+					next_to_clear -= inner_value
 
-			// We are an assoc lists of lists, the list at the next value so we can handle references in there
-			// (But again, we only need to bother checking the list if it's not empty.)
-			if(islist(associated_value) && length(associated_value))
-				UNTYPED_LIST_ADD(remove_queue, associated_value)
+				// We are an assoc lists of lists, the list at the next value so we can handle references in there
+				// (But again, we only need to bother checking the list if it's not empty.)
+				if(islist(associated_value) && length(associated_value))
+					UNTYPED_LIST_ADD(remove_queue, associated_value)
 
-			// We found the value that's been deleted, it was an assoc value. Clear it out entirely
-			else if(associated_value == source)
-				next_to_clear -= inner_value
+				// We found the value that's been deleted, it was an assoc value. Clear it out entirely
+				else if(associated_value == source)
+					next_to_clear -= inner_value
+					SEND_SIGNAL(pawn, COMSIG_AI_BLACKBOARD_KEY_CLEARED(inner_value))
 
 		index += 1
 

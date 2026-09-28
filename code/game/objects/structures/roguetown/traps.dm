@@ -10,6 +10,7 @@
 	max_integrity = 100
 	buckle_lying = 90
 	layer = 2.8
+	ai_path_weight = 10
 
 /obj/structure/spike_pit/Crossed(atom/movable/AM)
 	var/hitsound = pick('sound/combat/hits/bladed/genstab (1).ogg', 'sound/combat/hits/bladed/genstab (2).ogg', 'sound/combat/hits/bladed/genstab (3).ogg')
@@ -29,7 +30,7 @@
 			area = BODY_ZONE_R_LEG
 		var/obj/item/bodypart/affecting = H.get_bodypart(check_zone(area))
 		if(!affecting) //if somehow no legs
-			affecting =  H.get_bodypart(check_zone(BODY_ZONE_CHEST))
+			affecting =	H.get_bodypart(check_zone(BODY_ZONE_CHEST))
 
 		//Wounds bleed pretty slow alone so this is more to be annoying than dangerous.
 		var/damage = 30

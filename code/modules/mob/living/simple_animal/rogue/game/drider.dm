@@ -1,12 +1,16 @@
 /mob/living/simple_animal/hostile/retaliate/rogue/drider //lol
+	anatomy_type = /datum/anatomy/spider
 	icon = 'icons/roguetown/mob/monster/drider.dmi'
 	name = "drider spider"
 	desc = "A monstrously large spider utilised by drow as mounts, better suited \
 	for the Underdark than any mammmalian mount. Fairly terrifying, but a sight one \
 	acclimates to with enough exposure."
-	pixel_x = -2
+	pixel_x = -16
 	pixel_y = 7
-	faction = list("spider_lowers")
+	faction = list(FACTION_SPIDER_LOWERS)
+	threat_point = THREAT_DANGEROUS
+	ambush_faction = "underdark"
+	blood_toll_bucket = STATS_KILLED_GREATER_BEASTS
 	gender = MALE
 	icon_state = "drider"
 	icon_living = "drider"
@@ -14,8 +18,8 @@
 	animal_species = null
 	butcher_results = list(/obj/item/reagent_containers/food/snacks/rogue/meat/spider = 3, /obj/item/natural/bone = 3)
 	base_intents = list(/datum/intent/simple/bite/mirespider_lurker)
-	health = 660
-	maxHealth = 660
+	health = DRIDER_HEALTH
+	maxHealth = DRIDER_HEALTH
 	pass_flags = PASSTABLE | PASSMOB
 	mob_size = MOB_SIZE_SMALL
 	milkies = FALSE
@@ -38,7 +42,7 @@
 /mob/living/simple_animal/hostile/retaliate/rogue/drider/tame
 	tame = TRUE
 
-/mob/living/simple_animal/hostile/retaliate/rogue/drider/Initialize()
+/mob/living/simple_animal/hostile/retaliate/rogue/drider/Initialize(mapload)
 	. = ..()
 	ADD_TRAIT(src, TRAIT_CRITICAL_RESISTANCE, TRAIT_GENERIC)
 	ADD_TRAIT(src, TRAIT_NOFALLDAMAGE2, TRAIT_GENERIC)
@@ -48,25 +52,13 @@
 	cut_overlays()
 	..()
 	if(stat != DEAD)
-		if(ssaddle)
-			var/mutable_appearance/saddlet = mutable_appearance(icon, "saddle-above", 4.3)
-			add_overlay(saddlet)
-			saddlet = mutable_appearance(icon, "saddle")
-			add_overlay(saddlet)
-		if(has_buckled_mobs())
-			var/mutable_appearance/mounted = mutable_appearance(icon, "drider_mounted", 4.3)
-			add_overlay(mounted)
+		add_saddleicon("saddle-above", "saddle")
+		add_ridericon("drider_mounted")
 
 /mob/living/simple_animal/hostile/retaliate/rogue/drider/tamed()
 	..()
 	deaggroprob = 20
-	if(can_buckle)
-		var/datum/component/riding/D = LoadComponent(/datum/component/riding/no_ocean)
-		D.set_riding_offsets(RIDING_OFFSET_ALL, list(TEXT_NORTH = list(0, 9), TEXT_SOUTH = list(0, 9), TEXT_EAST = list(-1, 9), TEXT_WEST = list(-1, 9)))
-		D.set_vehicle_dir_layer(NORTH, MOB_LAYER+0.5)
-		D.set_vehicle_dir_layer(SOUTH, OBJ_LAYER)
-		D.set_vehicle_dir_layer(EAST, OBJ_LAYER)
-		D.set_vehicle_dir_layer(WEST, OBJ_LAYER)
+	setup_mount()
 
 /mob/living/simple_animal/hostile/retaliate/rogue/drider/get_sound(input)
 	switch(input)
@@ -109,47 +101,7 @@
 			icon_state = "drider"
 			icon_living = "drider"
 
-/mob/living/simple_animal/hostile/retaliate/rogue/drider/simple_limb_hit(zone)
-	if(!zone)
-		return ""
-	switch(zone)
-		if(BODY_ZONE_PRECISE_R_EYE)
-			return "head"
-		if(BODY_ZONE_PRECISE_L_EYE)
-			return "head"
-		if(BODY_ZONE_PRECISE_NOSE)
-			return "snout"
-		if(BODY_ZONE_PRECISE_MOUTH)
-			return "snout"
-		if(BODY_ZONE_PRECISE_SKULL)
-			return "head"
-		if(BODY_ZONE_PRECISE_EARS)
-			return "head"
-		if(BODY_ZONE_PRECISE_NECK)
-			return "neck"
-		if(BODY_ZONE_PRECISE_L_HAND)
-			return "foreleg"
-		if(BODY_ZONE_PRECISE_R_HAND)
-			return "foreleg"
-		if(BODY_ZONE_PRECISE_L_FOOT)
-			return "leg"
-		if(BODY_ZONE_PRECISE_R_FOOT)
-			return "leg"
-		if(BODY_ZONE_PRECISE_STOMACH)
-			return "stomach"
-		if(BODY_ZONE_HEAD)
-			return "head"
-		if(BODY_ZONE_R_LEG)
-			return "leg"
-		if(BODY_ZONE_L_LEG)
-			return "leg"
-		if(BODY_ZONE_R_ARM)
-			return "foreleg"
-		if(BODY_ZONE_L_ARM)
-			return "foreleg"
-	return ..()
-
-/mob/living/simple_animal/hostile/retaliate/rogue/drider/tame/saddled/Initialize()
+/mob/living/simple_animal/hostile/retaliate/rogue/drider/tame/saddled/Initialize(mapload)
 	. = ..()
 	var/obj/item/natural/saddle/S = new(src)
 	ssaddle = S

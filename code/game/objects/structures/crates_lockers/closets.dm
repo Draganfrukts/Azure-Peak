@@ -340,6 +340,9 @@
 		var/pickchance = 35
 		var/moveup = 10
 
+		var/silentpick = HAS_TRAIT(user, TRAIT_SILENT_LOCKPICK)
+		var/gildedeyes = HAS_TRAIT(user, TRAIT_GILDED_SIGHT)
+
 		picktime -= (pickskill * 10)
 		picktime = clamp(picktime, 10, 70)
 
@@ -351,14 +354,18 @@
 		pickchance *= P.picklvl
 		pickchance = clamp(pickchance, 1, 95)
 
-
+		if(gildedeyes)
+			picktime = clamp(picktime, 10, 15)
 
 		while(!QDELETED(I) &&(lockprogress < locktreshold))
 			if(!do_after(user, picktime, target = src))
 				break
 			if(prob(pickchance))
 				lockprogress += moveup
-				playsound(src.loc, pick('sound/items/pickgood1.ogg','sound/items/pickgood2.ogg'), 5, TRUE)
+				if(silentpick)
+					playsound(src.loc, pick('sound/items/pickgood1.ogg','sound/items/pickgood2.ogg'), 2, TRUE)
+				else
+					playsound(src.loc, pick('sound/items/pickgood1.ogg','sound/items/pickgood2.ogg'), 5, TRUE)
 				to_chat(user, "<span class='warning'>Click...</span>")
 				if(L.mind)
 					add_sleep_experience(L, /datum/skill/misc/lockpicking, L.STAINT/2)
@@ -371,7 +378,10 @@
 				else
 					continue
 			else
-				playsound(loc, 'sound/items/pickbad.ogg', 40, TRUE)
+				if(silentpick)
+					playsound(loc, 'sound/items/pickbad.ogg', 2, TRUE)
+				else
+					playsound(loc, 'sound/items/pickbad.ogg', 40, TRUE)
 				I.take_damage(1, BRUTE, "blunt")
 				to_chat(user, "<span class='warning'>Clack.</span>")
 				add_sleep_experience(L, /datum/skill/misc/lockpicking, L.STAINT/4)
@@ -412,13 +422,13 @@
 	var/list/targets = list(O, src)
 	add_fingerprint(user)
 	user.visible_message(span_warning("[user] [actuallyismob ? "tries to ":""]stuff [O] into [src]."), \
-				 	 	span_warning("I [actuallyismob ? "try to ":""]stuff [O] into [src]."), \
-				 	 	span_hear("I hear clanging."))
+								span_warning("I [actuallyismob ? "try to ":""]stuff [O] into [src]."), \
+								span_hear("I hear clanging."))
 	if(actuallyismob)
 		if(do_after_mob(user, targets, 40))
 			user.visible_message(span_notice("[user] stuffs [O] into [src]."), \
-							 	 span_notice("I stuff [O] into [src]."), \
-							 	 span_hear("I hear a loud bang."))
+										span_notice("I stuff [O] into [src]."), \
+										span_hear("I hear a loud bang."))
 			O.forceMove(T)
 			close()
 	else
@@ -444,9 +454,6 @@
 	user.changeNext_move(CLICK_CD_INTENTCAP)
 	toggle(user)
 
-/obj/structure/closet/attack_paw(mob/user)
-	return attack_hand(user)
-
 // tk grab then use on self
 /obj/structure/closet/attack_self_tk(mob/user)
 	return attack_hand(user)
@@ -465,7 +472,7 @@
 		to_chat(usr, span_warning("This mob type can't use this verb."))
 
 // Objects that try to exit a locker by stepping were doing so successfully,
-// and due to an oversight in turf/Enter() were going through walls.  That
+// and due to an oversight in turf/Enter() were going through walls.	That
 // should be independently resolved, but this is also an interesting twist.
 /obj/structure/closet/Exit(atom/movable/AM)
 	open()
@@ -519,7 +526,10 @@
 	if(locked)
 		user.visible_message(span_warning("[user] unlocks [src]."), \
 			span_notice("I unlock [src]."))
-		playsound(src, 'sound/foley/doors/lock.ogg', 100)
+		if(HAS_TRAIT(user, TRAIT_SILENT_LOCKPICK))
+			playsound(src, 'sound/foley/doors/lock.ogg', 25)
+		else
+			playsound(src, 'sound/foley/doors/lock.ogg', 100)
 		locked = 0
 	else
 		user.visible_message(span_warning("[user] locks [src]."), \

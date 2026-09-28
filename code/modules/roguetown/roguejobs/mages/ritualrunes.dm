@@ -5,11 +5,11 @@
 	anchored = TRUE
 	icon = 'icons/obj/rune.dmi'
 	icon_state = "6"
-	resistance_flags = FIRE_PROOF | UNACIDABLE | ACID_PROOF
+	resistance_flags = INDESTRUCTIBLE | FIRE_PROOF | UNACIDABLE | ACID_PROOF
 	layer = SIGIL_LAYER
 	color = null
 	var/magictype = "arcyne"//"arcyne", "divine", "druid", "blood"
-	var/runesize = 0	//Used to determine range of 'range' of the rune when counting for invokers. Should correspond to rune size. EX: 32x32 and 96x96 should be size 1. Increase each size by one for every tile radius increase after.
+	var/runesize = 0	//Used to determine range of the rune. Should correspond to rune size. EX: 32x32 and 96x96 should be size 1. Increase each size by one for every tile radius increase after.
 	var/invoker_name = "basic rune"
 
 	/// The description of the ritual rune shown to those who have knowledge to examine it
@@ -17,11 +17,6 @@
 
 	/// This is said by those when the rune is invoked.
 	var/invocation = "Invoco!"
-	/// The amount of invokers required around the rune to invoke it.
-	var/req_invokers = 1
-
-	/// If we have a description override for required invokers to invoke
-	var/req_invokers_text
 	/// Used for some runes, this is for when you want a rune to not be usable when in use.
 	var/rune_in_use = FALSE
 
@@ -29,6 +24,8 @@
 	var/log_when_erased = FALSE
 	/// Whether this rune can be scribed or if it's admin only / special spawned / whatever
 	var/can_be_scribed = TRUE
+	/// Whether this rune requires a nearby leyline to be scribed
+	var/requires_leyline = FALSE
 	/// How long the rune takes to erase
 	var/erase_time = 1.5 SECONDS
 	/// How long the rune takes to create
@@ -77,9 +74,6 @@ GLOBAL_LIST_INIT(t1rune_types, generate_t1rune_types())
 GLOBAL_LIST_INIT(t2rune_types, generate_t2rune_types())
 GLOBAL_LIST_INIT(t3rune_types, generate_t3rune_types())
 GLOBAL_LIST_INIT(t4rune_types, generate_t4rune_types())
-
-/// List of all teleport runes
-GLOBAL_LIST(teleport_runes)
 
 /// Returns an associated list of rune types. [rune.cultist_name] = [typepath]
 /proc/generate_rune_types()
@@ -151,48 +145,70 @@ GLOBAL_LIST(teleport_runes)
 	animate(src, color = oldcolor, time = 5)
 	addtimer(CALLBACK(src, TYPE_PROC_REF(/atom, update_atom_colour)), 0.5 SECONDS)
 
+/// Clears lingering references from invoke() to prevent hard deletes.
+/obj/effect/decal/cleanable/roguerune/proc/invoke_cleanup()
+	selected_atoms = null
+	ritual_result = null
+	if(pickritual)
+		qdel(pickritual)
+		pickritual = null
+
 /obj/effect/decal/cleanable/roguerune/attack_hand(mob/living/user)
 	if(rune_in_use)
 		to_chat(user, span_notice("Someone is already using this rune."))
 		return
 
-	var/list/invokers = collect_invokers(user)
-	if(length(invokers) < req_invokers)
-		to_chat(user, span_danger("You need [req_invokers - length(invokers)] more adjacent invokers to use this rune in such a manner."))
+	rune_in_use = TRUE
+
+	if(!can_invoke(user))
 		rune_in_use = FALSE
 		fail_invoke()
 		return
 
-	if(!can_invoke(user, invokers))
-		rune_in_use = FALSE
-		fail_invoke()
-		return
+	// Build descriptions for tooltip display in the selection list, including invoker requirements
+	var/list/ritual_descriptions = list()
+	for(var/ritual_name in rituals)
+		var/datum/runeritual/ritual_path = rituals[ritual_name]
+		var/rdesc = initial(ritual_path.desc)
+		var/rinvokers = initial(ritual_path.req_invokers)
+		if(rinvokers > 1)
+			rdesc = "[rdesc] (Requires [rinvokers] invokers)"
+		if(rdesc)
+			ritual_descriptions[ritual_name] = rdesc
 
-	var/ritualnameinput = tgui_input_list(user, "Rituals", "", rituals)
+	var/ritualnameinput = tgui_input_list(user, "Rituals", "", rituals, descriptions = ritual_descriptions)
 	var/datum/runeritual/pickritual1 = rituals[ritualnameinput]
 
 	if(!pickritual1)
 		rune_in_use = FALSE
 		return
 
-	if(pickritual1.tier > tier)
+	if(initial(pickritual1.tier) > tier)
 		to_chat(user, span_hierophant_warning("Your ritual rune is not strong enough to perform this ritual."))
 		rune_in_use = FALSE
+		return
+
+	// Collect invokers and check ritual requirements
+	var/ritual_req = initial(pickritual1.req_invokers)
+	var/list/invokers = collect_invokers(user, ritual_req)
+	if(length(invokers) < ritual_req)
+		to_chat(user, span_danger("This ritual requires [ritual_req] invokers. You need [ritual_req - length(invokers)] more nearby."))
+		rune_in_use = FALSE
+		fail_invoke()
 		return
 
 	invoke(invokers, pickritual1)
 	return ..()
 
-/obj/effect/decal/cleanable/roguerune/proc/can_invoke(mob/living/user, list/invokers)
+/obj/effect/decal/cleanable/roguerune/proc/can_invoke(mob/living/user)
 	return TRUE
 
-/obj/effect/decal/cleanable/roguerune/proc/collect_invokers(mob/living/user)
-	rune_in_use = TRUE
-	//This proc determines if the rune can be invoked at the time. If there are multiple required invokers, it will find all nearby invokers.
-	var/list/invokers = list() //people eligible to invoke the rune
+/// Collects eligible invokers near the rune. Always includes the user; searches for additional invokers if needed.
+/obj/effect/decal/cleanable/roguerune/proc/collect_invokers(mob/living/user, req_count = 1)
+	var/list/invokers = list()
 	if(user)
 		invokers += user
-	if(req_invokers > 1)
+	if(req_count > 1)
 		for(var/mob/living/invoker in range(runesize, src))
 			if(invoker == user)
 				continue
@@ -200,19 +216,14 @@ GLOBAL_LIST(teleport_runes)
 				continue
 			if(invoker.stat != CONSCIOUS)
 				continue
-			if(magictype == "arcyne")
-				if(isarcyne(invoker))
-					invokers += invoker
-			if(magictype == "divine")
-				if(isdivine(invoker))
-					invokers += invoker
-			if(magictype == "druid")
-				if(isdruid(invoker))
-					invokers += invoker
-			if(magictype == "blood")
-				if(isblood(invoker))
-					invokers += invoker
-
+			if(magictype == "arcyne" && isarcyne(invoker))
+				invokers += invoker
+			else if(magictype == "divine" && isdivine(invoker))
+				invokers += invoker
+			else if(magictype == "druid" && isdruid(invoker))
+				invokers += invoker
+			else if(magictype == "blood" && isblood(invoker))
+				invokers += invoker
 	return invokers
 
 /obj/effect/decal/cleanable/roguerune/proc/invoke(list/invokers, datum/runeritual/ritual)		//Generic invoke proc. This will be defined on every rune, along with effects.If you want to make an object, or provide a buff, do so through this proc., have both here.
@@ -222,6 +233,7 @@ GLOBAL_LIST(teleport_runes)
 		if(iswallturf(close_atom))
 			to_chat(usr, span_hierophant_warning("Ritual failed, [src] is blocked by [close_atom]!"))
 			fail_invoke()
+			invoke_cleanup()
 			return
 		if(!ismovable(close_atom))
 			continue
@@ -238,6 +250,7 @@ GLOBAL_LIST(teleport_runes)
 		atoms_in_range += close_atom
 	pickritual = new ritual
 	if(!islist(pickritual.required_atoms))
+		invoke_cleanup()
 		return
 
 	// A copy of our requirements list.
@@ -301,11 +314,14 @@ GLOBAL_LIST(teleport_runes)
 		// Then let them know what they're missing
 		to_chat(usr, span_hierophant_warning("You are missing [english_list(what_are_we_missing)] in order to complete the ritual \"[pickritual.name]\"."))
 		fail_invoke()
+		invoke_cleanup()
 		return FALSE
 
 	playsound(usr, 'sound/magic/teleport_diss.ogg', 75, TRUE)
 
 	ritual_result = pickritual.on_finished_recipe(usr, selected_atoms, loc)
+
+	atoms_in_range.Cut()
 
 	return TRUE
 
@@ -316,53 +332,22 @@ GLOBAL_LIST(teleport_runes)
 	can_be_scribed = FALSE
 
 /obj/effect/decal/cleanable/roguerune/arcyne/attack_hand(mob/living/user)
-	if(!isarcyne(user))
+	if(!can_use_arcyne_rune(user))
 		to_chat(user, span_warning("You aren't able to understand the words of [src]."))
 		return
 	. = ..()
 
+/obj/effect/decal/cleanable/roguerune/arcyne/proc/can_use_arcyne_rune(mob/living/user)
+	return HAS_TRAIT(user, TRAIT_LEYLINE_ATTUNEMENT) && !HAS_TRAIT(user, TRAIT_CHUNKYFINGERS)
 
-
-/obj/effect/decal/cleanable/roguerune/arcyne/knowledge
-	name = "Knowledge rune"
-	desc = "arcane symbols pulse upon the ground..."
-	icon_state = "6"
-	invocation = "Scientia Patefiat!"
-	color = "#3A0B61"
-	spellbonus = 15
-	scribe_damage = 10
-	can_be_scribed = TRUE
-	rituals = list(/datum/runeritual/knowledge::name = /datum/runeritual/knowledge)
-	var/buffed = FALSE
-
-/obj/effect/decal/cleanable/roguerune/arcyne/knowledge/invoke(list/invokers, datum/runeritual/runeritual)
-	if(!..())	//VERY important. Calls parent and checks if it fails. parent/invoke has all the checks for ingredients
-		return
-//	if(!buffed)
-	var/mob/living/user = usr
-	user.apply_status_effect(/datum/status_effect/buff/magic/knowledge)
-	buffed = TRUE
-	if(ritual_result)
-		pickritual.cleanup_atoms(selected_atoms)
-
-	for(var/atom/invoker in invokers)
-		if(!isliving(invoker))
-			continue
-		var/mob/living/living_invoker = invoker
-		if(invocation)
-			living_invoker.say(invocation, language = /datum/language/common, ignore_spam = TRUE, forced = "cult invocation")
-		if(invoke_damage)
-			living_invoker.apply_damage(invoke_damage, BRUTE)
-			to_chat(living_invoker,  span_italics("[src] saps your strength!"))
-	do_invoke_glow()
 
 
 /obj/effect/decal/cleanable/roguerune/arcyne/enchantment
-	name = "Imbuement Array"
+	name = "imbuement array"
 	desc = "arcane symbols pulse upon the ground..."
 	icon = 'icons/effects/96x96.dmi'
 	icon_state = "imbuement"
-	tier = 2
+	tier = 3
 	runesize = 1
 	pixel_x = -32 //So the big ol' 96x96 sprite shows up right
 	pixel_y = -32
@@ -372,13 +357,17 @@ GLOBAL_LIST(teleport_runes)
 
 /obj/effect/decal/cleanable/roguerune/arcyne/enchantment/New()
 	. = ..()
-	rituals += GLOB.t2enchantmentrunerituallist
+	rituals += GLOB.t3enchantmentrunerituallist
+
+/obj/effect/decal/cleanable/roguerune/arcyne/enchantment/can_use_arcyne_rune(mob/living/user)
+	return HAS_TRAIT(user, TRAIT_LEYLINE_ATTUNEMENT)
 
 /obj/effect/decal/cleanable/roguerune/arcyne/enchantment/invoke(list/invokers, datum/runeritual/runeritual)
 	if(!..())	//VERY important. Calls parent and checks if it fails. parent/invoke has all the checks for ingredients
 		return
 	if(ritual_result)
 		pickritual.cleanup_atoms(selected_atoms)
+	invoke_cleanup()
 
 	for(var/atom/invoker in invokers)
 		if(!isliving(invoker))
@@ -388,11 +377,11 @@ GLOBAL_LIST(teleport_runes)
 			living_invoker.say(invocation, language = /datum/language/common, ignore_spam = TRUE, forced = "cult invocation")
 		if(invoke_damage)
 			living_invoker.apply_damage(invoke_damage, BRUTE)
-			to_chat(living_invoker,  span_italics("[src] saps your strength!"))
+			to_chat(living_invoker,	span_italics("[src] saps your strength!"))
 	do_invoke_glow()
 
 /obj/effect/decal/cleanable/roguerune/arcyne/enchantment/greater	//used for better quality of learning, grants temporary 2 minute INT bonus.
-	name = "Greater Imbuement Array"
+	name = "greater imbuement array"
 	desc = "arcane symbols pulse upon the ground..."
 	icon = 'icons/effects/160x160.dmi'
 	icon_state = "imbuement"
@@ -404,7 +393,228 @@ GLOBAL_LIST(teleport_runes)
 
 /obj/effect/decal/cleanable/roguerune/arcyne/enchantment/greater/New()
 	. = ..()
+	rituals.Cut()
 	rituals += GLOB.t4enchantmentrunerituallist
+
+// Binding Array — consumes realm materials to bind a single creature to your service.
+/obj/effect/decal/cleanable/roguerune/arcyne/binding
+	name = "binding array"
+	desc = "arcane symbols twist inward upon themselves, forming a cage of power..."
+	icon = 'icons/effects/96x96.dmi'
+	icon_state = "empowerment"
+	tier = 0
+	runesize = 1
+	pixel_x = -32
+	pixel_y = -32
+	invocation = "Vinculum Formare!"
+	layer = SIGIL_LAYER
+	can_be_scribed = TRUE
+	var/busy = FALSE
+	var/mob/living/simple_animal/summoned_mob
+
+/obj/effect/decal/cleanable/roguerune/arcyne/binding/New()
+	. = ..()
+	rituals += GLOB.familiarbindingrituallist
+
+/obj/effect/decal/cleanable/roguerune/arcyne/binding/Destroy()
+	// destroy the rune without a player in the mob - sorry, it's gone now
+	if(summoned_mob && !QDELETED(summoned_mob))
+		qdel(summoned_mob)
+		summoned_mob = null
+	return ..()
+
+/obj/effect/decal/cleanable/roguerune/arcyne/binding/get_mechanics_examine(mob/user)
+	. = ..()
+	if(isarcyne(user))
+		. += span_info("Use the rune to select a rite. Some rites require the circle to be near a leyline.")
+		. += span_info("For rites that summon a familiar, left-click the circle with an empty hand afterwards to attempt to draw in a player to control it.")
+		. += span_info("If you need to cancel a binding attempt, right-click the circle to delete the mob and refund the costs.")
+
+/obj/effect/decal/cleanable/roguerune/arcyne/binding/attack_hand(mob/living/user)
+	try
+		if(summon_mob(user))
+			. = ..()
+	catch(var/exception/e)
+		to_chat(user, "Exception: [e] on [e.file], line [e.line]. This is a code error!")
+
+/obj/effect/decal/cleanable/roguerune/arcyne/binding/proc/summon_mob(mob/living/user)
+	if(summoned_mob && ishuman(user))
+		if(busy)
+			to_chat(user, span_warning("I am already attempting to bind this familiar! I must have patience..."))
+			return
+		var/mob/living/carbon/human/species/familiar/S = summoned_mob
+		if(!S || QDELETED(S))
+			to_chat(user, span_warning("The containment has already faded."))
+			summoned_mob = null
+			return
+		var/plane = S.planar_origin
+		for(var/mob/living/carbon/human/species/familiar/existing_fam in GLOB.alive_mob_list + GLOB.dead_mob_list)
+			if(existing_fam.familiar_summoner == user)
+				to_chat(user, span_warning("You can only bind one familiar at once!"))
+				return FALSE
+		if(S.planar_origin == "void")
+			to_chat(user, span_notice("You begin attempting to awaken your creation's mind..."))
+		else
+			to_chat(user, span_notice("You reach across the veil, attempting to draw in the familiar's mind..."))
+		busy = TRUE
+		var/list/candidates = pollCandidatesForMob("Do you want to play as a Mage's familiar? You will materialize as [(plane == "infernal" || plane == "elemental")?"an":"a"] [plane] familiar.", null, null, null, 100, S, POLL_IGNORE_MAGE_SUMMON)
+		if(!LAZYLEN(candidates))
+			to_chat(user,span_warning("No candidate players available."))
+			busy = FALSE
+			return
+		var/list/preferred_candidates = list()
+		var/mob/chosen = null
+		for(var/mob/candidate in candidates)
+			var/client/client_ref = candidate.client
+			if(client_ref && client_ref.prefs && client_ref.prefs.familiar_prefs)
+				if(!client_ref.prefs.familiar_prefs.familiar_species) // this is an old familiar prefs object again, woe! fix that shit
+					client_ref.prefs.familiar_prefs.New(client_ref.prefs)
+					to_chat(user, span_warning("A candidate had invalid familiar prefs! Re-instantiating them now."))
+					to_chat(candidate, span_warning("Set your familiar prefs to be summoned as a familiar!"))
+					continue // we skip the rest of the checks because they are not going to have prefs
+				if(client_ref.prefs.familiar_prefs.familiar_species[plane] && client_ref.prefs.familiar_prefs.familiar_names[plane])
+					if(client_ref.prefs.familiar_prefs.familiar_names[plane] in GLOB.chosen_names)
+						// special case: realname conflict
+						to_chat(user, span_warning("A candidate had valid prefs, but their name conflicted with an existing character's!"))
+						to_chat(client_ref, span_warning("Your familiar's name is already claimed, this round!"))
+					else
+						// you have all the required fields set for a familiar of this type, congrats you can be summoned
+						preferred_candidates += candidate
+			else
+				// if not, we give you a hint to set your prefs so you can be summoned
+				to_chat(user, span_warning("A candidate tried to be summoned, but had no valid prefs!"))
+				to_chat(candidate,span_warning("Set your familiar prefs to be summoned as a familiar!"))
+		if(LAZYLEN(preferred_candidates)) // we found someone with settings for the correct planar origin: it's go time
+			var/list/familiar_names = list()
+			var/list/familiar_choices = list()
+			for(var/mob/famcand in preferred_candidates)
+				familiar_names+=famcand.client.prefs.familiar_prefs.familiar_names[plane]
+				var/fam_species = GLOB.familiar_display_names[famcand.client.prefs.familiar_prefs.familiar_species[plane]]
+				familiar_choices+="[famcand.client.prefs.familiar_prefs.familiar_names[plane]] ([fam_species])"
+			var/pretty_choice = input(user,"Select a familiar candidate to summon","ACROSS THE VEIL") as anything in familiar_choices
+			var/chosen_name = familiar_names[familiar_choices.Find(pretty_choice)] // if two people have the same familar name uhh idk lmao
+			for(var/mob/familiarcandidate in preferred_candidates)
+				if(familiarcandidate.client.prefs.familiar_prefs.familiar_names[plane]==chosen_name)
+					chosen = familiarcandidate
+			if(!chosen)
+				//what the fuck
+				to_chat(user, span_warning("Chosen target not found; maybe they disconnected?"))
+				busy = FALSE
+				return
+			var/datum/familiar_prefs/prefs = chosen.client?.prefs?.familiar_prefs
+			if(!istype(prefs)) // uh oh
+				to_chat(user, span_warning("Summoning failed: target has no valid familiar prefs, somehow."))
+				busy = FALSE
+				return
+			qdel(S)
+			summoned_mob = null
+			var/to_summon = prefs.familiar_species[plane]
+			var/mob/living/carbon/human/species/familiar/fam = new to_summon(loc)
+			fam.familiar_summoner = user
+			fam.fully_replace_character_name(null, prefs.familiar_names[plane])
+			fam.pronouns = prefs.familiar_pronouns[plane] ? prefs.familiar_pronouns[plane] : THEY_THEM
+			fam.voice_color = prefs.familiar_voice_colors[plane]
+			fam.gender = FEMALE // allows them to wear clothing, needed because of legacy code. i hate - whatever
+			src.visible_message(span_notice("[fam.summoning_emote]"))
+
+			if(isnewplayer(chosen))
+				var/mob/dead/new_player/new_chosen = chosen
+				new_chosen.close_spawn_windows()
+			if(!chosen.ckey)
+				to_chat(user, span_warning("Summoning failed: chosen candidate has no ckey!"))
+				busy = FALSE
+				return
+			fam.ckey = chosen.ckey
+			var/datum/mind/mind_datum = fam.mind
+			if(!mind_datum)
+				to_chat(user, span_warning("Summoning failed: mind transfer failed"))
+				busy = FALSE
+				return
+			if(fam.client)
+				remove_verb(fam.client, GLOB.ghost_verbs)
+			fam.client?.init_verbs()
+			mind_datum.RemoveAllSpells()
+			mind_datum.AddSpell(new /datum/action/cooldown/spell/message_summoner())
+			user.mind?.AddSpell(new /datum/action/cooldown/spell/message_familiar())
+
+			if(fam.inherent_spell)
+				for(var/spell_path in fam.inherent_spell)
+					if(ispath(spell_path))
+						var/obj/effect/proc_holder/spell/spell_instance = new spell_path
+						if(spell_instance)
+							mind_datum.AddSpell(spell_instance)
+			fam.cmode = FALSE
+			fam.mind.i_know_person(user)
+			user.mind.i_know_person(fam)
+			fam.STASPD = min(user.STASPD + (fam.planar_origin=="fae" ? 3 : 0), 20) // so they can always keep up with their summoner
+			var/faction_to_add = "[user.mind.current.real_name]_faction"
+			fam.faction |= faction_to_add
+			var/tutorial = null
+			if(istype(fam,/mob/living/carbon/human/species/familiar/fae))
+				tutorial = "You are a familiar: a lesser being drawn from the outer planes. The faewyld is a primal place, and those that grow beyond their station are often pruned... for those of little power like yourself, the mortal realm is a safer place to grow. Serve your summoner, learn from this realm, and return stronger."
+			else if(istype(fam,/mob/living/carbon/human/species/familiar/infernal))
+				tutorial = "You are a familiar: a lesser being drawn from the outer planes. The hells are a brutal place, and those with ambition beyond their ability are often culled... for those of little power like yourself, the mortal realm is a safer place to refuel. Serve your summoner, learn from this realm, and return stronger."
+			else if(istype(fam,/mob/living/carbon/human/species/familiar/elemental))
+				tutorial = "You are a familiar: a lesser being drawn from the outer planes. The depths are an unchanging place, and pebbles that stick up are eroded down... for those of little power like yourself, the mortal realm is a safer place to accumulate. Serve your summoner, learn from this realm, and return stronger."
+			else
+				tutorial = "You are a Void Drakeling: a being entirely new to this world, and all others. A fragment of draconic power torn from elsewhere, if you are ever to become as strong as what you were once part of, you must sate this hunger. Serve your creator, and be voracious; planar beings shall be the fuel for your ascension."
+			to_chat(fam, span_notice(tutorial))
+			if(fam.tutorial_message)
+				to_chat(fam, fam.tutorial_message)
+			GLOB.chosen_names += fam.real_name
+			GLOB.character_ckey_list[fam.real_name] = fam.ckey
+			log_game("[key_name(user)] has summoned [key_name(chosen)] as familiar '[fam.name]' ([fam.type]).")
+			busy = FALSE
+		else
+			// nobody has valid familiar prefs. woe!
+			to_chat(user, span_warning("No valid familiar candidate found!"))
+			busy = FALSE
+			return
+		playsound(user, 'sound/magic/teleport_diss.ogg', 75, TRUE)
+		do_invoke_glow()
+		clear_obstacles(user)
+		sleep(20)
+		if(!S || QDELETED(S))
+			summoned_mob = null
+			return
+	return TRUE
+
+/obj/effect/decal/cleanable/roguerune/arcyne/binding/attack_right(mob/user)
+	. = ..()
+	if(summoned_mob && (input(user,"Would you like to cancel this summoning attempt?","Fallback","No") as anything in list("Yes","No") | null)=="Yes")
+		busy = FALSE
+		if(istype(summoned_mob,/mob/living/carbon/human/species/familiar/void))
+			var/static/list/refund_costs = list(/obj/item/magic/artifact = 1, /obj/item/magic/voidstone = 2, /obj/item/magic/leyline = 1)
+			for(var/index in refund_costs)
+				for(var/i in 1 to refund_costs[index])
+					new index(loc)
+		QDEL_NULL(summoned_mob)
+
+/obj/effect/decal/cleanable/roguerune/arcyne/binding/proc/clear_obstacles(mob/living/user)
+	for(var/turf/closed/wall/anticheese in range(loc, runesize))
+		anticheese.visible_message(span_warning("[anticheese] crumbles under the force of the releasing wards."))
+		anticheese.ChangeTurf(/turf/open/floor/rogue/blocks)
+
+/obj/effect/decal/cleanable/roguerune/arcyne/binding/invoke(list/invokers, datum/runeritual/runeritual)
+	if(!..())
+		return
+	if(ismob(ritual_result))
+		summoned_mob = ritual_result
+	if(ritual_result)
+		pickritual.cleanup_atoms(selected_atoms)
+	invoke_cleanup()
+
+	for(var/atom/invoker in invokers)
+		if(!isliving(invoker))
+			continue
+		var/mob/living/living_invoker = invoker
+		var/datum/runeritual/binding/bindingritual = runeritual
+		if(bindingritual.invocation)
+			living_invoker.say(bindingritual.invocation, language = /datum/language/common, ignore_spam = TRUE, forced = "cult invocation")
+		if(invoke_damage)
+			living_invoker.apply_damage(invoke_damage, BRUTE)
+			to_chat(living_invoker, span_italics("[src] saps your strength!"))
+	do_invoke_glow()
 
 /obj/effect/decal/cleanable/roguerune/arcyne/wall
 	name = "wall accession matrix"
@@ -505,6 +715,7 @@ GLOBAL_LIST(teleport_runes)
 
 	if(ritual_result)
 		pickritual.cleanup_atoms(selected_atoms)
+	invoke_cleanup()
 
 	for(var/atom/invoker in invokers)
 		if(!isliving(invoker))
@@ -514,7 +725,75 @@ GLOBAL_LIST(teleport_runes)
 			living_invoker.say(invocation, language = /datum/language/common, ignore_spam = TRUE, forced = "cult invocation")
 		if(invoke_damage)
 			living_invoker.apply_damage(invoke_damage, BRUTE)
-			to_chat(living_invoker,  span_italics("[src] saps your strength!"))
+			to_chat(living_invoker,	span_italics("[src] saps your strength!"))
+	do_invoke_glow()
+
+/obj/effect/decal/cleanable/roguerune/arcyne/verglas
+	name = "verglas accession matrix"
+	desc = "arcane symbols litter the ground- a slick sheen of frost spreads from the sigil."
+	icon_state = "wall"
+	tier = 2
+	invocation = "Glacies Surgat!"
+	can_be_scribed = TRUE
+	color = GLOW_COLOR_ICE
+	var/field_radius = 3 // Slippery sliddery (Match spell for ice rink fight)
+	var/list/field = list()
+
+/obj/effect/decal/cleanable/roguerune/arcyne/verglas/New()
+	. = ..()
+	rituals += GLOB.verglasrunerituallist
+
+/obj/effect/decal/cleanable/roguerune/arcyne/verglas/Destroy()
+	QDEL_LIST_CONTENTS(field)
+	field = null
+	return ..()
+
+/obj/effect/decal/cleanable/roguerune/arcyne/verglas/attack_hand(mob/living/user)
+	if(active)
+		QDEL_LIST_CONTENTS(field)
+		to_chat(user, span_warning("You deactivate the [src]!"))
+		playsound(usr, 'sound/magic/teleport_diss.ogg', 75, TRUE)
+		active = FALSE
+		return
+	. = ..()
+
+/obj/effect/decal/cleanable/roguerune/arcyne/verglas/invoke(list/invokers, datum/runeritual/runeritual)
+	if(!..())
+		return
+	var/turf/centerpoint = get_turf(src)
+	var/mob/living/user = usr
+	if(istype(user))
+		var/turf/front = centerpoint
+		for(var/i in 1 to field_radius + 1)
+			var/turf/next = get_step(front, user.dir)
+			if(!next)
+				break
+			front = next
+		centerpoint = front
+	playsound(centerpoint, 'sound/spellbooks/crystal.ogg', 80, TRUE)
+	for(var/turf/T in get_hear(field_radius, centerpoint))
+		if(T.density)
+			continue
+		if(istype(T, /turf/open/water))
+			continue
+		if(locate(/obj/effect/verglas) in T)
+			continue
+		field += new /obj/effect/verglas(T, 0)
+	active = TRUE
+
+	if(ritual_result)
+		pickritual.cleanup_atoms(selected_atoms)
+	invoke_cleanup()
+
+	for(var/atom/invoker in invokers)
+		if(!isliving(invoker))
+			continue
+		var/mob/living/living_invoker = invoker
+		if(invocation)
+			living_invoker.say(invocation, language = /datum/language/common, ignore_spam = TRUE, forced = "cult invocation")
+		if(invoke_damage)
+			living_invoker.apply_damage(invoke_damage, BRUTE)
+			to_chat(living_invoker,	span_italics("[src] saps your strength!"))
 	do_invoke_glow()
 
 /obj/effect/decal/cleanable/roguerune/arcyne/wallgreater
@@ -533,7 +812,6 @@ GLOBAL_LIST(teleport_runes)
 	var/datum/map_template/template
 	var/fortress = /datum/map_template/arcyne_fortress
 	var/list/barriers = list()
-	rituals = list(/datum/runeritual/other/wall/t3::name = /datum/runeritual/other/wall/t3)
 
 /obj/effect/decal/cleanable/roguerune/arcyne/wallgreater/New()
 	. = ..()
@@ -541,7 +819,6 @@ GLOBAL_LIST(teleport_runes)
 
 /obj/effect/decal/cleanable/roguerune/arcyne/wallgreater/proc/get_template(/datum/map_template/arcyne_fortress/fortress)
 
-	to_chat(usr, span_hierophant_warning("template retrieving"))
 	var/datum/map_template/temporary = new fortress
 	template = SSmapping.map_templates[temporary.id]
 	if(!template)
@@ -558,9 +835,9 @@ GLOBAL_LIST(teleport_runes)
 	get_template(template)
 
 	template.load(deploy_location, centered = TRUE)
-	to_chat(usr, span_hierophant_warning("template.load complete"))
 	if(ritual_result)
 		pickritual.cleanup_atoms(selected_atoms)
+	invoke_cleanup()
 
 	for(var/atom/invoker in invokers)
 		if(!isliving(invoker))
@@ -570,244 +847,87 @@ GLOBAL_LIST(teleport_runes)
 			living_invoker.say(invocation, language = /datum/language/common, ignore_spam = TRUE, forced = "cult invocation")
 		if(invoke_damage)
 			living_invoker.apply_damage(invoke_damage, BRUTE)
-			to_chat(living_invoker,  span_italics("[src] saps your strength!"))
+			to_chat(living_invoker,	span_italics("[src] saps your strength!"))
 	do_invoke_glow()
 
-/obj/effect/decal/cleanable/roguerune/arcyne/teleport
-	name = "planar convergence matrix"
-	desc = "A large spiraling sigil that seems to thrum with power."
-	icon = 'icons/effects/160x160.dmi'
-	icon_state = "portal"
-	tier = 2
-	req_invokers = 2
-	invocation = "Plana Convergant!"
-	req_keyword = TRUE
-	runesize = 2
-	pixel_x = -64 //So the big ol' 96x96 sprite shows up right
-	pixel_y = -64
-	pixel_z = 0
-	can_be_scribed = TRUE
-	rituals = list(/datum/runeritual/teleport::name = /datum/runeritual/teleport)
-	var/listkey
-
-/obj/effect/decal/cleanable/roguerune/arcyne/teleport/Initialize(mapload, set_keyword)
-	. = ..()
-	var/area/A = get_area(src)
-	var/locname = initial(A.name)
-	listkey = set_keyword ? "[set_keyword] [locname]":"[locname]"
-	LAZYADD(GLOB.teleport_runes, src)
-
-/obj/effect/rune/teleport/Destroy()
-	LAZYREMOVE(GLOB.teleport_runes, src)
-	return ..()
-
-/obj/effect/decal/cleanable/roguerune/arcyne/teleport/invoke(list/invokers, datum/runeritual/runeritual)
-	if(!..())	//VERY important. Calls parent and checks if it fails. parent/invoke has all the checks for ingredients
-		return
-	var/mob/living/user = invokers[1] //the first invoker is always the user
-	var/list/potential_runes = list()
-	var/list/teleportnames = list()
-	for(var/obj/effect/decal/cleanable/roguerune/arcyne/teleport/teleport_rune as anything in GLOB.teleport_runes)
-		if(teleport_rune != src)
-			potential_runes[avoid_assoc_duplicate_keys(teleport_rune.listkey, teleportnames)] = teleport_rune
-
-	if(!length(potential_runes))
-		to_chat(user, span_warning("There are no valid runes to teleport to!"))
-		log_game("Teleport rune activated by [user] at [COORD(src)] failed - no other teleport runes.")
-		fail_invoke()
-		return
-
-	var/input_rune_key = input(user, "Rune to teleport to", "Teleportation Target") as null|anything in potential_runes //we know what key they picked
-	if(isnull(input_rune_key))
-		return
-	if(isnull(potential_runes[input_rune_key]))
-		fail_invoke()
-		return
-	var/obj/effect/rune/teleport/actual_selected_rune = potential_runes[input_rune_key] //what rune does that key correspond to?
-	if(!Adjacent(user) || QDELETED(src) || !actual_selected_rune)
-		fail_invoke()
-		return
-
-	var/turf/target = get_turf(actual_selected_rune)
-	if(target.is_blocked_turf(TRUE))
-		to_chat(user, span_warning("The target rune is blocked. Attempting to teleport to it would be massively unwise."))
-		log_game("Teleport rune activated by [user] at [COORD(src)] failed - destination blocked.")
-		fail_invoke()
-		return
-	var/movedsomething = FALSE
-	var/moveuserlater = FALSE
-	var/movesuccess = FALSE
-	if(ritual_result)
-		pickritual.cleanup_atoms(selected_atoms)
-	for(var/atom/movable/A in range(runesize, src))
-		if(istype(A, /obj/effect/dummy/phased_mob))
-			continue
-		if(ismob(A))
-			if(!isliving(A)) //Let's not teleport ghosts and AI eyes.
-				continue
-		if(A == user)
-			moveuserlater = TRUE
-			movedsomething = TRUE
-			continue
-		if(!A.anchored)
-			movedsomething = TRUE
-			if(do_teleport(A, target, channel = TELEPORT_CHANNEL_CULT))
-				movesuccess = TRUE
-	if(movedsomething)
-		//..()
-		playsound(src, 'sound/magic/cosmic_expansion.ogg', 50, TRUE)
-		playsound(target, 'sound/magic/cosmic_expansion.ogg', 50, TRUE)
-		if(moveuserlater)
-			if(do_teleport(user, target, channel = TELEPORT_CHANNEL_CULT))
-				movesuccess = TRUE
-		if(movesuccess)
-			visible_message(span_warning("There is a sharp crack of inrushing air, and everything above the rune disappears!"), null, "<i>You hear a sharp crack.</i>")
-			to_chat(user, span_cult("You[moveuserlater ? "r vision blurs, and with a falling feeling you suddenly appear somewhere else":" send everything above the rune away"]."))
-		else
-			to_chat(user, span_cult("You[moveuserlater ? "r vision blurs briefly, but nothing happens":" try send everything above the rune away, but the teleportation fails"]."))
-		if(movesuccess)
-			target.visible_message(span_warning("There is a boom of outrushing air as something appears above the rune!"), null, "<i>You hear a boom.</i>")
-		for(var/atom/invoker in invokers)
-			if(!isliving(invoker))
-				continue
-			var/mob/living/living_invoker = invoker
-			if(invocation)
-				living_invoker.say(invocation, language = /datum/language/common, ignore_spam = TRUE, forced = "cult invocation")
-			if(invoke_damage)
-				living_invoker.apply_damage(invoke_damage, BRUTE)
-				to_chat(living_invoker,  span_italics("[src] saps your strength!"))
-	else
-		fail_invoke()
-
-/obj/effect/decal/cleanable/roguerune/arcyne/summoning	//32x32 rune t1(one tile)
-	name = "confinement matrix"
-	desc = "A relatively basic confinement matrix used to hold small things when summoned."
+// Summoning circles — draw near a leyline to trigger encounters.
+// Tier determines what creatures can be summoned from the leyline.
+// Chalk: T1-T3. Dagger: All tiers.
+/obj/effect/decal/cleanable/roguerune/arcyne/summoning
+	name = "lesser matrix of summoning"
+	desc = "A lesser circle of arcyne power, channeling the energy of the leyline to breach the veil between the material plane and the other and bring forth creechurs."
 	icon_state = "summon"
 	invocation = "Evoca et Constringe!"
-	max_integrity = 0
+	max_integrity = -1
 	resistance_flags = INDESTRUCTIBLE | FIRE_PROOF | UNACIDABLE | ACID_PROOF
 	tier = 1
 	can_be_scribed = TRUE
-	var/summoning = FALSE
-	var/mob/living/simple_animal/summoned_mob
 
 /obj/effect/decal/cleanable/roguerune/arcyne/summoning/New()
 	. = ..()
 	rituals += GLOB.t1summoningrunerituallist
 
+/obj/effect/decal/cleanable/roguerune/arcyne/summoning/invoke(list/invokers, datum/runeritual/runeritual)
+	if(!..())
+		return
+	// Chanting is handled in the ritual's on_finished_recipe, not here.
+	if(ritual_result)
+		pickritual.cleanup_atoms(selected_atoms)
+	invoke_cleanup()
+	do_invoke_glow()
+
 /obj/effect/decal/cleanable/roguerune/arcyne/summoning/ex_act(severity, target)
 	return
 
-/obj/effect/decal/cleanable/roguerune/arcyne/summoning/Destroy()
-	if(summoning)
-		REMOVE_TRAIT(summoned_mob, TRAIT_PACIFISM, TRAIT_GENERIC)	//can't kill while planar bound.
-		summoned_mob.status_flags -= GODMODE//remove godmode
-		summoned_mob.candodge = TRUE
-		summoned_mob.binded = FALSE
-		summoned_mob.move_resist = MOVE_RESIST_DEFAULT
-		summoned_mob.SetParalyzed(0)
-		summoned_mob = null
-		summoning = FALSE
-	.=..()
-
-/obj/effect/decal/cleanable/roguerune/arcyne/summoning/attack_hand(mob/living/user)
-	if(summoning && isarcyne(user))
-		to_chat(user, span_warning("You release the summon from it's containment!"))
-		playsound(usr, 'sound/magic/teleport_diss.ogg', 75, TRUE)
-		do_invoke_glow()
-		clear_obstacles(user)
-		sleep(20)
-		animate(summoned_mob, color = null,time = 5)
-		REMOVE_TRAIT(summoned_mob, TRAIT_PACIFISM, TRAIT_GENERIC)	//can't kill while planar bound.
-		summoned_mob.status_flags -= GODMODE//remove godmode
-		summoned_mob.candodge = TRUE
-		summoned_mob.binded = FALSE
-		summoned_mob.move_resist = MOVE_RESIST_DEFAULT
-		summoned_mob.SetParalyzed(0)
-		summoned_mob = null
-		summoning = FALSE
-		return
-	. = ..()
-
-/obj/effect/decal/cleanable/roguerune/arcyne/summoning/invoke(list/invokers, datum/runeritual/runeritual)
-	if(!..())	//VERY important. Calls parent and checks if it fails. parent/invoke has all the checks for ingredients
-		return
-	// All the components have been invisibled, time to actually do the ritual. Call on_finished_recipe
-	// (Note: on_finished_recipe may sleep in the case of some rituals like summons, which expect ghost candidates.)
-	// - If the ritual was success (Returned TRUE), proceede to clean up the atoms involved in the ritual. The result has already been spawned by this point.
-	// - If the ritual failed for some reason (Returned FALSE), likely due to no ghosts taking a role or an error, we shouldn't clean up anything, and reset.
-	if(ismob(ritual_result))
-		summoned_mob = ritual_result
-		src.summoning = TRUE
-	if(ritual_result)
-		pickritual.cleanup_atoms(selected_atoms)
-
-	for(var/atom/invoker in invokers)
-		if(!isliving(invoker))
-			continue
-		var/mob/living/living_invoker = invoker
-		if(invocation)
-			living_invoker.say(invocation, language = /datum/language/common, ignore_spam = TRUE, forced = "cult invocation")
-		if(invoke_damage)
-			living_invoker.apply_damage(invoke_damage, BRUTE)
-			to_chat(living_invoker,  span_italics("[src] saps your strength!"))
-	do_invoke_glow()
-
-/obj/effect/decal/cleanable/roguerune/arcyne/summoning/proc/clear_obstacles(mob/living/user)
-	for(var/turf/closed/wall/anticheese in range(loc, runesize))
-		anticheese.visible_message(span_warning("[anticheese] crumbles under the force of the releasing wards."))
-		anticheese.ChangeTurf(/turf/open/floor/rogue/blocks)
-		continue
-
-/obj/effect/decal/cleanable/roguerune/arcyne/summoning/mid// 96x96 rune t2(3x3 tile)
-	name = "sealate confinement matrix"
-	desc = "An adept confinement matrix improved with the addition of a sealate matrix; used to hold things when summoned."
+/obj/effect/decal/cleanable/roguerune/arcyne/summoning/mid
+	name = "ordinary matrix of summoning"
+	desc = "An ordinary circle of arcyne power, capable of reaching into the second dimension of the veil and bringing forth more powerful creechurs."
 	icon = 'icons/effects/96x96.dmi'
-	icon_state = "sealate"
+	icon_state = "summonmid"
 	runesize = 1
 	tier = 2
-	pixel_x = -32 //So the big ol' 96x96 sprite shows up right
+	pixel_x = -32
 	pixel_y = -32
 	pixel_z = 0
 	can_be_scribed = TRUE
 
 /obj/effect/decal/cleanable/roguerune/arcyne/summoning/mid/New()
 	. = ..()
+	rituals.Cut()
 	rituals += GLOB.t2summoningrunerituallist
 
-/obj/effect/decal/cleanable/roguerune/arcyne/summoning/adv	//160x160 rune t2(5x5 tile)
-	name = "warded sealate confinement matrix"
-	desc = "A thoroughly warded confinement matrix improved with the addition of a sealate matrix; \
-	used to hold larger, dangerous things when summoned."
-	icon = 'icons/effects/160x160.dmi'
-	icon_state = "warded"
-	runesize = 2
+/obj/effect/decal/cleanable/roguerune/arcyne/summoning/adv
+	name = "greater sealed matrix of summoning"
+	desc = "A greater summoning circle, and the strongest a singular mage can sustain with the lyfeforce from their body, capable of summoning truly terrifying beasts."
+	icon = 'icons/effects/96x96.dmi'
+	icon_state = "summonadv"
+	runesize = 1
 	tier = 3
-	pixel_x = -64 //So the big ol' 160x160 sprite shows up right
-	pixel_y = -64
+	pixel_x = -32
+	pixel_y = -32
 	pixel_z = 0
 	can_be_scribed = TRUE
 
 /obj/effect/decal/cleanable/roguerune/arcyne/summoning/adv/New()
 	. = ..()
+	rituals.Cut()
 	rituals += GLOB.t3summoningrunerituallist
 
-/obj/effect/decal/cleanable/roguerune/arcyne/summoning/max	//224x224 rune t3(7x7 tile)
-	name = "noc's eye warded sealate confinement matrix"
-	desc = "A thoroughly warded confinement matrix improved with a Noc's eye sealing measure \
-	and the addition of a sealate matrix; used to hold the largest, most dangerous things summonable."
-	icon = 'icons/effects/224x224.dmi'
-	icon_state = "huge_runeblued"
-	runesize = 3
-	req_invokers = 3
-	tier = 4
-	pixel_x = -96 //So the big ol' 96x96 sprite shows up right
-	pixel_y = -96
+/obj/effect/decal/cleanable/roguerune/arcyne/summoning/max
+	name = "grand warded matrix of summoning"
+	desc = "A grand summoning circle capable of summoning the strongest and most powerful of creechurs modern mages can manage to reach."
+	icon = 'icons/effects/96x96.dmi'
+	icon_state = "summonmax"
+	runesize = 1
+	tier = 5
+	pixel_x = -32
+	pixel_y = -32
 	pixel_z = 0
 	can_be_scribed = TRUE
 
 /obj/effect/decal/cleanable/roguerune/arcyne/summoning/max/New()
 	. = ..()
+	rituals.Cut()
 	rituals += GLOB.t4summoningrunerituallist
 
 /obj/effect/decal/cleanable/roguerune/divine	//To be used for divine rituals.

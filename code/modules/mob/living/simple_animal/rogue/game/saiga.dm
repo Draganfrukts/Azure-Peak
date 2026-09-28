@@ -1,6 +1,9 @@
 //the saiga
 
 /mob/living/simple_animal/hostile/retaliate/rogue/saiga
+	threat_point = THREAT_DEADLY
+	anatomy_type = /datum/anatomy/quadruped/standard
+	attack_aim = MOB_AIM_HIGH
 	name = "saiga doe"
 	desc = "Chiefly reputed friends of man, the saiga is the most ubiqutous beast of burden in the known world. They are driven to haul caravans and ploughs, ridden by mounted warriors on the field, and are much beloved by all."
 	icon = 'icons/roguetown/mob/monster/saiga.dmi'
@@ -10,6 +13,7 @@
 	icon_gib = "saiga_gib"
 	gender = FEMALE
 	mob_biotypes = MOB_ORGANIC|MOB_BEAST
+	blood_toll_bucket = STATS_KILLED_GREATER_BEASTS
 	emote_see = list("looks around.", "chews some leaves.")
 	speak_chance = 1
 	turns_per_move = 5
@@ -39,18 +43,19 @@
 						/obj/item/alch/viscera = 2)
 	head_butcher = /obj/item/natural/head/saiga
 	base_intents = list(/datum/intent/simple/headbutt/saiga)
-	health = 400
-	maxHealth = 400
+	health = SAIGA_HEALTH
+	maxHealth = SAIGA_HEALTH
 	food_type = list(
 				/obj/item/reagent_containers/food/snacks/grown/wheat,
 				/obj/item/reagent_containers/food/snacks/grown/oat,
 				/obj/item/reagent_containers/food/snacks/grown/apple,
+				/obj/item/reagent_containers/food/snacks/grown/maize
 				)
 	tame_chance = 25
 	bonus_tame_chance = 15
 	footstep_type = FOOTSTEP_MOB_SHOE
 	pooptype = /obj/item/natural/poo/horse
-	faction = list("saiga")
+	faction = list(FACTION_SAIGA)
 	attack_verb_continuous = "headbutts"
 	attack_verb_simple = "headbutt"
 	melee_damage_lower = 60
@@ -70,10 +75,12 @@
 	can_buckle = TRUE
 	buckle_lying = 0
 	can_saddle = TRUE
+	max_buckled_mobs = 2
 	aggressive = 1
 	remains_type = /obj/effect/decal/remains/saiga
 
 /mob/living/simple_animal/hostile/retaliate/rogue/saiga/saigakid
+	threat_point = THREAT_TRASH
 	name = "saiga calf"
 	icon_state = "saigakid"
 	icon_living = "saigakid"
@@ -84,16 +91,15 @@
 					/obj/item/reagent_containers/food/snacks/rogue/meat/steak = 1,
 					/obj/item/natural/bone = 3,
 					)
-	health = 20
+	health = SAIGA_CALF_HEALTH
 	pass_flags = PASSTABLE | PASSMOB
 	mob_size = MOB_SIZE_SMALL
-	maxHealth = 20
+	maxHealth = SAIGA_CALF_HEALTH
 	melee_damage_lower = 1
 	melee_damage_upper = 6
 	STACON = 5
 	STASTR = 5
 	STASPD = 5
-	defprob = 50
 	pixel_x = -16
 	adult_growth = /mob/living/simple_animal/hostile/retaliate/rogue/saiga
 	tame = TRUE
@@ -112,7 +118,7 @@
 	speak_chance = 1
 	turns_per_move = 3
 	see_in_dark = 6
-	faction = list("saiga")
+	faction = list(FACTION_SAIGA)
 	attack_verb_continuous = "headbutts"
 	attack_verb_simple = "headbutt"
 	environment_smash = ENVIRONMENT_SMASH_NONE
@@ -133,6 +139,7 @@
 	base_intents = list(/datum/intent/simple/headbutt/saiga)
 
 /mob/living/simple_animal/hostile/retaliate/rogue/saiga/saigaboy
+	threat_point = THREAT_TRASH
 	name = "saiga calf"
 	desc = ""
 	gender = MALE
@@ -180,27 +187,13 @@
 	cut_overlays()
 	..()
 	if(stat != DEAD)
-		if(ssaddle)
-			var/mutable_appearance/saddlet = mutable_appearance(icon, gender == FEMALE ? "saddle-f-above" : "saddle-above", 4.3)
-			saddlet.appearance_flags = RESET_ALPHA|RESET_COLOR
-			add_overlay(saddlet)
-			saddlet = mutable_appearance(icon, gender == FEMALE ? "saddle-f" : "saddle")
-			saddlet.appearance_flags = RESET_ALPHA|RESET_COLOR
-			add_overlay(saddlet)
-		if(has_buckled_mobs())
-			var/mutable_appearance/mounted = mutable_appearance(icon, gender == FEMALE ? "saiga_mounted" : "buck_mounted", 4.3)
-			add_overlay(mounted)
+		add_saddleicon(gender == FEMALE ? "saddle-f-above" : "saddle-above", gender == FEMALE ? "saddle-f" : "saddle")
+		add_ridericon(gender == FEMALE ? "saiga_mounted" : "buck_mounted")
 
 /mob/living/simple_animal/hostile/retaliate/rogue/saiga/tamed()
 	..()
 	deaggroprob = 30
-	if(can_buckle)
-		var/datum/component/riding/D = LoadComponent(/datum/component/riding/no_ocean)
-		D.set_riding_offsets(RIDING_OFFSET_ALL, list(TEXT_NORTH = list(0, 8), TEXT_SOUTH = list(0, 8), TEXT_EAST = list(-2, 8), TEXT_WEST = list(2, 8)))
-		D.set_vehicle_dir_layer(SOUTH, ABOVE_MOB_LAYER)
-		D.set_vehicle_dir_layer(NORTH, OBJ_LAYER)
-		D.set_vehicle_dir_layer(EAST, OBJ_LAYER)
-		D.set_vehicle_dir_layer(WEST, OBJ_LAYER)
+	setup_mount()
 
 /mob/living/simple_animal/hostile/retaliate/rogue/saiga/death()
 	unbuckle_all_mobs()
@@ -213,10 +206,12 @@
 /mob/living/simple_animal/hostile/retaliate/rogue/saiga/proc/check_sprint_dismount()
 	SIGNAL_HANDLER
 	for(var/mob/living/carbon/human/rider in buckled_mobs)
-		if(rider.m_intent == MOVE_INTENT_RUN)
-			var/rider_skill = rider.get_skill_level(/datum/skill/misc/riding)
-			if(rider_skill < SKILL_LEVEL_MASTER)
-				violent_dismount(rider)
+		if(rider.m_intent != MOVE_INTENT_RUN)
+			continue
+		var/rider_skill = rider.get_skill_level(/datum/skill/misc/riding)
+		if(rider_skill >= SKILL_LEVEL_MASTER)
+			continue
+		violent_dismount(rider)
 
 /mob/living/simple_animal/hostile/retaliate/rogue/saiga/post_buckle_mob(mob/living/M)
 	. = ..()
@@ -254,25 +249,8 @@
 		if("idle")
 			return pick('sound/vo/mobs/saiga/idle (1).ogg','sound/vo/mobs/saiga/idle (2).ogg','sound/vo/mobs/saiga/idle (3).ogg','sound/vo/mobs/saiga/idle (4).ogg','sound/vo/mobs/saiga/idle (5).ogg','sound/vo/mobs/saiga/idle (6).ogg','sound/vo/mobs/saiga/idle (7).ogg')
 
-/mob/living/simple_animal/hostile/retaliate/rogue/saiga/simple_limb_hit(zone)
-	if(!zone)
-		return ""
-	switch(zone)
-		if(BODY_ZONE_HEAD, BODY_ZONE_PRECISE_R_EYE, BODY_ZONE_PRECISE_L_EYE, BODY_ZONE_PRECISE_SKULL, BODY_ZONE_PRECISE_EARS)
-			return "head"
-		if(BODY_ZONE_PRECISE_NOSE, BODY_ZONE_PRECISE_MOUTH)
-			return "snout"
-		if(BODY_ZONE_PRECISE_NECK)
-			return "neck"
-		if(BODY_ZONE_R_ARM, BODY_ZONE_L_ARM, BODY_ZONE_PRECISE_L_HAND, BODY_ZONE_PRECISE_R_HAND)
-			return "foreleg"
-		if(BODY_ZONE_R_LEG, BODY_ZONE_L_LEG, BODY_ZONE_PRECISE_L_FOOT, BODY_ZONE_PRECISE_R_FOOT)
-			return "leg"
-		if(BODY_ZONE_PRECISE_STOMACH)
-			return "stomach"
-	return ..()
-
 /mob/living/simple_animal/hostile/retaliate/rogue/saiga/saigaboy
+	threat_point = THREAT_TRASH
 	icon = 'icons/roguetown/mob/monster/saiga.dmi'
 	name = "saiga"
 	gender = MALE
@@ -304,14 +282,13 @@
 /mob/living/simple_animal/hostile/retaliate/rogue/saiga/saigabuck/tame
 	tame = TRUE
 
-
-/mob/living/simple_animal/hostile/retaliate/rogue/saiga/saigabuck/tame/saddled/Initialize()
+/mob/living/simple_animal/hostile/retaliate/rogue/saiga/saigabuck/tame/saddled/Initialize(mapload)
 	. = ..()
 	var/obj/item/natural/saddle/S = new(src)
 	ssaddle = S
 	update_icon()
 
-/mob/living/simple_animal/hostile/retaliate/rogue/saiga/tame/saddled/Initialize()
+/mob/living/simple_animal/hostile/retaliate/rogue/saiga/tame/saddled/Initialize(mapload)
 	. = ..()
 	var/obj/item/natural/saddle/S = new(src)
 	ssaddle = S

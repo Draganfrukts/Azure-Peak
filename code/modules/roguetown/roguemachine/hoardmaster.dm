@@ -12,7 +12,7 @@
 	var/current_cat = "1"
 
 
-/obj/structure/roguemachine/Hoardmaster/Initialize()
+/obj/structure/roguemachine/Hoardmaster/Initialize(mapload)
 	. = ..()
 	update_icon()
 	var/namechance = rand(1,6)
@@ -41,7 +41,7 @@
 
 /obj/structure/roguemachine/Hoardmaster/Topic(href, href_list)
 	. = ..()
-	if(!HAS_TRAIT(usr, TRAIT_COMMIE))
+	if(!HAS_TRAIT(usr, TRAIT_FREEMAN))
 		return
 	if(!usr.canUseTopic(src, BE_CLOSE))
 		return
@@ -70,6 +70,7 @@
 			hmasteritem.flags_1 |= HOARDMASTER_SPAWNED_1
 			if(istype(hmasteritem, /obj/item))
 				var/obj/item/newitem = hmasteritem
+				newitem.mark_as_worn()
 				newitem.sellprice = 0
 				if(newitem.smeltresult)
 					newitem.smeltresult = /obj/item/ash
@@ -80,7 +81,7 @@
 	return attack_hand(usr)
 
 /obj/structure/roguemachine/Hoardmaster/attack_hand(mob/living/user)
-	if(!HAS_TRAIT(user, TRAIT_COMMIE))
+	if(!HAS_TRAIT(user, TRAIT_FREEMAN))
 		return
 	var/datum/antagonist/bandit/B = usr.mind.has_antag_datum(/datum/antagonist/bandit)
 	. = ..()
@@ -110,7 +111,7 @@
 			unlocked_cats+="Knave"
 		if("Iconoclast")
 			unlocked_cats+="Iconoclast"
-   
+
 	if(current_cat == "1")
 		contents += "<center>"
 		for(var/X in unlocked_cats)

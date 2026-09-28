@@ -74,7 +74,7 @@
 	dead = TRUE
 	rotprocess = SHELFLIFE_SHORT
 
-/obj/item/reagent_containers/food/snacks/smallrat/Initialize()
+/obj/item/reagent_containers/food/snacks/smallrat/Initialize(mapload)
 	. = ..()
 	START_PROCESSING(SSobj, src)
 	if(dead)
@@ -90,7 +90,7 @@
 	if(dead)
 		..()
 	else
-		if(!isturf(loc))
+		if(isturf(loc))
 			if(isliving(user))
 				var/mob/living/L = user
 				if(prob(L.STASPD * 1.5))

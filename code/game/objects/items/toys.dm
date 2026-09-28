@@ -10,7 +10,7 @@
  *		Mech prizes
  *		AI core prizes
  *		Toy codex gigas
- * 		Skeleton toys
+ *		Skeleton toys
  *		Cards
  *		Toy nuke
  *		Fake meteor
@@ -18,7 +18,7 @@
  *		Toy big red button
  *		Beach ball
  *		Toy xeno
- *      Kitty toys!
+ *		Kitty toys!
  *		Snowballs
  *		Clockwork Watches
  *		Toy Daggers
@@ -75,7 +75,7 @@
 /obj/item/ash/snappop_phoenix
 	var/respawn_time = 300
 
-/obj/item/ash/snappop_phoenix/Initialize()
+/obj/item/ash/snappop_phoenix/Initialize(mapload)
 	. = ..()
 	addtimer(CALLBACK(src, PROC_REF(respawn)), respawn_time)
 
@@ -123,7 +123,7 @@
 	. = ..()
 	. += span_smallnotice("Use the deck in your hand to shuffle the cards. Draw a card by clicking on it with an empty hand.")
 
-/obj/item/toy/cards/deck/Initialize()
+/obj/item/toy/cards/deck/Initialize(mapload)
 	. = ..()
 	populate_deck()
 
@@ -453,5 +453,12 @@
 			cards += "[i] of [suit]"
 		for(var/person in list("Page", "Knight", "Queen", "King"))
 			cards += "[person] of [suit]"
-	for(var/trump in list("The Magician", "The High Priestess", "The Empress", "The Emperor", "The Hierophant", "The Lover", "The Chariot", "Justice", "The Hermit", "The Wheel of Fortune", "Strength", "The Hanged Man", "Death", "Temperance", "The Devil", "The Tower", "The Star", "The Moon", "The Sun", "Judgement", "The World", "The Fool"))
+	for(var/trump in list("The Fool", "The Magician", "The High Priestess", "The Empress", "The Emperor", "The Hierophant", "The Lover", "The Chariot", "Justice", "The Hermit", "The Wheel of Fortune", "Strength", "The Hanged Man", "Death", "Temperance", "The Devil", "The Tower", "The Star", "The Moon", "The Sun", "Judgement", "The World"))
+		cards += trump
+
+/obj/item/toy/cards/deck/tarot/majorarcana
+
+/obj/item/toy/cards/deck/tarot/majorarcana/populate_deck()
+	icon_state = "deck_[deckstyle]_full"
+	for(var/trump in list("The Fool", "The Magician", "The High Priestess", "The Empress", "The Emperor", "The Hierophant", "The Lover", "The Chariot", "Justice", "The Hermit", "The Wheel of Fortune", "Strength", "The Hanged Man", "Death", "Temperance", "The Devil", "The Tower", "The Star", "The Moon", "The Sun", "Judgement", "The World"))
 		cards += trump

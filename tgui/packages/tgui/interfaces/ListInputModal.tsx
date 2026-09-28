@@ -1,7 +1,14 @@
 import { useState } from 'react';
 import { useBackend } from 'tgui/backend';
 import { Window } from 'tgui/layouts';
-import { Autofocus, Button, Divider, Input, Section, Stack } from 'tgui-core/components';
+import {
+  Autofocus,
+  Button,
+  Divider,
+  Input,
+  Section,
+  Stack,
+} from 'tgui-core/components';
 import { isAlphabetic, isNumeric, KEY } from 'tgui-core/keys';
 
 import { InputButtons } from './common/InputButtons';
@@ -10,16 +17,18 @@ import { Loader } from './common/Loader';
 type ListInputData = {
   init_value: string;
   items: string[];
+  descriptions?: Record<string, string>;
   large_buttons: boolean;
   message: string;
   timeout: number;
   title: string;
 };
 
-export const ListInputModal = (props) => {
+export const ListInputModal = () => {
   const { act, data } = useBackend<ListInputData>();
   const {
     items = [],
+    descriptions,
     message = '',
     init_value,
     large_buttons,
@@ -96,7 +105,7 @@ export const ListInputModal = (props) => {
   );
   // Dynamically changes the window height based on the message.
   const windowHeight =
-    325 + Math.ceil(message.length / 3) + (large_buttons ? 5 : 0);
+    340 + Math.ceil(message.length / 3) + (large_buttons ? 5 : 0);
   // Grabs the cursor when no search bar is visible.
   if (!searchBarVisible) {
     setTimeout(() => document!.getElementById(selected.toString())?.focus(), 1);
@@ -123,7 +132,7 @@ export const ListInputModal = (props) => {
   }
 
   return (
-    <Window title={title} width={325} height={windowHeight}>
+    <Window title={title} width={400} height={windowHeight}>
       {timeout && <Loader value={timeout} />}
       <Window.Content
         onKeyDown={(event) => {
@@ -152,6 +161,7 @@ export const ListInputModal = (props) => {
           <Stack fill vertical>
             <Stack.Item grow>
               <ListDisplay
+                descriptions={descriptions}
                 filteredItems={filteredItems}
                 onClick={onClick}
                 onFocusSearch={onFocusSearch}
@@ -184,14 +194,27 @@ export const ListInputModal = (props) => {
   );
 };
 
+type ListDisplayProps = Pick<ListInputData, 'descriptions'> & {
+  filteredItems: string[];
+  onClick: (idx: number) => void;
+  onFocusSearch: () => void;
+  searchBarVisible: boolean;
+  selected: number;
+};
 /**
  * Displays the list of selectable items.
  * If a search query is provided, filters the items.
  */
-const ListDisplay = (props) => {
+const ListDisplay = (props: ListDisplayProps) => {
   const { act } = useBackend<ListInputData>();
-  const { filteredItems, onClick, onFocusSearch, searchBarVisible, selected } =
-    props;
+  const {
+    descriptions,
+    filteredItems,
+    onClick,
+    onFocusSearch,
+    searchBarVisible,
+    selected,
+  } = props;
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
     const key = event.key;
@@ -205,12 +228,13 @@ const ListDisplay = (props) => {
     <Section fill scrollable>
       <Autofocus />
       {filteredItems.map((item, index) => {
+        const tooltip = descriptions?.[item] || null;
         return (
           <Button
             className="candystripe"
             color="transparent"
             fluid
-            id={index}
+            id={`${index}`}
             key={index}
             onClick={() => onClick(index)}
             onDoubleClick={(event) => {
@@ -225,6 +249,8 @@ const ListDisplay = (props) => {
               animation: 'none',
               transition: 'none',
             }}
+            tooltip={tooltip}
+            tooltipPosition="bottom"
           >
             {item.replace(/^\w/, (c) => c.toUpperCase())}
           </Button>

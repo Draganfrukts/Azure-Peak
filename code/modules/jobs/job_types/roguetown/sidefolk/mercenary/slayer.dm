@@ -1,19 +1,16 @@
 /datum/advclass/mercenary/trollslayer
 	name = "Trollslayer" // barbarian-like subclass with soft-nudist (no armor) and no Fast Reflexes, supposed to soak up damage with their con and skinarmor and chop shit up with class-exclusive axes
 	tutorial = "Atop the windy peaks of the dwarven Mountainhomes, you swore an Oath, vowing to cleanse the land of monsters or die trying. You give yourself wholly to the Battlefather’s judgment, bearing your devotion as armor and your rage as a weapon. No creacher upon this world is safe from your divine wrath."
-	allowed_races = list(
-		/datum/species/dwarf,
-		/datum/species/dwarf/mountain
-		)
+	forbidden_races = list(RACES_GRUDGE)
 	outfit = /datum/outfit/job/roguetown/mercenary/trollslayer
-	category_tags = list(CTAG_MERCENARY)
+	category_tags = list(CTAG_MERCENARY, CTAG_MERCPARTY_BULWARK)
 	class_select_category = CLASS_CAT_RACIAL
 	cmode_music = 'sound/music/combat_dwarf.ogg'
 	extra_context = "Only the dwarves who swore an Oath to the ten may become Trollslayers." // dwarf exclusive and will force Ravox
 
-	traits_applied = list(TRAIT_CRITICAL_RESISTANCE, TRAIT_SHIRTLESS) //TRAIT_SHIRTLESS prevents equip on the head, armor and shirt slots and enables class-specific weapons
-	subclass_stats = list( 
-		STATKEY_STR = 2, 
+	traits_applied = list(TRAIT_CRITICAL_RESISTANCE, TRAIT_SHIRTLESS, TRAIT_NOPAINSTUN) //TRAIT_SHIRTLESS blocks equip in armor, shirt, and head slots.
+	subclass_stats = list(
+		STATKEY_STR = 2,
 		STATKEY_CON = 5,
 		STATKEY_WIL = 2,
 		STATKEY_INT = -3, // Brain dented in an accident involving 2 squirrels and a drunk zizite.
@@ -30,8 +27,8 @@
 		/datum/skill/misc/tracking = SKILL_LEVEL_JOURNEYMAN,
 		/datum/skill/labor/butchering = SKILL_LEVEL_JOURNEYMAN, // Butcher trolls
 		/datum/skill/misc/medicine = SKILL_LEVEL_APPRENTICE, // Sew up the countless holes you will be receiving
+		/datum/skill/misc/reading = SKILL_LEVEL_NOVICE, //bare minimum so they can use silverfaces and the like
 	)
-	adv_stat_ceiling = list(STAT_STRENGTH = 12) // I'm sorry but you're not grabbing muscular and aiming chest with 12 speed 17 strength swift intent spam.
 
 /datum/outfit/job/roguetown/mercenary/trollslayer
 	allowed_patrons = ALL_SLAYER_PATRONS
@@ -41,7 +38,7 @@
 	if(H.mind)
 		to_chat(H, span_warning("You are a Slayer - an elite hunter of monsters, hailing from the windy peaks of the dwarven Mountainhomes. Your devotion is matched only by your unbridled fury. You forgo defense, entrusting your life to the Ten and make a living by selling your trophies."))
 		H.mind.AddSpell(new /obj/effect/proc_holder/spell/self/axedance)
-		armor = /obj/item/clothing/suit/roguetown/armor/regenerating/slayer
+		armor = /obj/item/clothing/suit/roguetown/armor/manual/pushups/slayer //light iron maille
 		pants = /obj/item/clothing/under/roguetown/heavy_leather_pants
 		backr = /obj/item/storage/backpack/rogue/satchel
 		belt = /obj/item/storage/belt/rogue/leather/slayer
@@ -53,7 +50,7 @@
 			/obj/item/natural/head/troll = 1 // will spawn inside of the belt but I can't be bothered to make it spawn in the headhook
 		)
 		var/weapons = list("Hatchets", "Greataxe")
-		var/weapon_choice = input("Choose your weapon", "How will you channel your rage?") as anything in weapons
+		var/weapon_choice = input(H, "Choose your weapon", "How will you channel your rage?") as anything in weapons
 		switch(weapon_choice)
 			if("Greataxe")
 				backl = /obj/item/rogueweapon/stoneaxe/battle/slayer
@@ -62,11 +59,35 @@
 				beltl = /obj/item/rogueweapon/stoneaxe/woodcut/steel/slayer
 				ADD_TRAIT(H, TRAIT_DUALWIELDER, TRAIT_GENERIC)
 
+
+/obj/item/clothing/suit/roguetown/armor/manual/pushups/slayer
+	name = "rough skin"
+	desc = ""
+	allowed_race = list(
+		/datum/species/dwarf,
+		/datum/species/dwarf/mountain
+		)
+	armor = ARMOR_MAILLE
+	slot_flags = ITEM_SLOT_ARMOR
+	body_parts_covered = COVERAGE_FULL | COVERAGE_HEAD | NECK //This does not cover eyes/nose/mouth.
+	body_parts_inherent = COVERAGE_FULL | COVERAGE_HEAD | NECK
+	blade_dulling = DULLING_BASHCHOP
+	max_integrity = ARMOR_INT_CHEST_LIGHT_STEEL
+
+	repairmsg_end = "Your skin looks just as shiny as ever, like it might stop the blow of a fully grown troll once more."
+	repairmsg_continue = "The thick skin cover starts to bulge and repair tears"
+
+/obj/item/clothing/suit/roguetown/armor/manual/pushups/slayer/obj_destruction()
+	visible_message(span_bloody("The dwarf flinches from the blow!"), vision_distance = 3) // visual que for breaking
+
+//Slayer skin equates to a light maille hauberk layering over chest, limbs, and head (Not neck, ears, face), that regens via pushups.
+
+
 /obj/item/rogueweapon/stoneaxe/woodcut/steel/slayer
 	name = "slayer axe"
 	desc = "A marvel of craftsdwarfship, this ornate handaxe attunes itself to those who have sworn the Oath."
 	force = 26
-	possible_item_intents = list(/datum/intent/axe/cut/battle, /datum/intent/axe/chop/battle, /datum/intent/axe/bash)
+	possible_item_intents = list(/datum/intent/axe/cut, /datum/intent/axe/chop, /datum/intent/axe/bash)
 	gripped_intents = null
 	icon_state = "slayer_axe"
 	icon = 'icons/roguetown/weapons/axes32.dmi'
@@ -87,7 +108,7 @@
 	force = 20
 	force_wielded = 34 // Slightly weaker than the double bladed greataxe, but the edge doesn't dull quickly.
 	possible_item_intents = list(/datum/intent/axe/cut, /datum/intent/axe/chop, SPEAR_BASH)
-	gripped_intents = list(/datum/intent/axe/cut/battle/greataxe, /datum/intent/axe/chop/battle/greataxe, SPEAR_BASH)
+	gripped_intents = list(/datum/intent/axe/cut/long, /datum/intent/axe/chop/long, SPEAR_BASH)
 	icon_state = "slayer"
 	icon = 'icons/roguetown/weapons/axes64.dmi'
 	dropshrink = 0.6
@@ -117,47 +138,6 @@
 			if("onback")
 				return list("shrink" = 0.4,"sx" = -1,"sy" = 2,"nx" = 0,"ny" = 2,"wx" = 2,"wy" = 1,"ex" = 0,"ey" = 1,"nturn" = 0,"sturn" = 0,"wturn" = 70,"eturn" = 15,"nflip" = 1,"sflip" = 1,"wflip" = 1,"eflip" = 1,"northabove" = 1,"southabove" = 0,"eastabove" = 0,"westabove" = 0)
 	return ..()
-
-/obj/item/clothing/suit/roguetown/armor/regenerating/slayer // a bit of natural armor to offset the nudism and shitty dodge. not too hard to break but will slowly repair itself
-	name = "rough skin"
-	desc = ""
-	icon_state = null
-	armor = ARMOR_RUMACLAN
-	prevent_crits = list(BCLASS_CUT, BCLASS_BLUNT)
-	blocksound = SOFTHIT
-	blade_dulling = DULLING_BASHCHOP
-	slot_flags = ITEM_SLOT_SHIRT|ITEM_SLOT_ARMOR
-	body_parts_covered = COVERAGE_ALL_BUT_HANDFEET
-	body_parts_inherent = COVERAGE_ALL_BUT_HANDFEET
-	r_sleeve_status = SLEEVE_NORMAL
-	l_sleeve_status = SLEEVE_NORMAL
-	allowed_race = list(
-		/datum/species/dwarf,
-		/datum/species/dwarf/mountain
-		)
-	surgery_cover = FALSE 
-	max_integrity = 135
-	sewrepair = FALSE
-	repairmsg_begin = "The thick skin cover starts to bulge and repair tears"
-	repairmsg_continue = "More of the tears on the skin close up"
-	repairmsg_stop = "A firm blow undoes some of the fresh skin you've grown!"
-	repairmsg_end = "Your skin looks just as shiny as ever, like it might stop the blow of a fully grown troll once more."
-
-	interrupt_damount = 25
-	repair_time = 35 SECONDS
-
-/obj/item/clothing/suit/roguetown/armor/regenerating/slayer/Initialize(mapload)
-	. = ..()
-	ADD_TRAIT(src, TRAIT_NODROP, CURSED_ITEM_TRAIT)
-
-/obj/item/clothing/suit/roguetown/armor/regenerating/slayer/dropped(mob/living/carbon/human/user)
-	. = ..()
-	if(QDELETED(src))
-		return
-	qdel(src)
-
-/obj/item/clothing/suit/roguetown/armor/regenerating/slayer/obj_destruction()
-	visible_message(span_bloody("The dwarf flinches from the blow!"), vision_distance = 3) // visual que for breaking
 
 /obj/effect/proc_holder/spell/self/axedance
 	name = "Dance of the Axes" // rage button. gives maniac traits, some stats and removes the user's ability to dodge and parry. dunks stamina on expiration
@@ -198,7 +178,6 @@
 	ADD_TRAIT(owner, TRAIT_BLOODLOSS_IMMUNE, STATUS_EFFECT_TRAIT)
 	ADD_TRAIT(owner, TRAIT_STRENGTH_UNCAPPED, STATUS_EFFECT_TRAIT)
 	ADD_TRAIT(owner, TRAIT_NODEF, STATUS_EFFECT_TRAIT)
-	ADD_TRAIT(owner, TRAIT_NOPAINSTUN, STATUS_EFFECT_TRAIT)
 
 /datum/status_effect/buff/axedance/on_remove()
 	. = ..()
@@ -209,7 +188,6 @@
 	REMOVE_TRAIT(owner, TRAIT_BLOODLOSS_IMMUNE, STATUS_EFFECT_TRAIT)
 	REMOVE_TRAIT(owner, TRAIT_STRENGTH_UNCAPPED, STATUS_EFFECT_TRAIT)
 	REMOVE_TRAIT(owner, TRAIT_NODEF, STATUS_EFFECT_TRAIT)
-	REMOVE_TRAIT(owner, TRAIT_NOPAINSTUN, STATUS_EFFECT_TRAIT)
 	owner.apply_status_effect(/datum/status_effect/debuff/axe_exhaustion)
 	owner.stamina = 400
 

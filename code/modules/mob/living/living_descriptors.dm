@@ -12,7 +12,7 @@
 	if(!length(mob_descriptors))
 		mob_descriptors = null
 
-/mob/living/proc/get_descriptor_type(var/desired_type)
+/mob/living/proc/get_descriptor_type(desired_type)
 	for(var/datum/mob_descriptor/descriptor as anything in mob_descriptors)
 		if(ispath(descriptor, desired_type))
 			return MOB_DESCRIPTOR(descriptor)
@@ -198,15 +198,7 @@
 				they_replace = "he"
 				man_replace = "man"
 				him_replace = "him"
-			if (HE_HIM_F)
-				they_replace = "he"
-				man_replace = "man"
-				him_replace = "him"
 			if (SHE_HER)
-				they_replace = "she"
-				man_replace = "woman"
-				him_replace = "her"
-			if (SHE_HER_M)
 				they_replace = "she"
 				man_replace = "woman"
 				him_replace = "her"
@@ -214,15 +206,7 @@
 				they_replace = "they"
 				man_replace = "person"
 				him_replace = "them"
-			if (THEY_THEM_F)
-				they_replace = "they"
-				man_replace = "person"
-				him_replace = "them"
 			if (IT_ITS)
-				they_replace = "it"
-				man_replace = "creacher"
-				him_replace = "it"
-			if (IT_ITS_M)
 				they_replace = "it"
 				man_replace = "creacher"
 				him_replace = "it"

@@ -7,6 +7,7 @@
 	var/retained_dust = 0
 	var/list/sleep_exp = list()
 	var/datum/mind/mind = null
+	var/woke_up = TRUE
 	COOLDOWN_DECLARE(xp_show)
 	COOLDOWN_DECLARE(level_up)
 
@@ -71,12 +72,38 @@
 
 /datum/sleep_adv/proc/add_sleep_experience(skill, amt, silent = FALSE, _show_xp = TRUE)
 	var/mob/living/L = mind.current
+	var/datum/skill/sleep_gate = GetSkillRef(skill)
+	if(sleep_gate && !sleep_gate.learnable_in_sleep)
+		return
 	var/show_xp = _show_xp
 	if(!(L.client?.prefs.combat_toggles & XP_TEXT))
 		show_xp = FALSE
 	if((L.get_skill_level(skill) < SKILL_LEVEL_APPRENTICE) && (!is_considered_sleeping()|| HAS_TRAIT(mind.current, TRAIT_VAMP_DREAMS)))
+		// Check skill cap even below apprentice (e.g. alchemy with max_untraited_level = SKILL_LEVEL_NONE)
+		var/datum/skill/pre_skillref = GetSkillRef(skill)
+		var/pre_cap = pre_skillref.max_untraited_level
+		#ifdef USES_TRAIT_SKILL_GATING
+		for(var/trait in pre_skillref.trait_uncap)
+			if(HAS_TRAIT(mind.current, trait) && (pre_skillref.trait_uncap[trait] > pre_cap))
+				pre_cap = pre_skillref.trait_uncap[trait]
+		#endif
+		#ifndef USES_TRAIT_SKILL_GATING
+		pre_cap = SKILL_LEVEL_LEGENDARY
+		#endif
+		if(pre_cap < SKILL_LEVEL_APPRENTICE && L.get_skill_level(skill) >= pre_cap)
+			var/skillname = pre_skillref.name ? pre_skillref.name : "ERROR"
+			var/captimer = LAZYACCESS(L.mob_timers, "skillcap_[skillname]")
+			if(!captimer || world.time > (captimer + SKILLCAP_NOTIF_COOLDOWN))
+				L.mob_timers["skillcap_[skillname]"] = world.time
+				to_chat(L, span_warning("I can't learn anything more about [skillname]."))
+				if(show_xp)
+					L.balloon_alert(L, "<font color = '#bb2b2b'>Skill cap!</font>")
+			return
 		var/org_lvl = L.get_skill_level(skill)
 		L.adjust_experience(skill, amt)
+		// Clamp level to cap if XP pushed us past it (e.g. cap at Novice, XP jumped us to Apprentice)
+		if(pre_cap < SKILL_LEVEL_APPRENTICE && L.get_skill_level(skill) > pre_cap)
+			L.adjust_skillrank_down_to(skill, pre_cap, TRUE)
 		var/new_lvl = L.get_skill_level(skill)
 		var/capped_post_check = enough_sleep_xp_to_advance(skill, 2)
 		if(COOLDOWN_FINISHED(src, xp_show))
@@ -100,6 +127,16 @@
 	if(trait_capped_level && enough_sleep_xp_to_advance(skill, trait_capped_level - mind.current.get_skill_level(skill)))
 		amt = 0
 
+		// Notifying you on a cooldown if you actually hit the cap
+		var/skillname = skillref.name ? skillref.name : "ERROR"
+		var/captimer = LAZYACCESS(L.mob_timers, "skillcap_[skillname]")
+
+		if(!captimer || world.time > (captimer + SKILLCAP_NOTIF_COOLDOWN))
+			L.mob_timers["skillcap_[skillname]"] = world.time
+			to_chat(L, span_warning("I can't learn anything more about [skillname]."))
+			if(show_xp)
+				L.balloon_alert(L, "<font color = '#bb2b2b'>Skill cap!</font>")
+
 	var/capped_pre = enough_sleep_xp_to_advance(skill, 2)
 	var/can_advance_pre = enough_sleep_xp_to_advance(skill, 1)
 
@@ -111,8 +148,8 @@
 		show_xp = FALSE
 	if(!can_advance_pre && can_advance_post && !silent)
 		to_chat(mind.current, span_nicegreen(pick(list(
-			"I'm getting a better grasp at [lowertext(skillref.name)]...",
-			"With some rest, I feel like I can get better at [lowertext(skillref.name)]...",
+			"I'm getting a better grasp at [LOWER_TEXT(skillref.name)]...",
+			"With some rest, I feel like I can get better at [LOWER_TEXT(skillref.name)]...",
 			"[skillref.name] starts making more sense to me...",
 		))))
 		if(!COOLDOWN_FINISHED(src, level_up))
@@ -123,7 +160,7 @@
 		show_xp = FALSE
 	if(!capped_pre && capped_post && !silent)
 		to_chat(mind.current, span_nicegreen(pick(list(
-			"My [lowertext(skillref.name)] can no longer improve without some rest and meditation...",
+			"My [LOWER_TEXT(skillref.name)] can no longer improve without some rest and meditation...",
 		))))
 		if(!COOLDOWN_FINISHED(src, level_up))
 			if((L.client?.prefs.combat_toggles & XP_TEXT))
@@ -216,10 +253,21 @@
 
 /datum/sleep_adv/proc/process_sleep()
 	if(is_considered_sleeping())
+		woke_up = FALSE // Reset flag while sleeping so on_wake can fire on next transition
 		return
 	if(mind.current.eyesclosed)
 		return
+	on_wake()
 	close_ui()
+
+/// Called when the player wakes up, whether voluntarily (clicking continue) or involuntarily (being woken).
+/// Guarded by woke_up flag to ensure it only fires once per sleep session.
+/datum/sleep_adv/proc/on_wake()
+	if(woke_up)
+		return
+	woke_up = TRUE
+	if(mind.aspect_resets_used > 0)
+		mind.aspect_resets_used = 0
 
 /datum/sleep_adv/proc/is_considered_sleeping()
 	if(!mind.current)
@@ -255,6 +303,9 @@
 		return
 	if(!enough_sleep_xp_to_advance(skill_type, 1))
 		return
+	var/datum/skill/bought_skill = GetSkillRef(skill_type)
+	if(bought_skill && !bought_skill.learnable_in_sleep)
+		return
 	if(HAS_TRAIT(mind.current, TRAIT_CURSE_MALUM))
 		to_chat(mind.current, span_warning("My dreams turn to nitemares."))
 		return
@@ -278,6 +329,8 @@
 	for(var/skill_type in SSskills.all_skills)
 		var/datum/skill/skill = GetSkillRef(skill_type)
 		if(!skill.randomable_dream_xp)
+			continue
+		if(!skill.learnable_in_sleep)
 			continue
 		if(enough_sleep_xp_to_advance(skill_type, 1))
 			continue
@@ -305,7 +358,7 @@
 			skill_string += " and "
 		else if(i != 1)
 			skill_string += ", "
-		skill_string += lowertext(skill_name)
+		skill_string += LOWER_TEXT(skill_name)
 	to_chat(mind.current, span_notice("I feel inspired about [skill_string]..."))
 
 
@@ -313,22 +366,13 @@
 	if(!can_buy_special())
 		return
 	// Apply special here
-	 //TODO SLEEP ADV SPECIALS
+		//TODO SLEEP ADV SPECIALS
 	sleep_adv_points -= get_special_cost()
 
 /datum/sleep_adv/proc/finish()
 	if(!mind.current)
 		return
-	if(mind.has_changed_spell)
-		mind.has_changed_spell = FALSE
-		to_chat(mind.current, span_smallnotice("I feel like I can change my spells again."))
-	if(mind.has_rituos)
-		mind.has_rituos = FALSE
-		to_chat(mind.current, span_smallnotice("The toil of invoking Her Lesser Work has fled my feeble form. I can continue my transfiguration..."))
-	if (mind.rituos_spell)
-		to_chat(mind.current, span_warning("My glimpse of [mind.rituos_spell.name] flees my slumbering mind..."))
-		mind.RemoveSpell(mind.rituos_spell)
-		mind.rituos_spell = null
+	on_wake()
 	to_chat(mind.current, span_notice("...and that's all I dreamt of."))
 	if(HAS_TRAIT(mind.current, TRAIT_STUDENT))
 		REMOVE_TRAIT(mind.current, TRAIT_STUDENT, TRAIT_GENERIC)
@@ -336,6 +380,9 @@
 	if(HAS_TRAIT(mind.current, TRAIT_EXPLOSIVE_SUPPLY))
 		mind.has_bomb = TRUE
 		to_chat(mind.current, span_smallnotice("I need to check on HERMES. I think a new package has arrived."))
+	if(HAS_TRAIT(mind.current, TRAIT_DRUG_SUPPLY))
+		mind.has_drug_delivery = TRUE
+		to_chat(mind.current, span_smallnotice("The Guild left something for me. I should check HERMES for my delivery."))
 	close_ui()
 
 /datum/sleep_adv/Topic(href, list/href_list)

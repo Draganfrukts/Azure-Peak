@@ -1,4 +1,6 @@
 /mob/living/simple_animal/hostile/retaliate/rogue/mirespider
+	anatomy_type = /datum/anatomy/spider/mirespider
+	attack_aim = MOB_AIM_GROUND
 	icon = 'icons/mob/mirespider_small.dmi'
 	desc = "Said to have originated from the decapitated heads of fallen legionnaires from eons past, grown legs and a voracious appetite, mire crawlers are common pests in many a wetland. Occasionally hunted for their silk."
 	name = "mire crawler"
@@ -13,7 +15,9 @@
 	see_in_dark = 10
 	move_to_delay = 3
 
-	faction = list("zombie", "spiders")
+	faction = list(FACTION_ZOMBIE, FACTION_SPIDERS)
+	threat_point = THREAT_TRASH
+	ambush_faction = "mirespiders"
 	attack_sound = list('sound/vo/mobs/spider/attack (1).ogg','sound/vo/mobs/spider/attack (2).ogg','sound/vo/mobs/spider/attack (3).ogg','sound/vo/mobs/spider/attack (4).ogg')
 
 	base_intents = list(/datum/intent/simple/bite/mirespider)
@@ -25,6 +29,7 @@
 	perfect_butcher_results = list(/obj/item/reagent_containers/food/snacks/rogue/meat/spider = 1,
 						/obj/item/natural/hide = 1,
 						/obj/item/natural/silk = 2,
+						/obj/item/reagent_containers/food/snacks/rogue/honey/spider = 1,
 						/obj/item/alch/viscera = 1)
 	head_butcher = /obj/item/natural/head/mirespider
 
@@ -43,18 +48,19 @@
 	STASTR = 7
 	STASPD = 13
 	footstep_type = FOOTSTEP_MOB_BAREFOOT
-	defprob = 40
 	retreat_health = 0
 	food = 0
 
 	AIStatus = AI_OFF
 	can_have_ai = FALSE
 	ai_controller = /datum/ai_controller/mirespider
+	move_base_delay = MOVEMENT_DELAY_SPD_17
 
-/mob/living/simple_animal/hostile/retaliate/rogue/mirespider/Initialize()
+/mob/living/simple_animal/hostile/retaliate/rogue/mirespider/Initialize(mapload)
 	. = ..()
-	update_icon()
+	AddComponent(/datum/component/ai_aggro_system)
 	AddElement(/datum/element/ai_retaliate)
+	update_icon()
 	ADD_TRAIT(src, TRAIT_NOPAINSTUN, TRAIT_GENERIC)
 	ADD_TRAIT(src, TRAIT_KNEESTINGER_IMMUNITY, INNATE_TRAIT)
 
@@ -67,7 +73,7 @@
 		lurker = L
 		break
 	}
-	
+
 	if(lurker && ai_controller)
 		ai_controller.set_blackboard_key(BB_FOLLOW_TARGET, lurker)
 
@@ -101,71 +107,36 @@
 		Retaliate()
 		GiveTarget(pulledby)
 
-
-/mob/living/simple_animal/hostile/retaliate/rogue/mirespider/simple_limb_hit(zone)
-	if(!zone)
-		return ""
-	switch(zone)
-		if(BODY_ZONE_PRECISE_R_EYE)
-			return "head"
-		if(BODY_ZONE_PRECISE_L_EYE)
-			return "head"
-		if(BODY_ZONE_PRECISE_NOSE)
-			return "nose"
-		if(BODY_ZONE_PRECISE_MOUTH)
-			return "mouth"
-		if(BODY_ZONE_PRECISE_SKULL)
-			return "head"
-		if(BODY_ZONE_PRECISE_EARS)
-			return "head"
-		if(BODY_ZONE_PRECISE_NECK)
-			return "neck"
-		if(BODY_ZONE_PRECISE_L_HAND)
-			return "foreleg"
-		if(BODY_ZONE_PRECISE_R_HAND)
-			return "foreleg"
-		if(BODY_ZONE_PRECISE_L_FOOT)
-			return "leg"
-		if(BODY_ZONE_PRECISE_R_FOOT)
-			return "leg"
-		if(BODY_ZONE_PRECISE_STOMACH)
-			return "stomach"
-		if(BODY_ZONE_PRECISE_GROIN)
-			return "tail"
-		if(BODY_ZONE_HEAD)
-			return "head"
-		if(BODY_ZONE_R_LEG)
-			return "leg"
-		if(BODY_ZONE_L_LEG)
-			return "leg"
-		if(BODY_ZONE_R_ARM)
-			return "foreleg"
-		if(BODY_ZONE_L_ARM)
-			return "foreleg"
-	return ..()
-
 /mob/living/simple_animal/hostile/rogue/mirespider_lurker
-	icon = 'icons/mob/mirespider_big.dmi'
+	anatomy_type = /datum/anatomy/spider/spitter
+	attack_aim = MOB_AIM_HIGH // BIG spidah with tall sprite
+	icon = 'icons/mob/mirespider_new.dmi'
 	desc = "An unusually large and dangerous mire crawler, these lumbering creatures tend to find smaller specimens gravitating to them for safety - or perhaps simply to hunt more efficiently."
 	name = "mire lurker"
 	icon_state = "lurker"
 	icon_living = "lurker"
 	icon_dead = "lurker_dead"
+	response_help_continuous = "pets"
+	response_help_simple = "pet"
 
-	faction = list("zombie", "spiders")
+	faction = list(FACTION_ZOMBIE, FACTION_SPIDERS)
+	threat_point = THREAT_ELITE
+	ambush_faction = "mirespiders"
 	attack_sound = list('sound/vo/mobs/spider/attack (1).ogg','sound/vo/mobs/spider/attack (2).ogg','sound/vo/mobs/spider/attack (3).ogg','sound/vo/mobs/spider/attack (4).ogg')
 
 	base_intents = list(/datum/intent/simple/bite/mirespider_lurker)
 	botched_butcher_results = list(/obj/item/reagent_containers/food/snacks/rogue/meat/spider = 2,
 						/obj/item/natural/hide = 2,
-						/obj/item/natural/silk = 1, 
+						/obj/item/natural/silk = 1,
 						/obj/item/alch/viscera = 1)
 	butcher_results = list(/obj/item/reagent_containers/food/snacks/rogue/meat/spider = 4,
 						/obj/item/natural/hide = 3,
 						/obj/item/natural/silk = 3,
+						/obj/item/reagent_containers/food/snacks/rogue/honey/spider = 1,
 						/obj/item/alch/viscera = 4)
 	perfect_butcher_results = list(/obj/item/reagent_containers/food/snacks/rogue/meat/spider = 4,
 						/obj/item/natural/hide = 4,
+						/obj/item/reagent_containers/food/snacks/rogue/honey/spider = 2,
 						/obj/item/natural/silk = 5, // You killed the mire lurker. You get all the figgy pudding . . .
 						/obj/item/alch/viscera = 4)
 	head_butcher = /obj/item/natural/head/mirelurker
@@ -185,6 +156,7 @@
 	AIStatus = AI_OFF
 	can_have_ai = FALSE
 	ai_controller = /datum/ai_controller/mirespider_lurker
+	move_base_delay = MOVEMENT_DELAY_SPD_17
 	projectiletype = /obj/projectile/bullet/spider
 
 	ranged = 1
@@ -210,24 +182,28 @@
 	projectiletype = /obj/projectile/bullet/spider_shroom
 	botched_butcher_results = list(/obj/item/reagent_containers/food/snacks/rogue/meat/spider = 2,
 						/obj/item/natural/hide = 2,
-						/obj/item/natural/silk = 1, 
+						/obj/item/natural/silk = 1,
 						/obj/item/reagent_containers/powder/ozium = 1,
 						/obj/item/alch/viscera = 1)
 	butcher_results = list(/obj/item/reagent_containers/food/snacks/rogue/meat/spider = 4,
 						/obj/item/natural/hide = 3,
 						/obj/item/natural/silk = 3,
 						/obj/item/reagent_containers/powder/ozium = 2,
+						/obj/item/reagent_containers/food/snacks/rogue/honey/spider = 1,
 						/obj/item/alch/viscera = 4)
 	perfect_butcher_results = list(/obj/item/reagent_containers/food/snacks/rogue/meat/spider = 4,
 						/obj/item/natural/hide = 4,
 						/obj/item/natural/silk = 5, // You killed the mire lurker. You get all the figgy pudding . . .
 						/obj/item/reagent_containers/powder/ozium = 2,
 						/obj/item/reagent_containers/powder/herozium = 1,
+						/obj/item/reagent_containers/food/snacks/rogue/honey/spider = 1,
 						/obj/item/alch/viscera = 4)
 	head_butcher = /obj/item/natural/head/mirelurker
 
-/mob/living/simple_animal/hostile/rogue/mirespider_lurker/Initialize()
+/mob/living/simple_animal/hostile/rogue/mirespider_lurker/Initialize(mapload)
 	. = ..()
+	AddComponent(/datum/component/ai_aggro_system)
+	AddElement(/datum/element/ai_retaliate)
 	ADD_TRAIT(src, TRAIT_NOPAINSTUN, TRAIT_GENERIC)
 	ADD_TRAIT(src, TRAIT_KNEESTINGER_IMMUNITY, INNATE_TRAIT)
 	// I'll replace this with something better later. Stopgap for now to make killing them more than just a nuisance.
@@ -260,6 +236,8 @@
 	followers.Cut()
 
 /mob/living/simple_animal/hostile/rogue/mirespider_paralytic
+	anatomy_type = /datum/anatomy/spider/mirespider
+	attack_aim = MOB_AIM_HIGH // BIG spidah with tall sprite
 	icon = 'icons/mob/mirespider_small.dmi'
 	name = "aragn"
 	desc = "A gigantic species of spider accompanied always by a strong sulphuric stench. Its fangs carry \
@@ -268,22 +246,26 @@
 	icon_living = "aragn"
 	icon_dead = "aragn_dead"
 
-	faction = list("zombie", "spiders")
+	faction = list(FACTION_ZOMBIE, FACTION_SPIDERS)
+	threat_point = THREAT_ELITE
+	ambush_faction = "mirespiders"
 	attack_sound = list('sound/vo/mobs/spider/attack (1).ogg','sound/vo/mobs/spider/attack (2).ogg','sound/vo/mobs/spider/attack (3).ogg','sound/vo/mobs/spider/attack (4).ogg')
 
 	base_intents = list(/datum/intent/simple/bite/mirespider_paralytic)
 	botched_butcher_results = list(/obj/item/reagent_containers/food/snacks/rogue/meat/spider = 1,
-						/obj/item/natural/silk = 1, 
+						/obj/item/natural/silk = 1,
 						/obj/item/alch/viscera = 1)
 	butcher_results = list(/obj/item/reagent_containers/food/snacks/rogue/meat/spider = 2,
 						/obj/item/natural/hide = 1,
 						/obj/item/natural/silk = 1,
 						/obj/item/alch/viscera = 1,
+						/obj/item/reagent_containers/food/snacks/rogue/honey/spider = 1,
 						/obj/item/reagent_containers/spidervenom_inert = 1)
 	perfect_butcher_results = list(/obj/item/reagent_containers/food/snacks/rogue/meat/spider = 2,
 						/obj/item/natural/hide = 1,
 						/obj/item/natural/silk = 1,
 						/obj/item/alch/viscera = 1,
+						/obj/item/reagent_containers/food/snacks/rogue/honey/spider = 1,
 						/obj/item/reagent_containers/spidervenom_inert = 2)
 	head_butcher = /obj/item/natural/head/mirespider_paralytic
 
@@ -300,9 +282,15 @@
 	AIStatus = AI_OFF
 	can_have_ai = FALSE
 	ai_controller = /datum/ai_controller/mirespider_paralytic
+	move_base_delay = MOVEMENT_DELAY_SPD_17
 
 /datum/intent/simple/bite/mirespider_paralytic
 	clickcd = ARAGN_ATTACK_SPEED
+
+/mob/living/simple_animal/hostile/rogue/mirespider_paralytic/Initialize(mapload)
+	. = ..()
+	AddComponent(/datum/component/ai_aggro_system)
+	AddElement(/datum/element/ai_retaliate)
 
 /mob/living/simple_animal/hostile/rogue/mirespider_paralytic/AttackingTarget()
 	. = ..()
@@ -317,7 +305,7 @@
 	desc = "YOU SHOULD NOT BE SEEING THIS, GO YELL AT KETRAI."
 	icon_state = "crawler"
 
-/obj/random/spider/Initialize()
+/obj/random/spider/Initialize(mapload)
 	. = ..()
 	spawn_random_spider_at(loc)
 	qdel(src)
@@ -329,10 +317,10 @@
 	qdel(src)
 
 /mob/living/simple_animal/hostile/retaliate/rogue/mirespider/angry
-	faction = list("mad", "zombie")
+	faction = list(FACTION_MAD, FACTION_ZOMBIE)
 
 /mob/living/simple_animal/hostile/rogue/mirespider_paralytic/angry
-	faction = list("mad", "zombie")
+	faction = list(FACTION_MAD, FACTION_ZOMBIE)
 
 /mob/living/simple_animal/hostile/rogue/mirespider_lurker/angry
-	faction = list("mad", "zombie")
+	faction = list(FACTION_MAD, FACTION_ZOMBIE)

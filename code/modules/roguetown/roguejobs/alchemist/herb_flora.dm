@@ -13,7 +13,7 @@
 	var/timerid
 	var/harvested = FALSE
 
-/obj/structure/flora/roguegrass/herb/Initialize()
+/obj/structure/flora/roguegrass/herb/Initialize(mapload)
 	. = ..()
 	GLOB.herb_locations |= src
 	loot_replenish()
@@ -44,10 +44,21 @@
 			if(B)
 				B = new B(user.loc)
 				user.put_in_hands(B)
-				if(HAS_TRAIT(user, TRAIT_WOODWALKER))
+				var/bonus_chance = 0
+				if(user.mind)
+					var/alch_level = user.get_skill_level(/datum/skill/craft/alchemy)
+					var/farm_level = user.get_skill_level(/datum/skill/labor/farming)
+					var/alch_chance = (alch_level / 6) * 100
+					var/farm_chance = (farm_level / 6) * 66
+					if(HAS_TRAIT(user, TRAIT_ALCHEMY_EXPERT) && alch_level >= SKILL_LEVEL_JOURNEYMAN)
+						alch_chance *= 2
+					bonus_chance = max(bonus_chance, alch_chance, farm_chance)
+				var/got_bonus = FALSE
+				if(prob(bonus_chance))
 					var/obj/item/C = new B.type(user.loc)
 					user.put_in_hands(C)
-				user.visible_message(span_notice("[user] finds [HAS_TRAIT(user, TRAIT_WOODWALKER) ? "two of " : ""][B] in [src]."))
+					got_bonus = TRUE
+				user.visible_message(span_notice("[user] harvests [got_bonus ? "two " : ""][B.name] from [src] bush."))
 				harvested = TRUE
 				timerid = addtimer(CALLBACK(src, PROC_REF(loot_replenish)), 5 MINUTES, flags = TIMER_STOPPABLE)
 				//add_filter("picked", 1, alpha_mask_filter(icon = icon('icons/effects/picked_overlay.dmi', "picked_overlay_[rand(1,3)]"), flags = MASK_INVERSE))
@@ -67,8 +78,10 @@
 /obj/structure/flora/roguegrass/herb/random
 	name = "random herb"
 	desc = "Haha, im in danger."
+	icon = 'icons/roguetown/helpers/spawnerhelpers.dmi'
+	icon_state = "random_herb"
 
-/obj/structure/flora/roguegrass/herb/random/Initialize()
+/obj/structure/flora/roguegrass/herb/random/Initialize(mapload)
 	var/type = pick(list(/obj/structure/flora/roguegrass/herb/atropa,
 	/obj/structure/flora/roguegrass/herb/matricaria,
 	/obj/structure/flora/roguegrass/herb/symphitum,
@@ -231,3 +244,12 @@
 	icon_state = "manabloom2"
 
 	herbtype = /obj/item/reagent_containers/food/snacks/grown/manabloom
+
+/obj/structure/flora/roguegrass/herb/fyritius
+	name = "fyritius flowers"
+	desc = "A cluster of dangerously flammable flowers. Their hazardous qualities make them useful \
+	alchemical reagents for burning away rot, decay, and diseases. Mundane, magickal, or divine."
+	icon = 'icons/roguetown/misc/crops.dmi' // im too lazy to move it or make a new sprite
+	icon_state = "fyritius2"
+
+	herbtype = /obj/item/reagent_containers/food/snacks/grown/rogue/fyritius

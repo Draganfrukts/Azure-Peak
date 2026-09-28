@@ -1,20 +1,267 @@
+/mob/living/proc/revive_check(mob/user)
+	if(!mind)
+		to_chat(user, span_warning("[src]'s mind cannot be found."))
+		return FALSE
+	if(HAS_TRAIT(src, TRAIT_DNR))
+		to_chat(user, span_warning("[src] can't be brought back."))
+		return FALSE
+	if(!key && !get_ghost(FALSE, TRUE))
+		to_chat(user, span_warning("[src]'s soul has departed."))
+		return FALSE
+	if(src.has_status_effect(/datum/status_effect/debuff/rotted_zombie))
+		to_chat(user, span_warning("[src] is rotting. They can't be brought back like this!"))
+		return FALSE
+	var/choice = tgui_alert(src, "[user] is attempting to bring you back to life. Do you wish to return?", "Resurrection", list("Accept", "Decline"), timeout = 15 SECONDS)
+	if(choice == "Accept")
+		return TRUE
+	if(choice == "Decline")
+		to_chat(user, span_warning("[src] has declined the resurrection."))
+		return FALSE
+	to_chat(user, span_warning("[src] can still be revived, but are not responding."))
+	return null
+
 /// SPELL DATUMS
 
-/obj/effect/proc_holder/spell/invoked/resurrect/matthios
-	name = "Faustian Transaction"
-	desc = "Revives the target by invoking a deal with Matthios. In exchange for their lyfe returned, they will be placed\
-	in a lasting debt to Him. Any coins within their hands will be spent paying off said debt. Blood for gold."
-	debuff_type = /datum/status_effect/debuff/debt_indicator
-	alt_required_items = list()
-	required_items = list()
-	sound = 'sound/magic/slimesquish.ogg'
-	chargedloop = /datum/looping_sound/invokelightning
-	harms_undead = FALSE
-	overlay_icon = 'icons/mob/actions/zizomiracles.dmi'
-	overlay_state = "revival"
-	action_icon_state = "revival"
-	action_icon = 'icons/mob/actions/zizomiracles.dmi'
-	required_structure = /obj/structure/fluff/psycross/zizocross
+/datum/action/cooldown/spell/matthios/anastasis
+	name = "Rekindled Exchange"
+	desc = "Uses primordial fyre to revive a target that is free of rot and decay, and reenact the Free God's First Transaction, putting them in a long-lasting debt to Him. The debt is periodically paid with their mammon."
+	fluff_desc = "The Free God once traded fire for the betterment of mortals. Now, His servants reenact that first exchange, purchasing a soul's return from death at a price to be paid later."
+	button_icon_state = "revival"
+	sound = 'sound/magic/astrata_choir.ogg'
+	glow_intensity = GLOW_INTENSITY_VERY_HIGH
+	click_to_activate = TRUE
+	cast_range = SPELL_RANGE_ADJACENT
+	self_cast_possible = FALSE
+	primary_resource_cost = SPELLCOST_MIRACLE_LEGENDARY
+	secondary_resource_cost = SPELLCOST_MIRACLE_MAJOR
+	invocation_type = INVOCATION_NONE
+	charge_required = TRUE
+	charge_time = 5 SECONDS
+	charge_sound = 'sound/magic/chargingold.ogg'
+	charge_swingdelay_type = SWINGDELAY_CANCEL
+	cooldown_time = 2 MINUTES
+	spell_flags = SPELL_PSYDON
+	spell_requirements = SPELL_REQUIRES_MIND | SPELL_REQUIRES_HUMAN | SPELL_REQUIRES_SAME_Z | SPELL_REQUIRES_NO_MOVE
+
+#define MATTHIOS_DEBT_MIN 150
+#define MATTHIOS_DEBT_MAX 250
+
+/datum/action/cooldown/spell/matthios/anastasis/cast(atom/cast_on)
+	. = ..()
+	if(!isliving(cast_on))
+		return FALSE
+	var/mob/living/carbon/human/user = owner
+	var/mob/living/carbon/human/target = cast_on
+	// Find any nearby cross.
+	var/obj/structure/fluff/psycross/found_cross
+	for(var/obj/structure/fluff/psycross/S in oview(1, target))
+		found_cross = S
+		break
+	if(!found_cross)
+		to_chat(owner, span_warning("You see no holy nor profane cross through which to work this exchange."))
+		return FALSE
+
+	// Check whether the soul can actually be revived, cos i revived someone who was pmuch departed lol oops!!
+	if(!target.revive_check(owner))
+		return FALSE
+
+	var/is_matthios = istype(found_cross, /obj/structure/fluff/psycross/matthios)
+	var/is_astrata = istype(found_cross, /obj/structure/fluff/psycross/astrata)
+
+	var/list/options = list("Charity", "Debt")
+	if(is_matthios) // matthios cross lets you trade lux instead of money as a third option
+		options += "Waiver"
+	else if(is_astrata) // astrata cross forces you to only be charitable, its harder to hold an exchange under that gaze
+		options = list("Charity")
+
+	var/choice = input(user, "Choose the transaction.", name) as anything in options
+	if(choice == "Waiver") // pay off debts with lux, any around you first, otherwise, devitalize self
+		var/obj/item/reagent_containers/lux/found_lux
+		for(var/obj/item/reagent_containers/lux/L in view(1, user))
+			found_lux = L
+			break
+		if(!found_lux)
+			for(var/obj/item/reagent_containers/lux_moss/M in view(1, user))
+				found_lux = M
+				break
+		if(found_lux)
+			qdel(found_lux)
+			to_chat(user, span_nicegreen("The Lux is consumed for this exchange, accounting no debts with Him!"))
+		else
+			if(user.has_status_effect(/datum/status_effect/debuff/devitalised))
+				to_chat(user, span_warning("Your Lux is too faint to be used as a waiver right now."))
+				return FALSE
+			user.apply_status_effect(/datum/status_effect/debuff/devitalised)
+			to_chat(user, span_userdanger("You waiver your very Lux for this exchange, accounting no debts with Him!"))
+	else
+		var/debt = rand(MATTHIOS_DEBT_MIN, MATTHIOS_DEBT_MAX)
+		if(target.patron in ALL_INHUMEN_PATRONS)
+			debt *= 0.5
+		else if(HAS_TRAIT(target, TRAIT_NOBLE) && !HAS_TRAIT(target, TRAIT_FREEMAN))
+			debt *= 3
+		debt = round(debt)
+		if(choice == "Charity") // we shoulder the L, all mammon here goes to matthios
+			user.apply_status_effect(/datum/status_effect/debuff/matthios_debt, debt, user)
+		else if(choice == "Debt") // they shoulder the L, part of the mammon goes to caster
+			target.apply_status_effect(/datum/status_effect/debuff/matthios_debt, debt, user)
+
+	// the ACTUAL revive goes here
+	target.adjustOxyLoss(-target.getOxyLoss())
+
+	if(!target.revive(full_heal = FALSE))
+		to_chat(owner, span_warning("Nothing happens."))
+		return FALSE
+
+	var/mob/living/carbon/spirit/underworld_spirit = target.get_spirit()
+	if(underworld_spirit)
+		var/mob/dead/observer/ghost = underworld_spirit.ghostize()
+		qdel(underworld_spirit)
+		ghost.mind.transfer_to(target, TRUE)
+
+	target.grab_ghost(force = TRUE)
+	target.emote("breathgasp")
+	target.Jitter(100)
+	target.update_body()
+	target.visible_message(span_astrata("[target] is revived by holy light!"), span_green("I awake from the void."))
+	target.mind.remove_antag_datum(/datum/antagonist/zombie)
+	target.remove_status_effect(/datum/status_effect/debuff/rotted_zombie)
+	target.apply_status_effect(/datum/status_effect/debuff/revived)
+
+	// any additional flavortext goes here
+	if(choice == "Waiver")
+		to_chat(user, span_nicegreen("The Lux is consumed for this exchange, accounting no debts with Him!"))
+		to_chat(target, span_nicegreen("Warm sanctity wraps around your rekindled soul. Someone else has paid your toll."))
+	else if(choice == "Charity")
+		to_chat(user, span_userdanger("You shoulder the burden of resurrection yourself. Matthios records your debt with Him."))
+		to_chat(target, span_nicegreen("Warm sanctity wraps around your rekindled soul. Someone else has paid your toll."))
+	else if(choice == "Debt")
+		to_chat(user, span_nicegreen("You leave the burden where it belongs. Matthios smiles upon your bargain."))
+		to_chat(target, span_userdanger("Your soul returns, but it feels as if your Patron demands compensation..?"))
+	if(HAS_TRAIT(target, TRAIT_IRONMAN))
+		target.apply_status_effect(/datum/status_effect/debuff/integrity_rig, 11 MINUTES)
+		target.visible_message(span_danger("[target] is looking on the verge of exploding again! Their core may need an extra whack from a hammer."))
+
+	return TRUE
+
+/atom/movable/screen/alert/status_effect/debuff/matthios_debt
+	name = "Hoarding Compulsion"
+	desc = "I need more mammon to tithe my beloved Patron, for I owe them my lyfe! I must hoard more mammon until they are satisfied..."
+	icon_state = "pom_regret"
+
+/atom/movable/screen/alert/status_effect/debuff/matthios_debt/examine_ui(mob/user)
+	var/list/inspec = list("----------------------")
+	inspec += "<br><span class='notice'><b>[name]</b></span>"
+	inspec += "<br>[desc]"
+	var/mob/living/L = user
+	if(L)
+		var/datum/status_effect/debuff/matthios_debt/D = L.has_status_effect(/datum/status_effect/debuff/matthios_debt)
+		if(D)
+			inspec += "<br><span class='boldwarning'>Need... [D.debt_remaining] more mammon...</span>"
+	inspec += "<br>----------------------"
+	to_chat(user, "[inspec.Join()]")
+
+/datum/status_effect/debuff/matthios_debt
+	id = "matthios_debt"
+	duration = 60 MINUTES
+	tick_interval = 5 SECONDS
+	effectedstats = list(STATKEY_WIL = -4, STATKEY_LCK = -2)
+	alert_type = /atom/movable/screen/alert/status_effect/debuff/matthios_debt
+	var/debt_remaining = 0
+	var/total_debt = 0
+	var/mob/living/carbon/human/debtor
+	var/mob/living/carbon/human/creditor
+
+/datum/status_effect/debuff/matthios_debt/on_creation(mob/living/carbon/human/new_owner, debt_amount, mob/living/carbon/human/source)
+	debtor = new_owner
+	creditor = source
+	debt_remaining = max(0, debt_amount)
+	total_debt = debt_remaining
+	..()
+
+/datum/status_effect/debuff/matthios_debt/on_apply()
+	. = ..()
+	if(!ishuman(owner))
+		return FALSE
+	if(debt_remaining <= 0)
+		return FALSE
+	to_chat(owner, span_userdanger("You feel a strange compulsion to hoard... I need... [debt_remaining] mammon..."))
+	return TRUE
+
+/datum/status_effect/debuff/matthios_debt/tick()
+	if(!debtor || QDELETED(debtor))
+		qdel(src)
+		return
+	if(debt_remaining <= 0)
+		qdel(src)
+		return
+	var/paid = remove_debt_mammon(debtor, debt_remaining)
+	if(paid <= 0)
+		return
+	debt_remaining = max(0, debt_remaining - paid)
+	if(creditor && !QDELETED(creditor))
+		if(creditor != debtor)
+			mint_matthios_payment(creditor, paid)
+	if(debt_remaining <= 0)
+		to_chat(debtor, span_nicegreen("The odd burden of compulsion lifts from your soul. You feel... free? It's a good feeling."))
+		qdel(src)
+
+/datum/status_effect/debuff/matthios_debt/proc/mint_matthios_payment(mob/living/carbon/human/H, amount)
+	if(!H || amount <= 0)
+		return
+	if(SStreasury.has_account(H))
+		SStreasury.mint(SStreasury.get_account(H), amount, "Meister reports an e3#rr@o#r?!")
+		return
+	for(var/obj/item/matthios_canister/firstlaw/C in H.contents)
+		if(!C || QDELETED(C))
+			continue
+		C.stored_value += amount
+		return
+	var/obj/item/matthios_canister/firstlaw/C = new()
+	C.stored_value = amount
+	H.put_in_hands(C)
+
+/proc/remove_debt_mammon(atom/A, amount) // tightest check i can muster for this
+	if(!A || amount <= 0)
+		return 0
+	var/remaining = amount
+	var/list/coins = list()
+	collect_coins_recursive(A, coins)
+	coins = sortTim(coins, /proc/cmp_coin_value_desc)
+	for(var/obj/item/roguecoin/C in coins)
+		if(remaining <= 0)
+			break
+		if(QDELETED(C))
+			continue
+		var/value_per = C.sellprice
+		if(value_per <= 0)
+			continue
+		var/quantity = C.quantity
+		if(quantity <= 0)
+			continue
+		var/stack_value = value_per * quantity
+		if(stack_value <= remaining)
+			remaining -= stack_value
+			qdel(C)
+			continue
+		var/coins_to_remove = ceil(remaining / value_per)
+		coins_to_remove = min(coins_to_remove, quantity)
+		C.set_quantity(quantity - coins_to_remove)
+		var/removed_value = coins_to_remove * value_per
+		remaining -= removed_value
+		if(C.quantity <= 0)
+			qdel(C)
+	if(remaining > 0 && ishuman(A))
+		var/mob/living/carbon/human/H = A
+		var/datum/fund/account = SStreasury.get_account(H)
+		if(account)
+			var/from_bank = min(remaining, account.balance)
+			if(from_bank > 0)
+				if(SStreasury.burn(account, from_bank, "Meister reports an e3#rr@o#r?!"))
+					remaining -= from_bank
+	return max(0, amount - remaining)
+
+#undef MATTHIOS_DEBT_MIN
+#undef MATTHIOS_DEBT_MAX
 
 /obj/effect/proc_holder/spell/invoked/resurrect/graggar
 	name = "Blood for Graggar"
@@ -25,13 +272,13 @@
 	alt_required_items = list(/obj/item/organ/heart = 1)
 	required_items = list(/obj/item/organ/heart = 1)
 	sound = 'sound/magic/slimesquish.ogg'
-	chargedloop = /datum/looping_sound/invokelightning
+	chargedloop = /datum/looping_sound/invokeascendant
 	harms_undead = FALSE
-	overlay_icon = 'icons/mob/actions/zizomiracles.dmi'
+	overlay_icon = 'icons/mob/actions/graggarmiracles.dmi'
 	overlay_state = "revival"
 	action_icon_state = "revival"
-	action_icon = 'icons/mob/actions/zizomiracles.dmi'
-	required_structure = /obj/structure/fluff/psycross/zizocross
+	action_icon = 'icons/mob/actions/graggarmiracles.dmi'
+	required_structure = /obj/structure/fluff/psycross/graggar
 
 /obj/effect/proc_holder/spell/invoked/resurrect/baotha
 	name = "Drive the Thorns Deep"
@@ -40,151 +287,31 @@
 	alt_required_items = list(/obj/item/natural/thorn = 3)
 	required_items = list(/obj/item/natural/thorn = 7)
 	sound = 'sound/magic/slimesquish.ogg'
-	chargedloop = /datum/looping_sound/invokelightning
+	chargedloop = /datum/looping_sound/invokeascendant
 	harms_undead = FALSE
-	overlay_icon = 'icons/mob/actions/zizomiracles.dmi'
+	overlay_icon = 'icons/mob/actions/baothamiracles.dmi'
 	overlay_state = "revival"
 	action_icon_state = "revival"
-	action_icon = 'icons/mob/actions/zizomiracles.dmi'
-	required_structure = /obj/structure/fluff/psycross/zizocross
+	action_icon = 'icons/mob/actions/baothamiracles.dmi'
+	required_structure = /obj/structure/fluff/psycross/baotha
 	req_items = list() // temp. baothans dont have a holy symbol. apparently one is being commed so this is just the stopgap.
 
 /obj/effect/proc_holder/spell/invoked/resurrect/zizo
-	name = "Zizoid Rebirth"
-	desc = "Revive a fallen ally by siphoning their potential. You gain their strength, whilst they gain a second chance.\
+	name = "Hollow Rebirth"
+	desc = "Revive a fallen subject while siphoning their potential and destroying some of their Lux as a toll. You gain their strength, whilst they gain a second chance.\
 	If they die, you will lose their stolen strength."
 	sound = 'sound/magic/slimesquish.ogg'
-	chargedloop = /datum/looping_sound/invokelightning
+	chargedloop = /datum/looping_sound/invokeascendant
 	harms_undead = FALSE
 	overlay_icon = 'icons/mob/actions/zizomiracles.dmi'
 	overlay_state = "revival"
 	action_icon_state = "revival"
+	recharge_time = 5 MINUTES // halved compared to others
 	action_icon = 'icons/mob/actions/zizomiracles.dmi'
-	required_items = list(/obj/item/heart_blood_vial/filled = 3)
-	alt_required_items = list(/obj/item/heart_blood_vial/filled = 1)
-	// We apply zizo's debuff differently
+	// We apply zizo's revival differently from this point onward
+	zizo = TRUE
 	debuff_type = null
 	required_structure = /obj/structure/fluff/psycross/zizocross
-
-/// - MATTHIOS - ///
-
-#define NOBLE_MULTIPLIER 2.5
-
-/datum/component/debt_collector
-	var/debt_remaining = 0
-	/// There's a couple instances where on_equip() is called twice incorrectly. I'm applying a small cooldown to prevent abuse of this...
-	var/next_payment_time = 0
-
-/datum/component/debt_collector/Initialize(start_debt = 200)
-	if(!ishuman(parent))
-		return COMPONENT_INCOMPATIBLE
-
-	var/mob/living/carbon/human/H = parent
-	if(HAS_TRAIT(H, TRAIT_NOBLE))
-		debt_remaining = start_debt * NOBLE_MULTIPLIER
-	else
-		debt_remaining = start_debt
-	RegisterSignal(parent, COMSIG_ITEM_EQUIPPED, .proc/on_equip)
-
-/datum/component/debt_collector/proc/on_equip(mob/living/carbon/human/H, obj/item/I, slot)
-	SIGNAL_HANDLER
-
-	if(slot != ITEM_SLOT_HANDS)
-		return
-
-	if(world.time < next_payment_time)
-		return
-
-	// Set the cooldown immediately to "lock" this tick
-	next_payment_time = world.time + 1
-
-	// Only interact with standard currency, so no marques or psila
-	if(istype(I, /obj/item/roguecoin/gold) || istype(I, /obj/item/roguecoin/silver) || istype(I, /obj/item/roguecoin/copper))
-		addtimer(CALLBACK(src, .proc/process_payment, H, I), 1)
-
-/datum/component/debt_collector/proc/process_payment(mob/living/carbon/human/H, obj/item/roguecoin/C)
-	var/total_real_value = C.get_real_price()
-	if(debt_remaining <= 0)
-		clear_debt(H)
-		return
-
-	if(total_real_value > debt_remaining)
-		var/refund_budget = total_real_value - debt_remaining
-		refund_budget = max(0, floor(refund_budget))
-		to_chat(H, span_warning("A golden hand claims [C] and manifest the remainder."))
-
-		qdel(C)
-		// We need a delay to stop the old coin pile from merging with the refund prematurely. Delay one tick :D
-		// I love coin code!!
-		spawn(1)
-			var/obj/structure/roguemachine/temp_ref = new /obj/structure/roguemachine()
-			temp_ref.budget2change(refund_budget, H)
-			qdel(temp_ref)
-
-		debt_remaining = 0
-		clear_debt(H)
-
-	else
-		debt_remaining -= total_real_value
-		to_chat(H, span_warning("As you grasp [C], [total_real_value] worth of debt vanishes. Remaining: [debt_remaining]."))
-		playsound(H, 'sound/foley/coins1.ogg', 50, TRUE)
-		qdel(C)
-		if(debt_remaining <= 0)
-			clear_debt(H)
-
-/datum/component/debt_collector/proc/clear_debt(mob/living/carbon/human/H)
-	to_chat(H, span_nicegreen("The weight of your debt has lifted!"))
-	H.remove_status_effect(/datum/status_effect/debuff/debt_indicator)
-	qdel(src)
-
-#undef NOBLE_MULTIPLIER
-
-/atom/movable/screen/alert/status_effect/debuff/debt_indicator
-	name = "Indentured Spirit"
-	desc = "A spiritual debt weighs heavy on your soul, sapping your vitality. Standard coins you touch are consumed to appease Matthios."
-	icon_state = "pom_regret"
-
-/atom/movable/screen/alert/status_effect/debuff/debt_indicator/examine_ui(mob/user)
-	var/list/inspec = list("----------------------")
-	inspec += "<br><span class='notice'><b>[name]</b></span>"
-	if(desc)
-		inspec += "<br>[desc]"
-
-	// Find the component to show the live debt count
-	var/datum/component/debt_collector/DC = user.GetComponent(/datum/component/debt_collector)
-	if(DC)
-		inspec += "<br><span class='boldwarning'>Current Debt: [DC.debt_remaining] mammon.</span>"
-
-	// Stat penalties logic from the base proc
-	for(var/S in attached_effect?.effectedstats)
-		if(attached_effect.effectedstats[S] > 0)
-			inspec += "<br><span class='purple'>[S]</span> \Roman [attached_effect.effectedstats[S]]"
-		else if(attached_effect.effectedstats[S] < 0)
-			var/newnum = attached_effect.effectedstats[S] * -1
-			inspec += "<br><span class='danger'>[S]</span> \Roman [newnum]"
-
-	inspec += "<br>----------------------"
-	to_chat(user, "[inspec.Join()]")
-
-/datum/status_effect/debuff/debt_indicator
-	id = "debt_indicator"
-	// You should pay off the debt!
-	duration = 45 MINUTES
-	alert_type = /atom/movable/screen/alert/status_effect/debuff/debt_indicator
-	effectedstats = list(
-		STATKEY_STR = -2,
-		STATKEY_SPD = -4,
-		STATKEY_CON = -2
-	)
-
-/datum/status_effect/debuff/debt_indicator/on_apply()
-	. = ..()
-	owner.AddComponent(/datum/component/debt_collector, 200)
-	to_chat(owner, span_userdanger("A cold, crushing weight settles over your limbs... you are indentured."))
-
-/datum/status_effect/debuff/debt_indicator/on_remove()
-	. = ..()
-	to_chat(owner, span_nicegreen("The crushing weight lifts from your soul. You are free!"))
 
 /// - GRAGGAR ///
 
@@ -214,7 +341,7 @@
 	spawn_orcs()
 
 	// Auto-delete after 15 minutes
-	addtimer(CALLBACK(src, .proc/expire), lifetime)
+	addtimer(CALLBACK(src, PROC_REF(expire)), lifetime)
 	START_PROCESSING(SSobj, src)
 
 /obj/structure/primal_rift/process()
@@ -238,7 +365,7 @@
 /obj/structure/primal_rift/proc/spawn_orcs()
 	var/turf/T = get_turf(src)
 	for(var/i in 1 to max_orcs)
-		var/mob/living/carbon/human/species/orc/npc/O = new(T) 
+		var/mob/living/carbon/human/species/orc/npc/O = new(T)
 		O.visible_message(span_danger("[O] step out of the rift, axes drawn!"))
 		O.AddComponent(/datum/component/rift_bound, src)
 		orc_count++
@@ -251,7 +378,7 @@
 		return COMPONENT_INCOMPATIBLE
 
 	linked_portal = rift
-	RegisterSignal(parent, COMSIG_LIVING_DEATH, .proc/on_death)
+	RegisterSignal(parent, COMSIG_LIVING_DEATH, PROC_REF(on_death))
 
 /datum/component/rift_bound/proc/on_death()
 	SIGNAL_HANDLER
@@ -402,7 +529,7 @@
 	// We apply withdrawals immediately
 	last_sniff_time = world.time - (5 MINUTES)
 	current_cooldown = world.time + message_cooldown
-	RegisterSignal(owner, COMSIG_DRUG_SNIFFED, .proc/on_sniff)
+	RegisterSignal(owner, COMSIG_DRUG_SNIFFED, PROC_REF(on_sniff))
 
 /datum/status_effect/debuff/baotha_addiction/proc/on_sniff()
 	SIGNAL_HANDLER
@@ -484,19 +611,104 @@
 	// check if parent returns TRUE
 	if(.)
 		var/mob/living/carbon/human/target = targets[1]
+
 		user.apply_status_effect(/datum/status_effect/buff/zizo_tithe, tithe_distribution, target)
 		target.apply_status_effect(/datum/status_effect/debuff/zizo_drain, tithe_distribution)
 
-		to_chat(user, span_nicegreen("The victim's essence flows into you as they gasp for air."))
-		to_chat(target, span_userdanger("You are alive, but Zizo has taken his tithe from your soul."))
+		var/found_zizo_cross = FALSE
+
+		for(var/atom/A in oview(1, target))
+			if(istype(A, /obj/structure/fluff/psycross/zizocross))
+				found_zizo_cross = TRUE
+				break
+
+			if(istype(A, /turf))
+				var/turf/T = A
+				for(var/obj/O in T.contents)
+					if(istype(O, /obj/structure/fluff/psycross/zizocross))
+						found_zizo_cross = TRUE
+						break
+
+			if(found_zizo_cross)
+				break
+
+		// A proper Zizo cross stabilizes the rite and prevents undeath complications
+		if(found_zizo_cross)
+			to_chat(target, span_warning("Your stolen Lux writhes violently, but the unholy cross steadies your Lux before undeath can fully take hold."))
+		else
+			if(!target.has_status_effect(/datum/status_effect/debuff/zizo_temp_undeath) || !HAS_TRAIT(target, TRAIT_SILVER_BLESSED))
+				target.apply_status_effect(/datum/status_effect/debuff/zizo_temp_undeath)
+				to_chat(target, span_userdanger("You feel your rekindled Lux torn from within, leaving you hollowed as undeath threatens to gnaw at your fading soul."))
+			else
+				playsound(user.loc, 'sound/misc/smelter_sound.ogg', 50, FALSE)
+				to_chat(target, span_userdanger("Your fading Lux collapses inward far too soon. Flesh sloughs from bone as undeath tightens its grip upon you."))
+				target.apply_status_effect(/datum/status_effect/debuff/devitalised)
+
+		to_chat(user, span_nicegreen("You wrench the victim's rekindled Lux into yourself, leaving them hollowed and starving for life."))
+
+/atom/movable/screen/alert/status_effect/debuff/zizo_temp_undeath
+	name = "Embrace of Zizo"
+	desc = "You feel your very essence struggling against the hold of Undeath... Your mind is beseethed with dark, evil thoughts, and all you feel is hunger..."
+
+/datum/status_effect/debuff/zizo_temp_undeath
+	id = "zizo_temp_undeath"
+	duration = 15 MINUTES
+	tick_interval = 1 MINUTES // every minute, starve, if you manage to fill your belly, duration is reduced by 5 minutes
+	alert_type = /atom/movable/screen/alert/status_effect/debuff/zizo_temp_undeath
+
+/datum/status_effect/debuff/zizo_temp_undeath/on_creation()
+	. = ..()
+	to_chat(owner, span_warning("Hungry... Hungry... HUNGRY. I AM STARVING. I NEED TO EAT. I NEED TO EAT!"))
+	ADD_TRAIT(owner, TRAIT_ROTMAN, "zizo_temp_undeath")
+	ADD_TRAIT(owner, TRAIT_NASTY_EATER, "zizo_temp_undeath")
+	ADD_TRAIT(owner, TRAIT_STRONGBITE, "zizo_temp_undeath")
+	to_chat(owner, span_necrosis("My limbs... I am rotten under my skin. Anything can remove them-- Anything can reattach them...?"))
+	ADD_TRAIT(owner, TRAIT_EASYDISMEMBER, "zizo_temp_undeath")
+	ADD_TRAIT(owner, TRAIT_LIMBATTACHMENT, "zizo_temp_undeath")
+	ADD_TRAIT(owner, TRAIT_SILVER_WEAK, "zizo_temp_undeath")
+	ADD_TRAIT(owner, TRAIT_DEATHLESS, "zizo_temp_undeath")
+	ADD_TRAIT(owner, TRAIT_ZOMBIE_IMMUNE, "zizo_temp_undeath")
+	to_chat(owner, span_boldred("THIS WORLD IS WRONG. EVERYTHING IS WRONG. WE LIVE IN A CORPSE. THE DECAYING CORPSE OF A DEAD GOD!"))
+	ADD_TRAIT(owner, TRAIT_PSYCHOSIS, "zizo_temp_undeath")
+	ADD_TRAIT(owner, TRAIT_NOMOOD, "zizo_temp_undeath")
+
+/datum/status_effect/debuff/zizo_temp_undeath/tick()
+	. = ..()
+	var/mob/living/carbon/human/H = owner
+	if(!istype(H))
+		return
+	if(H.stat == DEAD)
+		return
+	var/very_hongry = pick("HUNGRY...", "Hungry...", "Hungry! Hungry!",	"I NEED TO EAT!", "I'm STARVING!!", "Need to eat... anything... I'll eat anything. I'm so hungry.")
+	if(H.nutrition >= NUTRITION_LEVEL_FED)
+		duration -= 5 MINUTES
+		to_chat(owner, span_warning("You feel some of your Lux react to being full... your reserves drain rapidly and your stomach quickly empties."))
+		to_chat(owner, span_green("I am recovering faster..."))
+
+	to_chat(owner, span_warning(very_hongry))
+	H.nutrition = 0
+
+/datum/status_effect/debuff/zizo_temp_undeath/on_remove()
+	. = ..()
+	to_chat(owner, span_boldgreen("...You feel the corroded part of your Lux finally recover, giving you some well-deserved clarity back. What the hell was that?"))
+	REMOVE_TRAIT(owner, TRAIT_ROTMAN, "zizo_temp_undeath")
+	REMOVE_TRAIT(owner, TRAIT_NASTY_EATER, "zizo_temp_undeath")
+	REMOVE_TRAIT(owner, TRAIT_STRONGBITE, "zizo_temp_undeath")
+	REMOVE_TRAIT(owner, TRAIT_EASYDISMEMBER, "zizo_temp_undeath")
+	REMOVE_TRAIT(owner, TRAIT_LIMBATTACHMENT, "zizo_temp_undeath")
+	REMOVE_TRAIT(owner, TRAIT_SILVER_WEAK, "zizo_temp_undeath")
+	REMOVE_TRAIT(owner, TRAIT_DEATHLESS, "zizo_temp_undeath")
+	REMOVE_TRAIT(owner, TRAIT_ZOMBIE_IMMUNE, "zizo_temp_undeath")
+	REMOVE_TRAIT(owner, TRAIT_PSYCHOSIS, "zizo_temp_undeath")
+	REMOVE_TRAIT(owner, TRAIT_NOMOOD, "zizo_temp_undeath")
 
 /atom/movable/screen/alert/status_effect/debuff/zizo_drain
-	name = "Zizo's drain"
-	desc = "Zizo has deemed my return worthy, but at a dear expense."
+	name = "Syphoned Lux"
+	desc = "Half of your very rekindled Lux has been syphoned away and the leftovers profaned..."
 
 /atom/movable/screen/alert/status_effect/buff/zizo_tithe
-	name = "Zizo's tithe"
-	desc = "Zizo has boosted my capabilities with their vitality."
+	name = "Lux Syphon"
+	desc = "You are invigorated with the rekindled Lux of another. A thousand more, and perhaps you will reach Her first step to Ascension."
 
 // THE BOON - Caster
 /datum/status_effect/buff/zizo_tithe
@@ -505,22 +717,30 @@
 	alert_type = /atom/movable/screen/alert/status_effect/buff/zizo_tithe
 	var/mob/living/carbon/human/victim
 
-/datum/status_effect/buff/zizo_tithe/on_creation(mob/living/new_owner, list/distribution, var/mob/living/carbon/human/H)
+/datum/status_effect/buff/zizo_tithe/on_creation(mob/living/new_owner, list/distribution, mob/living/carbon/human/H)
 	for(var/S in distribution)
 		effectedstats[S] = distribution[S]
 	victim = H
-	RegisterSignal(victim, COMSIG_LIVING_DEATH, .proc/cancel_early)
+	RegisterSignal(victim, COMSIG_LIVING_DEATH, PROC_REF(cancel_early))
 	return ..()
 
 /datum/status_effect/buff/zizo_tithe/on_remove()
-	UnregisterSignal(victim, COMSIG_LIVING_DEATH)
+	if(victim)
+		UnregisterSignal(victim, COMSIG_LIVING_DEATH)
 	. = ..()
 
 /datum/status_effect/buff/zizo_tithe/proc/cancel_early()
 	SIGNAL_HANDLER
 
-	var/mob/living/carbon/human/H = owner
-	H.remove_status_effect(/datum/status_effect/buff/zizo_tithe)
+	var/mob/living/carbon/human/caster = owner
+	var/mob/living/carbon/human/target = victim
+
+	if(caster)
+		caster.remove_status_effect(/datum/status_effect/buff/zizo_tithe)
+
+	if(target)
+		target.remove_status_effect(/datum/status_effect/debuff/zizo_drain)
+		target.remove_status_effect(/datum/status_effect/debuff/zizo_temp_undeath)
 
 // THE DRAIN - Victim
 /datum/status_effect/debuff/zizo_drain

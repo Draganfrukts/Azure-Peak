@@ -5,24 +5,26 @@
 	antimagic_allowed = TRUE
 	invocation_type = "shout"
 	recharge_time = 600
+	range = 7
 
 /obj/effect/proc_holder/spell/self/telljoke/cast(list/targets,mob/user = usr)
 	. = ..()
 	var/joker = input(user, "Say something funny!", "Comedia")
 	if(!joker)
 		return FALSE
-	user.say(joker, forced = "spell")
+	user.say(joker, forced = "spell", language = /datum/language/common)
 	sleep(20)
 	playsound(get_turf(user), 'sound/magic/comedy.ogg', 100)
-	for(var/mob/living/carbon/CA in view(7, get_turf(user)))
+	for(var/mob/living/carbon/CA in view(range, get_turf(user)))
 		if(CA == user)
 			continue
 		if(CA.cmode)
 			continue
+		if(HAS_TRAIT(CA, TRAIT_NOMOOD))
+			continue
 		if(CA.get_stress_amount() <= 0)
 			CA.add_stress(/datum/stressevent/joke)
 			CA.emote(pick("laugh","chuckle","giggle"), forced = TRUE)
-			
 			// Apply Xylix buff to those with the trait who hear the laughter
 			// Only apply if the hearer is not the one laughing and not the spell caster
 			for(var/mob/living/carbon/human/H in hearers(7, CA))
@@ -40,16 +42,17 @@
 	antimagic_allowed = TRUE
 	invocation_type = "shout"
 	recharge_time = 600
+	range = 7
 
 /obj/effect/proc_holder/spell/self/telltragedy/cast(list/targets,mob/user = usr)
 	. = ..()
 	var/joker = input(user, "Say something sad!", "Tragedia")
 	if(!joker)
 		return FALSE
-	user.say(joker, forced = "spell")
+	user.say(joker, forced = "spell", language = /datum/language/common)
 	sleep(20)
 	playsound(get_turf(user), 'sound/magic/tragedy.ogg', 100)
-	for(var/mob/living/carbon/CA in view(7, get_turf(user)))
+	for(var/mob/living/carbon/CA in view(range, get_turf(user)))
 		if(CA == user)
 			continue
 		if(CA.cmode)

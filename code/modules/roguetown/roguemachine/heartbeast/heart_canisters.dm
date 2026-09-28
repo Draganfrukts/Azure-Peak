@@ -4,7 +4,7 @@
 	icon = 'icons/obj/structures/heart_items.dmi'
 	icon_state = "canister_empty"
 	w_class = WEIGHT_CLASS_TINY
-	
+
 	var/obj/structure/stone_rack/parent_rack
 	var/filled = FALSE
 	var/current_color = "#ffffff"
@@ -54,14 +54,13 @@
 
 /obj/item/heart_canister/proc/show_aspect_menu(mob/user)
 	var/list/categories = list(
-		"Archetypes" = "Choose from available archetypes",
-		"Traits" = "Choose from available traits", 
-		"Quirks" = "Choose from available quirks",
-		"Cancel" = "Do not attune"
+		"Archetypes",
+		"Traits",
+		"Quirks"
 	)
 
-	var/category_choice = input(user, "Select aspect category to attune:", "Canister Attunement") as null|anything in categories
-	if(!category_choice || category_choice == "Cancel")
+	var/category_choice = tgui_input_list(user, "Select aspect category to attune:", "Canister Attunement", categories)
+	if(!category_choice)
 		return
 
 	show_aspects_in_category(category_choice, user)
@@ -94,12 +93,12 @@
 		var/datum/A = aspects[datum_type]
 
 		var/datum/flesh_archetype/archetype
-		var/datum/flesh_trait/trait  
+		var/datum/flesh_trait/trait
 		var/datum/flesh_quirk/quirk
-		
+
 		var/aspect_name
 		var/required_item_type
-		
+
 		if(istype(A, /datum/flesh_archetype))
 			archetype = A
 			aspect_name = archetype.name
@@ -125,14 +124,13 @@
 
 	// Sort alphabetically
 	selection_options = sortList(selection_options)
-	selection_options["Cancel"] = "CANCEL"
 
-	var/choice = input(user, "Select a [singular_name] to attune", "[category_name] Selection") as null|anything in selection_options
-	if(!choice || choice == "Cancel")
+	var/choice = tgui_input_list(user, "Select a [singular_name] to attune", "[category_name] Selection", selection_options)
+	if(!choice)
 		return
 
 	var/datum/selected_aspect = selection_options[choice]
-	if(selected_aspect && selected_aspect != "CANCEL")
+	if(selected_aspect)
 		attune_to_aspect(user, selected_aspect)
 
 /obj/item/heart_canister/update_icon()
@@ -290,6 +288,15 @@
 	desc = "A canister full of viscous blood, despite being closed it somehow still exudes a putrid smell. Highly valued, due to their ability to purify lux."
 	icon_state = "blood_canister_filled"
 
+/obj/item/heart_blood_canister/get_mechanics_examine(mob/user)
+	. = ..()
+	. += span_info("Cures black rot partially. Cures more rot than a vial.")
+	. += span_info("Black rot can be cured surgically with a knife, by touching calyxes, or by drinking heartblood.")
+	. += span_info("Can be applied to self or others to restore some energy.")
+	. += span_info("More effective when low on energy.")
+	. += span_info("Restores the same energy as a vial, but twice as fast.")
+	. += span_info("Takes longer to apply than vials, but is more potent.")
+
 /obj/item/heart_blood_vial
 	name = "Heartblood vial"
 	desc = "An empty vial yearning to be filled with chimeric heartbeast blood."
@@ -302,6 +309,15 @@
 	name = "Full heartblood vial"
 	desc = "A vial full of viscous blood, despite being closed it somehow still exudes a putrid smell. Highly valued, due to their ability to purify lux."
 	icon_state = "blood_vial_filled"
+
+/obj/item/heart_blood_vial/get_mechanics_examine(mob/user)
+	. = ..()
+	. += span_info("Cures black rot partially. Cures less rot than a canister.")
+	. += span_info("Black rot can be cured surgically with a knife, by touching calyxes, or by drinking heartblood.")
+	. += span_info("Can be applied to self or others to restore some energy.")
+	. += span_info("More effective when low on energy.")
+	. += span_info("Restores the same energy as a canister, but half as fast.")
+	. += span_info("Takes less time to apply than canisters, but is less potent.")
 
 /obj/item/heart_canister/ui_interact(mob/user, datum/tgui/ui)
 	if(!isliving(user))
@@ -345,7 +361,7 @@
 				if(concept_datum)
 					UNTYPED_LIST_ADD(concept_names, concept_datum.name)
 				else
-					UNTYPED_LIST_ADD(concept_names, "[concept_path]") 
+					UNTYPED_LIST_ADD(concept_names, "[concept_path]")
 			aspect_data["liked_concepts"] = concept_names
 
 			var/list/approach_summaries = list()
@@ -386,18 +402,22 @@
 		.["aspect_data"] = aspect_data
 	return .
 
+/obj/item/proc/spill_heart_contents()
+	var/turf/T = get_turf(src)
+	if(!T)
+		return
+	playsound(T, 'sound/foley/glassbreak.ogg', 75, TRUE)
+	new /obj/effect/decal/cleanable/heart_shards(T)
+	if(istype(src, /obj/item/heart_blood_canister/filled))
+		new /obj/effect/decal/cleanable/heart_blood(T)
+	else if(istype(src, /obj/item/heart_blood_vial/filled))
+		new /obj/effect/decal/cleanable/heart_blood/small(T)
+
 /obj/item/proc/break_fancy_container(obj/item/container)
 	if(!container)
 		return
-	var/turf/T = get_turf(container)
-	playsound(T, 'sound/foley/glassbreak.ogg', 75, TRUE)
-	new /obj/effect/decal/cleanable/heart_shards(T)
-	if(istype(container, /obj/item/heart_blood_canister/filled) || istype(container, /obj/item/heart_blood_vial/filled))
-		if(istype(container, /obj/item/heart_blood_canister/filled))
-			new /obj/effect/decal/cleanable/heart_blood(T)
-		else if(istype(container, /obj/item/heart_blood_vial/filled))
-			new /obj/effect/decal/cleanable/heart_blood/small(T)
-	qdel(container)
+	container.spill_heart_contents()
+	QDEL_IN(container, 1)
 	return TRUE
 
 /obj/effect/decal/cleanable/heart_blood
@@ -425,41 +445,42 @@
 	break_fancy_container(src)
 
 /obj/item/heart_blood_canister/obj_destruction(damage_flag)
-	break_fancy_container(src)
+	spill_heart_contents()
+	return ..()
 
 /obj/item/heart_blood_vial/obj_destruction(damage_flag)
-	break_fancy_container(src)
+	spill_heart_contents()
+	return ..()
 
 /obj/item/heart_blood_canister/filled/attack(mob/living/target, mob/living/user)
 	if(istype(target))
 		var/datum/status_effect/black_rot/rot = target.has_status_effect(/datum/status_effect/black_rot)
-		if(!rot)
-			to_chat(user, span_infection("[target] isn't infected with black rot currently."))
-			return
-		if(!do_mob(user, target, 0.6 SECONDS, FALSE))
+		if(!do_mob(user, target, 0.8 SECONDS, FALSE))
 			return
 		if(target == user)
 			target.visible_message(span_notice("[user] drinks some heartblood."), span_notice("I drink the heartblood, feeling it fight the rot within."))
 		else
 			target.visible_message(span_notice("[user] feeds [target] some heartblood."), span_notice("[user] feeds you some heartblood."))
-		rot.remove_stack(2)
-		qdel(src)
+		if(rot)
+			target.apply_status_effect(/datum/status_effect/buff/rot_cleansing, 67, 1)
+		target.apply_status_effect(/datum/status_effect/buff/invigoration, 10 SECONDS, 25, 15)
+		// Delayed deletion to let the attack() proc finish up safely.
+		QDEL_IN(src, 1)
 		return TRUE
 	return ..()
 
 /obj/item/heart_blood_vial/filled/attack(mob/living/target, mob/living/user)
 	if(istype(target))
 		var/datum/status_effect/black_rot/rot = target.has_status_effect(/datum/status_effect/black_rot)
-		if(!rot)
-			to_chat(user, span_infection("[target] isn't infected with black rot currently."))
-			return
-		if(!do_mob(user, target, 0.6 SECONDS, FALSE))
+		if(!do_mob(user, target, 0.4 SECONDS, FALSE))
 			return
 		if(target == user)
 			target.visible_message(span_notice("[user] drinks some heartblood."), span_notice("I drink the heartblood, feeling it fight the rot within."))
 		else
 			target.visible_message(span_notice("[user] feeds [target] some heartblood."), span_notice("[user] feeds you some heartblood."))
-		rot.remove_stack(1)
-		qdel(src)
+		if(rot)
+			target.apply_status_effect(/datum/status_effect/buff/rot_cleansing, 34, 1)
+		target.apply_status_effect(/datum/status_effect/buff/invigoration, 20 SECONDS, 25, 15)
+		QDEL_IN(src, 1)
 		return TRUE
 	return ..()

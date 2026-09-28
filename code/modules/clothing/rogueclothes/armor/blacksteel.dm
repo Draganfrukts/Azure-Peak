@@ -1,4 +1,4 @@
- //--------------- BLACKSTEEL ---------------------
+//--------------- BLACKSTEEL ---------------------
 
 /obj/item/clothing/suit/roguetown/armor/plate/full/blacksteel/modern
 	name = "blacksteel plate armor"
@@ -8,7 +8,7 @@
 
 /obj/item/clothing/suit/roguetown/armor/plate/full/blacksteel
 	name = "ancient blacksteel plate armor"
-	desc = "An antiquated set of blacksteel plate armor, from before Psydonia's blacksmiths had fully mastered the art of tempering such a coveted alloy. If you knew that todae was to be your last, would you've done anything different? Would you've communed with your friends and family, instead of loitering in a line and bickering about the specifics of steel-and-gold? </br>  </br>Cherish lyfe as it happens, or you will forever regret the memories you can no longer recall."
+	desc = "An antiquated set of blacksteel plate armor, from before Psydonia's blacksmiths had fully mastered the art of tempering such a coveted alloy. If you knew that todae was to be your last, would you've done anything different? Would you've communed with your friends and family, instead of loitering in a line and bickering about the specifics of steel-and-gold? </br>	</br>Cherish lyfe as it happens, or you will forever regret the memories you can no longer recall."
 	icon_state = "bkarmor"
 	item_state = "bkarmor"
 	blocking_behavior = null
@@ -28,7 +28,7 @@
 
 /obj/item/clothing/suit/roguetown/armor/plate/blacksteel
 	name = "ancient blacksteel half-plate"
-	desc = "An antiquated blacksteel cuirass, forged in an age when Psydonia's smiths still wrestled with the temperament of this jealous alloy. It's weight settles heavy upon the shoulders, and its pauldrons slope like a knight bowing to fate."
+	desc = "An antiquated blacksteel cuirass, forged in an age when Psydonia's smiths still wrestled with the temperament of this jealous alloy. Its weight settles heavy upon the shoulders, and its pauldrons slope like a knight bowing to fate."
 	body_parts_covered = COVERAGE_ALL_BUT_HANDLEGS
 	icon_state = "bkhalfarmor"
 	item_state = "bkhalfarmor"

@@ -34,9 +34,11 @@
 	var/list/age_times = list()
 	///the heat we need to be kept at
 	var/heat_required
-	// The name & description on the bottle, if any. Lowercase for the name. 
+	// The name & description on the bottle, if any. Lowercase for the name.
 	var/bottle_name = "generic brew"
 	var/bottle_desc = null
+	/// Typepath spawned by the keg when bottling. Override per recipe so the trade matcher can discriminate brews.
+	var/obj/item/reagent_containers/glass/bottle/brewing_bottle/output_bottle_type = /obj/item/reagent_containers/glass/bottle/brewing_bottle
 
 /datum/brewing_recipe/proc/after_finish_attackby(mob/user, obj/item/attacked_item, atom/source)
 	return FALSE
@@ -53,11 +55,11 @@
 		<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'/>
 		<meta http-equiv='Content-Type' content='text/html; charset=UTF-8'/>
 		<body>
-		  <div>
-		    <h1>[name]</h1>
-		    <div>
-			  <h2>Brewing Time: [brew_time / 10] Seconds </h2>
-			  <h2>Requirements</h2>
+			<div>
+			<h1>[name]</h1>
+			<div>
+				<h2>Brewing Time: [brew_time / 10] Seconds </h2>
+				<h2>Requirements</h2>
 		"}
 	if(ages)
 		html += "<h2>Will Continue to age after brewing.</h2>"

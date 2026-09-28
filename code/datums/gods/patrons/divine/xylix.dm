@@ -4,14 +4,14 @@
 	desc = "The Laughing God, both famous and infamous for his sway over the forces of luck. Xylix is known for the inspiration of many a bards lyric. Speaks through his gift to man; the Tarot deck."
 	worshippers = "Gamblers, Bards, Artists, and the Silver-Tongued"
 	mob_traits = list(TRAIT_XYLIX)
-	miracles = list(/obj/effect/proc_holder/spell/targeted/touch/orison			= CLERIC_ORI,
+	miracles = list(/datum/action/cooldown/spell/touch/orison					= CLERIC_ORI,
 					/obj/effect/proc_holder/spell/self/xylixslip				= CLERIC_T0,
 					/obj/effect/proc_holder/spell/invoked/ventriloquism			= CLERIC_T0,
 					/obj/effect/proc_holder/spell/invoked/mimicry				= CLERIC_T0,
-					/obj/effect/proc_holder/spell/invoked/lesser_heal 			= CLERIC_T1,
-					/obj/effect/proc_holder/spell/invoked/blood_heal			= CLERIC_T1,
+					/datum/action/cooldown/spell/miracle/heal					= CLERIC_T1,
+					/datum/action/cooldown/spell/miracle/bloodmiracle			= CLERIC_T1,
 					/obj/effect/proc_holder/spell/invoked/tipscales				= CLERIC_T1,
-					/obj/effect/proc_holder/spell/invoked/mockery				= CLERIC_T1,
+					/datum/action/cooldown/spell/projectile/vicious_mockery		= CLERIC_T1,
 					/obj/effect/proc_holder/spell/invoked/vendetta				= CLERIC_T2,
 					/obj/effect/proc_holder/spell/invoked/mastersillusion		= CLERIC_T2,
 					/obj/effect/proc_holder/spell/targeted/touch/parlor_trick	= CLERIC_T3,
@@ -38,6 +38,12 @@
 	)
 	storyteller = /datum/storyteller/xylix
 
+	titles = list(
+		"Tragedian",
+		"Xyji",
+		"Luck"
+	)
+
 // Near a gambling machine, cross, or within the church
 /datum/patron/divine/xylix/can_pray(mob/living/follower)
 	. = ..()
@@ -57,12 +63,12 @@
 	return FALSE
 
 /datum/patron/divine/xylix/on_lesser_heal(
-    mob/living/user,
-    mob/living/target,
-    message_out,
-    message_self,
-    conditional_buff,
-    situational_bonus
+	mob/living/user,
+	mob/living/target,
+	message_out,
+	message_self,
+	conditional_buff,
+	situational_bonus
 )
 	*message_out = span_info("A fugue seems to manifest briefly across [target]!")
 	*message_self = span_notice("My wounds vanish as if they had never been there! ")

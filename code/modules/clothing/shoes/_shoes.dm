@@ -10,18 +10,20 @@
 
 	permeability_coefficient = 0.5
 	slowdown = SHOES_SLOWDOWN
-	strip_delay = 5 SECONDS
+	strip_delay = STRIP_DELAY_SLOW
 	var/blood_state = BLOOD_STATE_NOT_BLOODY
 	var/list/bloody_shoes = list(BLOOD_STATE_MUD = 0, BLOOD_STATE_HUMAN = 0,BLOOD_STATE_XENO = 0, BLOOD_STATE_OIL = 0, BLOOD_STATE_NOT_BLOODY = 0)
 	var/offset = 0
 	var/equipped_before_drop = FALSE
 	var/can_be_bloody = TRUE
 	var/is_barefoot = FALSE
+	var/stepnoise_flag = STEPNOISE_ALL // Currently only used by the heel modifier.
 	bloody_icon_state = "shoeblood"
 	sleeved_detail = null
 
 	grid_width = 32
 	grid_height = 64
+	throw_on_break = TRUE
 
 /obj/item/clothing/shoes/ComponentInitialize()
 	. = ..()
@@ -44,20 +46,6 @@
 			sleep(3)
 			playsound(user, 'sound/blank.ogg', 50, TRUE)
 		return(BRUTELOSS)
-
-/obj/item/clothing/shoes/worn_overlays(isinhands = FALSE)
-	. = list()
-//	if(!isinhands)
-//		var/bloody = FALSE
-//		if(HAS_BLOOD_DNA(src))
-//			bloody = TRUE
-//		else
-//			bloody = bloody_shoes[BLOOD_STATE_HUMAN]
-
-//		if(damaged_clothes)
-//			. += mutable_appearance('icons/effects/item_damage.dmi', "damagedshoe")
-//		if(bloody)
-//			. += mutable_appearance('icons/effects/blood.dmi', "shoeblood")
 
 /obj/item/clothing/shoes/equipped(mob/user, slot)
 	. = ..()
@@ -88,6 +76,8 @@
 		return
 	bloody_shoes = list(BLOOD_STATE_MUD = 0,BLOOD_STATE_HUMAN = 0,BLOOD_STATE_XENO = 0, BLOOD_STATE_OIL = 0, BLOOD_STATE_NOT_BLOODY = 0)
 	blood_state = BLOOD_STATE_NOT_BLOODY
+	qdel(GetComponent(/datum/component/decal/blood))
 	if(ismob(loc))
 		var/mob/M = loc
 		M.update_inv_shoes()
+	return TRUE

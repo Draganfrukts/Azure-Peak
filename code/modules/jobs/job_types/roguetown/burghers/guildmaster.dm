@@ -1,5 +1,3 @@
-#define GUILDMASTER_ANNOUNCEMENT_COOLDOWN (2 MINUTES)
-
 /datum/job/roguetown/guildmaster
 	title = "Guildmaster"
 	flag = GUILDMASTER
@@ -9,7 +7,7 @@
 	spawn_positions = 1
 	min_pq = 0
 
-	allowed_races = ACCEPTED_RACES
+	forbidden_races = list(RACES_DESPISED)
 
 	tutorial = "You are the leader of the Azure Peak Guild of Crafts. You represents the interests of all of the craftsmen underneath you - including the Tailor\
 	the Blacksmiths, the Artificers and the Architects. Other townspeople may look to you for guidance, but they are not under your control. You are an experienced smith and artificer, and can do their work easily. Protect the craftsmen's interests."
@@ -30,6 +28,7 @@
 	job_subclasses = list(
 		/datum/advclass/guildmaster
 	)
+	has_subprefs = FALSE // only one subclass
 	spells = list(/obj/effect/proc_holder/spell/invoked/takeapprentice)
 
 /datum/advclass/guildmaster
@@ -50,6 +49,7 @@
 		/datum/skill/combat/maces = SKILL_LEVEL_JOURNEYMAN,
 		/datum/skill/combat/unarmed = SKILL_LEVEL_JOURNEYMAN,
 		/datum/skill/combat/wrestling = SKILL_LEVEL_JOURNEYMAN,
+		/datum/skill/misc/athletics = SKILL_LEVEL_JOURNEYMAN,
 		/datum/skill/labor/lumberjacking = SKILL_LEVEL_JOURNEYMAN,
 		/datum/skill/labor/mining = SKILL_LEVEL_JOURNEYMAN,
 		/datum/skill/craft/crafting = SKILL_LEVEL_JOURNEYMAN,
@@ -67,6 +67,7 @@
 		/datum/skill/craft/traps = SKILL_LEVEL_EXPERT, //setting to higher level to counter an antag trap maker
 		/datum/skill/misc/reading = SKILL_LEVEL_APPRENTICE,
 	)
+	tempo_capable = FALSE
 
 /datum/outfit/job/roguetown/guildmaster
 	has_loadout = TRUE
@@ -78,57 +79,33 @@
 	if(H.mind)
 		// Skillset is a combo of Artificer + Blacksmith with Labor Skills.
 		// And Tailor / Leathercrafting
-		H.verbs += /mob/living/carbon/human/proc/guild_announcement
 		armor = /obj/item/clothing/suit/roguetown/armor/leather/jacket/artijacket
 		pants = /obj/item/clothing/under/roguetown/trou/artipants
 		shoes = /obj/item/clothing/shoes/roguetown/boots/nobleboot
 		shirt = /obj/item/clothing/suit/roguetown/shirt/undershirt/artificer
 		backl = /obj/item/storage/backpack/rogue/backpack
+		id = /obj/item/scomstone
 		backpack_contents = list(
 			/obj/item/rogueweapon/hammer/iron = 1,
 			/obj/item/rogueweapon/tongs = 1,
 			/obj/item/recipe_book/blacksmithing = 1,
 			/obj/item/clothing/mask/rogue/spectacles/golden = 1,
-			/obj/item/contraption/linker/master = 1,
 			/obj/item/blueprint/mace_mushroom = 1
 			)
 		belt = /obj/item/storage/belt/rogue/leather
 		beltl = /obj/item/storage/belt/rogue/pouch/coins/rich
 		beltr = /obj/item/storage/keyring/guildmaster
+		var/wrenches = list("Compact Golden Wrench", "Massive Golden Wrench")
+		var/wrench_choice = input(H, "Choose your wrench.", "SYMBOL OF OFFICE") as anything in wrenches
+		switch(wrench_choice)
+			if("Compact Golden Wrench")
+				r_hand = /obj/item/rogueweapon/contraption/linker/mace/master
+			if("Massive Golden Wrench")
+				r_hand = /obj/item/rogueweapon/contraption/linker/mace/big/master
 	ADD_TRAIT(H, TRAIT_MASTER_CARPENTER, TRAIT_GENERIC)
 	ADD_TRAIT(H, TRAIT_MASTER_MASON, TRAIT_GENERIC)
 	if(H.mind)
-		SStreasury.give_money_account(ECONOMIC_UPPER_CLASS, H, "Savings.")
+		SStreasury.grant_savings(ECONOMIC_UPPER_CLASS, H)
 
 /datum/outfit/job/roguetown/guildmaster/choose_loadout(mob/living/carbon/human/H)
 	. = ..()
-
-/mob/living/carbon/human/proc/guild_announcement()
-	set name = "Announcement"
-	set category = "GUILDMASTER"
-	if(stat)
-		return
-	var/announcementinput = input("Bellow to the Peaks", "Make an Announcement") as text|null
-	if(announcementinput)
-		if(!src.can_speak_vocal())
-			to_chat(src,span_warning("I can't speak!"))
-			return FALSE
-		if(!istype(get_area(src), /area/rogue/indoors/town/dwarfin))//Nuh uh
-			to_chat(src, span_warning("I can only speak from within the Guild."))
-			return FALSE
-		if (!COOLDOWN_FINISHED(src, guildmaster_announcement))
-			to_chat(src, span_warning("You must wait before speaking again."))
-			return FALSE
-		visible_message(span_warning("[src] takes a deep breath, preparing to make an announcement."))
-		if(do_after(src, 15 SECONDS, target = src)) // Reduced to 15 seconds from 30 on the original Herald PR. 15 is well enough time for sm1 to shove you.
-			say(announcementinput)
-			var/sanitized_input = trim(copytext(sanitize(announcementinput), 1, MAX_MESSAGE_LEN))
-			var/accented_input = treat_message_accent(sanitized_input, strings("accent_universal.json", "universal"), 1)
-			var/treated_input = treat_message(accented_input, /datum/language/common)
-			priority_announce("[treated_input]", "The Guildmaster Heralds", 'sound/misc/bell.ogg', sender = src)
-			COOLDOWN_START(src, guildmaster_announcement, GUILDMASTER_ANNOUNCEMENT_COOLDOWN)
-		else
-			to_chat(src, span_warning("Your announcement was interrupted!"))
-			return FALSE
-
-#undef GUILDMASTER_ANNOUNCEMENT_COOLDOWN

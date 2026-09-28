@@ -8,7 +8,7 @@
 			grabstate = l_grab.grab_state
 	return grabstate
 
-/proc/do_thrust_animate(atom/movable/user, atom/movable/target, datum/sex_session/sex_session, pixels = 4, time = 2.7)
+/proc/do_thrust_animate(atom/movable/user, atom/movable/target, pixels = 4, time = 2.7)
 	var/oldx = user.pixel_x
 	var/oldy = user.pixel_y
 	var/target_x = oldx
@@ -37,23 +37,6 @@
 	SEND_SIGNAL(user, COMSIG_SEX_JOSTLE, target)
 	SEND_SIGNAL(target, COMSIG_SEX_JOSTLE, user)
 
-	if(sex_session?.bed && sex_session?.force > SEX_FORCE_MID)
-		if(QDELETED(sex_session.bed))
-			sex_session.find_bed()
-		if(QDELETED(sex_session.bed))
-			return
-		oldy = sex_session.bed.pixel_y
-		target_y = oldy-1
-		time /= 2
-		animate(sex_session.bed, pixel_y = target_y, time = time)
-		animate(pixel_y = oldy, time = time)
-		if(sex_session.target_on_bed && target)
-			oldy = target.pixel_y
-			target_y = oldy-1
-			animate(target, pixel_y = target_y, time = time)
-			animate(pixel_y = oldy, time = time)
-		sex_session.bed.damage_bed(sex_session.force > SEX_FORCE_HIGH ? 0.5 : 0.25)
-
 /mob/living/proc/start_sex_session(mob/living/target)
 	if(!target)
 		return
@@ -67,11 +50,11 @@
 	session.ui_interact(src)
 	return session
 
-/mob/living/carbon/human/proc/make_sucking_noise()
+/mob/living/carbon/human/proc/make_sucking_noise(do_subtle = FALSE)
 	if(gender == FEMALE)
-		playsound(src, pick('sound/misc/mat/girlmouth (1).ogg','sound/misc/mat/girlmouth (2).ogg'), 25, TRUE, ignore_walls = FALSE)
+		playsound(src, pick('sound/misc/mat/girlmouth (1).ogg','sound/misc/mat/girlmouth (2).ogg'), 25, TRUE, (do_subtle ? -6 : 0), ignore_walls = FALSE)
 	else
-		playsound(src, pick('sound/misc/mat/guymouth (2).ogg','sound/misc/mat/guymouth (3).ogg','sound/misc/mat/guymouth (4).ogg','sound/misc/mat/guymouth (5).ogg'), 35, TRUE, ignore_walls = FALSE)
+		playsound(src, pick('sound/misc/mat/guymouth (2).ogg','sound/misc/mat/guymouth (3).ogg','sound/misc/mat/guymouth (4).ogg','sound/misc/mat/guymouth (5).ogg'), 35, TRUE, (do_subtle ? -6 : 0), ignore_walls = FALSE)
 
 /mob/living/carbon/human/proc/try_impregnate(mob/living/carbon/human/wife)
 	var/obj/item/organ/testicles/testes = getorganslot(ORGAN_SLOT_TESTICLES)
@@ -99,7 +82,7 @@
 	// Need to drag yourself to the target.
 	if(dragged != user)
 		return
-	if(!human_user.can_do_sex)
+	if(!(human_user.can_do_sex && target.can_do_sex))
 		to_chat(user, "<span class='warning'>I can't do this.</span>")
 		return
 	var/may_bang = client && client.prefs && client.prefs.sexable == TRUE
@@ -140,9 +123,6 @@
 /mob/living/carbon/human/has_hands() // technically should be an and but i'll replicate original behavior
 	return get_bodypart(BODY_ZONE_L_ARM) || get_bodypart(BODY_ZONE_R_ARM)
 
-/mob/living/carbon/human/Initialize()
-	. = ..()
-	AddComponent(/datum/component/arousal)
 
 /mob/living/proc/return_character_information()
 	var/list/data = list()

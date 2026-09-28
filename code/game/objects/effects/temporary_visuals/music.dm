@@ -32,21 +32,6 @@
 	effect_color = colour
 	return ..()
 
-/datum/status_effect/buff/playing_music/on_remove()
-	. = ..()
-	if(!ishuman(owner))
-		return
-	var/mob/living/carbon/human/H = owner
-	if(!H.inspiration)
-		return
-	for(var/datum/status_effect/buff/playing_dirge/dirges in owner.status_effects)
-		owner.remove_status_effect(dirges)
-	for(var/datum/status_effect/buff/playing_melody/melodies in owner.status_effects)
-		owner.remove_status_effect(melodies)
-	for(var/mob/living/carbon/human/guy in H.inspiration.audience)
-		for(var/datum/status_effect/buff/song/song2remove in guy.status_effects)
-			guy.remove_status_effect(song2remove)
-	return ..()
 	
 
 /datum/status_effect/buff/playing_music/tick()
@@ -89,15 +74,6 @@
 	transform = m
 
 
-/obj/effect/temp_visual/songs/inspiration_dirget1
-	icon_state = "dirge_t1_base"
-
-/obj/effect/temp_visual/songs/inspiration_dirget2
-	icon_state = "dirge_t2_base"
-
-/obj/effect/temp_visual/songs/inspiration_dirget3
-	icon_state = "dirge_t3_base"
-
 /obj/effect/temp_visual/songs/inspiration_melodyt1
 	icon_state = "melody_t1_base"
 
@@ -115,3 +91,24 @@
 
 /obj/effect/temp_visual/songs/inspiration_bardsongt3
 	icon_state = "bardsong_t3_base"
+
+// Telltale music notes on affected targets - spawns above buffed allies and debuffed enemies
+/obj/effect/temp_visual/song_telltale
+	name = "music"
+	icon = 'icons/effects/music-note.dmi'
+	icon_state = "music_note"
+	duration = 20
+	plane = GAME_PLANE_UPPER
+	layer = ABOVE_ALL_MOB_LAYER
+	var/note_color = "#7f7f7f"
+
+/obj/effect/temp_visual/song_telltale/Initialize(mapload)
+	. = ..()
+	add_atom_colour(note_color, FIXED_COLOUR_PRIORITY)
+	alpha = 200
+	pixel_x = rand(-10, 10)
+	pixel_y = rand(14, 22) // Above the head
+
+// Blue-green notes for buffed allies
+/obj/effect/temp_visual/song_telltale/buff
+	note_color = "#5CB8E6"

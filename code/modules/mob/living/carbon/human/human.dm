@@ -71,14 +71,12 @@
 				regenerate_icons()
 #endif
 
-/mob/living/carbon/human/Initialize()
-	verbs += /mob/living/proc/lay_down
-
-	icon_state = ""		//Remove the inherent human icon that is visible on the map editor. We're rendering ourselves limb by limb, having it still be there results in a bug where the basic human icon appears below as south in all directions and generally looks nasty.
+/mob/living/carbon/human/Initialize(mapload)
+	add_verb(src, /mob/living/proc/lay_down)
+	icon_state = "" //Remove the inherent human icon that is visible on the map editor. We're rendering ourselves limb by limb, having it still be there results in a bug where the basic human icon appears below as south in all directions and generally looks nasty.
 
 	//initialize limbs first
 	create_bodyparts()
-
 	setup_human_dna()
 
 	if(dna.species)
@@ -94,6 +92,12 @@
 	AddComponent(/datum/component/personal_crafting)
 	AddComponent(/datum/component/footstep, footstep_type, 1, 2)
 	GLOB.human_list += src
+	unarmed_special = new /datum/special_intent/upper_cut()
+
+/mob/living/carbon/human/Login()
+	. = ..()
+	if(!GetComponent(/datum/component/arousal))
+		AddComponent(/datum/component/arousal)
 
 /mob/living/carbon/human/ZImpactDamage(turf/T, levels)
 	var/obj/item/bodypart/affecting
@@ -105,7 +109,7 @@
 	switch(rand(1,4))
 		if(1)
 			affecting = get_bodypart(pick(BODY_ZONE_R_LEG, BODY_ZONE_L_LEG))
-			chat_message = span_danger("I fall on my [lowertext(affecting.name)]!")
+			chat_message = span_danger("I fall on my [LOWER_TEXT(affecting.name)]!")
 		if(2)
 			affecting = get_bodypart(pick(BODY_ZONE_R_ARM, BODY_ZONE_L_ARM))
 			chat_message = span_danger("I fall on my arm!")
@@ -134,25 +138,34 @@
 	randomize_human(src)
 	dna.initialize_dna()
 
+/mob/living/carbon/human/get_status_tab_items()
+	. = ..()
+	if(devotion)
+		. += "DEVOTION: [devotion.devotion]/[devotion.max_devotion]"
+	if(mind)
+		var/datum/antagonist/vampire/vampire_datum = mind.has_antag_datum(/datum/antagonist/vampire)
+		if(vampire_datum)
+			. += "VITAE: [bloodpool]"
+
 /mob/living/carbon/human/Destroy()
-	STOP_PROCESSING(SShumannpc, src)
+	if(SScity_assembly?.is_alderman(src))
+		var/departing_name = real_name
+		var/departing_job = job
+		SScity_assembly.demote_alderman("Alderman's mob was deleted")
+		SScity_assembly.notify_alderman_lost_ref(departing_name, departing_job, "disconnected")
 	QDEL_NULL(physiology)
 	QDEL_NULL(sunder_light_obj)
 	GLOB.human_list -= src
+	if(current_fellowship)
+		current_fellowship.remove_member(src, reason = FELLOWSHIP_REASON_DESTROYED)
+		current_fellowship = null
+	if(length(incoming_fellowship_invites))
+		for(var/datum/weakref/W as anything in incoming_fellowship_invites)
+			var/datum/fellowship/F = W.resolve()
+			if(F)
+				F.remove_pending_invite(real_name)
+		incoming_fellowship_invites.Cut()
 	return ..()
-
-/mob/living/carbon/human/Stat()
-	..()
-	if(mind)
-		var/datum/antagonist/vampire/VD = mind.has_antag_datum(/datum/antagonist/vampire)
-		if(VD)
-			if(statpanel("Stats"))
-				stat("Vitae:", bloodpool)
-		if((mind.assigned_role == "Shepherd") || (mind.assigned_role == "Inquisitor"))
-			if(statpanel("Status"))
-				stat("Confessions sent: [GLOB.confessors.len]")
-
-	return //RTchange
 
 /mob/living/carbon/human/show_inv(mob/user)
 	user.set_machine(src)
@@ -161,12 +174,32 @@
 
 	dat += "<table>"
 
+	if(is_unclaimed_corpse())
+		var/has_fabric = FALSE
+		var/has_smelt = FALSE
+		for(var/obj/item/I in (get_equipped_items(TRUE) + held_items))
+			if(I.item_flags & ABSTRACT)
+				continue
+			if(I.is_salvageable())
+				has_fabric = TRUE
+			if(I.is_smeltable())
+				has_smelt = TRUE
+			if(has_fabric && has_smelt)
+				break
+		dat += "<tr><td><A href='?src=[REF(src)];strip_all=[LOOT_FILTER_ALL]'><B>Loot Everything</B></A></td></tr>"
+		if(has_fabric)
+			dat += "<tr><td><A href='?src=[REF(src)];strip_all=[LOOT_FILTER_FABRIC]'>Loot Fabric</A></td></tr>"
+		if(has_smelt)
+			dat += "<tr><td><A href='?src=[REF(src)];strip_all=[LOOT_FILTER_SMELT]'>Loot Smeltable</A></td></tr>"
+		dat += "<tr><td><hr></td></tr>"
+
 	if(handcuffed)
 		dat += "<tr><td><A href='?src=[REF(src)];item=[SLOT_HANDCUFFED]'>Remove [handcuffed]</A></td></tr>"
 	if(legcuffed)
 		dat += "<tr><td><A href='?src=[REF(src)];item=[SLOT_LEGCUFFED]'>Remove [legcuffed]</A></td></tr>"
 
-	dat += "<tr><td><hr></td></tr>"
+	if(handcuffed || legcuffed)
+		dat += "<tr><td><hr></td></tr>"
 
 	for(var/i in 1 to held_items.len)
 		var/obj/item/I = get_item_for_held_index(i)
@@ -281,14 +314,11 @@
 	else
 		dat += "<tr><td><A href='?src=[REF(src)];item=[SLOT_SHOES]'>[(shoes && !(shoes.item_flags & ABSTRACT)) ? shoes : "<font color=grey>Boots</font>"]</A></td></tr>"
 
-	dat += "<tr><td><hr></td></tr>"
-
 #ifdef MATURESERVER
 	if(get_location_accessible(src, BODY_ZONE_PRECISE_GROIN, skipundies = TRUE))
-		dat += "<tr><td><BR><B>Underwear:</B> <A href='?src=[REF(src)];undiesthing=1'>[!underwear ? "Nothing" : "Remove"]</A></td></tr>"
-	dat += "<tr><td><hr></td></tr>"
-	if(get_location_accessible(src, BODY_ZONE_PRECISE_GROIN, skipundies = TRUE))
-		dat += "<tr><td><BR><B>Legwear:</B> <A href='?src=[REF(src)];legwearsthing=1'>[!legwear_socks ? "Nothing" : "Remove"]</A></td></tr>"
+		dat += "<tr><td><hr></td></tr>"
+		dat += "<tr><td><B>Underwear:</B> <A href='?src=[REF(src)];undiesthing=1'>[!underwear ? "Nothing" : "Remove"]</A></td></tr>"
+		dat += "<tr><td><B>Legwear:</B> <A href='?src=[REF(src)];legwearsthing=1'>[!legwear_socks ? "Nothing" : "Remove"]</A></td></tr>"
 #endif
 
 	dat += {"</table>"}
@@ -656,9 +686,6 @@
 				else if(energy > 0)
 					hud_used.energy.icon_state = "energy5"
 
-		if(hud_used.zone_select)
-			hud_used.zone_select.update_icon()
-
 /mob/living/carbon/human/fully_heal(admin_revive = FALSE, break_restraints = FALSE)
 	dna?.species.spec_fully_heal(src)
 	if(admin_revive)
@@ -667,7 +694,10 @@
 	spill_embedded_objects()
 	set_heartattack(FALSE)
 	drunkenness = 0
-	return ..()
+	sunder_stacks = 0
+	. = ..()
+	if(hud_used?.zone_select)
+		hud_used.zone_select.rebuild_limbs()
 
 /mob/living/carbon/human/check_weakness(obj/item/weapon, mob/living/attacker)
 	. = ..()
@@ -711,8 +741,8 @@
 		if(!client || !client.prefs)
 			return
 		if(alert(usr,"This will irreversibly purge an INDIVIDUAL PORTION of this slot. Is this what you want?","DON'T FATFINGER THIS","PURGE","Nevermind") == "PURGE")
-			if(alert(usr,"The next prompt will not have a Nevermind option. Are you sure you want this?","ITS NOT REVERSIBLE","Yes","Nevermind") == "Yes")
-				var/choice = alert(usr,"What would you like to purge?","ITS TOO LATE NOW","Flavor","Notes","Extra")
+			if(alert(usr,"The next prompt will not have a Nevermind option. Are you sure you want this?","IT'S NOT REVERSIBLE","Yes","Nevermind") == "Yes")
+				var/choice = alert(usr,"What would you like to purge?","IT'S TOO LATE NOW","Flavor","Notes","Extra")
 				if(choice)
 					switch(choice)
 						if("Flavor")
@@ -731,7 +761,9 @@
 							client.prefs?.song_title = null
 							client.prefs?.ooc_extra = null
 							img_gallery = list()
+							nsfw_img_gallery = list()
 							client.prefs?.img_gallery = list()
+							client.prefs?.nsfw_img_gallery = list()
 						else
 							return
 					client.prefs?.save_preferences()
@@ -752,6 +784,7 @@
 				song_artist = null
 				song_title = null
 				img_gallery = list()
+				nsfw_img_gallery = list()
 				if(client)
 					client.prefs?.flavortext = null
 					client.prefs?.nsfwflavortext = null
@@ -761,6 +794,7 @@
 					client.prefs?.song_artist = null
 					client.prefs?.song_title = null
 					client.prefs?.img_gallery = list()
+					client.prefs?.nsfw_img_gallery = list()
 					client.prefs?.save_preferences()
 					client.prefs?.save_character()
 					to_chat(usr, span_warn("Slot purged successfully."))
@@ -935,32 +969,6 @@
 		remove_movespeed_modifier(MOVESPEED_ID_DAMAGE_SLOWDOWN)
 		remove_movespeed_modifier(MOVESPEED_ID_DAMAGE_SLOWDOWN_FLYING)
 
-/mob/living/carbon/human/adjust_nutrition(change) //Honestly FUCK the oldcoders for putting nutrition on /mob someone else can move it up because holy hell I'd have to fix SO many typechecks
-	if(HAS_TRAIT(src, TRAIT_NOHUNGER))
-		remove_status_effect(/datum/status_effect/debuff/hungryt1)
-		remove_status_effect(/datum/status_effect/debuff/hungryt2)
-		remove_status_effect(/datum/status_effect/debuff/hungryt3)
-		return FALSE
-	return ..()
-
-/mob/living/carbon/human/set_nutrition(change) //Seriously fuck you oldcoders.
-	if(HAS_TRAIT(src, TRAIT_NOHUNGER))
-		return FALSE
-	return ..()
-
-/mob/living/carbon/human/adjust_hydration(change)
-	if(HAS_TRAIT(src, TRAIT_NOHUNGER))
-		remove_status_effect(/datum/status_effect/debuff/thirstyt1)
-		remove_status_effect(/datum/status_effect/debuff/thirstyt2)
-		remove_status_effect(/datum/status_effect/debuff/thirstyt3)
-		return FALSE
-	return ..()
-
-/mob/living/carbon/human/set_hydration(change)
-	if(HAS_TRAIT(src, TRAIT_NOHUNGER))
-		return FALSE
-	return ..()
-
 /// copies the physical cosmetic features of another human mob.
 /mob/living/carbon/human/proc/copy_physical_features(mob/living/carbon/human/target)
 	if(!istype(target))
@@ -1044,10 +1052,18 @@
 /mob/living/carbon/human/species
 	var/race = null
 
-/mob/living/carbon/human/species/Initialize()
+/mob/living/carbon/human/species/Initialize(mapload)
 	. = ..()
 	if(race)
 		set_species(race)
+
+/mob/living/carbon/human/species/LateInitialize()
+	. = ..()
+	var/turf/turf = get_turf(loc)
+	if(turf)
+		if(!("[turf.z]" in GLOB.weatherproof_z_levels))
+			if(SSmapping.level_has_any_trait(turf.z, list(ZTRAIT_IGNORE_WEATHER_TRAIT)))
+				GLOB.weatherproof_z_levels |= "[turf.z]"
 
 //Vrell - Moving this here to fix load order bugs
 /mob/living/carbon/human/has_penis()
@@ -1074,18 +1090,9 @@
 /mob/living/carbon/human/update_mobility()
 	. = ..()
 	if(!(mobility_flags & MOBILITY_CANSTAND) && mouth?.spitoutmouth)
-		visible_message(span_warning("[src] spits out [mouth]."))
-		dropItemToGround(mouth, silent = FALSE)
-
-/*/mob/living/carbon/human/proc/update_heretic_commune()
-	if(HAS_TRAIT(src, TRAIT_COMMIE) || HAS_TRAIT(src, TRAIT_CABAL) || HAS_TRAIT(src, TRAIT_HORDE) || HAS_TRAIT(src, TRAIT_DEPRAVED))
-		verbs |= /mob/living/carbon/human/verb/commune
-		verbs |= /mob/living/carbon/human/verb/show_heretics
-		verbs |= /mob/living/carbon/human/verb/bad_omen
-	else
-		verbs -= /mob/living/carbon/human/verb/commune
-		verbs -= /mob/living/carbon/human/verb/show_heretics
-		verbs -= /mob/living/carbon/human/verb/bad_omen*/
+		if(stat != DEAD)
+			visible_message(span_warning("[src] spits out [mouth]."))
+			dropItemToGround(mouth, silent = FALSE)
 
 /mob/living/carbon/human/Topic(href, href_list)
 	..()
@@ -1097,3 +1104,43 @@
 ///This is used to allow the thrown item "deflect". Minor and mostly just for aurafarming. Hooks into do_attack_animation because it's the most reliable access to a "valid" attack.
 /mob/living/carbon/human/proc/update_proj_parry_timer()
 	projectile_parry_timer = (world.time + PROJ_PARRY_TIMER)
+
+/mob/living/carbon/human/proc/reapply_live_preferences()
+	if(!client?.prefs)
+		return FALSE
+
+	var/datum/language_holder/language_holder = get_language_holder()
+	var/list/preserved_languages = language_holder?.languages?.Copy()
+	var/selected_default_language = language_holder?.selected_default_language
+
+	client.prefs.copy_to(src, TRUE, FALSE)
+	refresh_live_vocal_preferences()
+
+	if(language_holder && length(preserved_languages))
+		for(var/language_type in preserved_languages)
+			grant_language(language_type)
+		language_holder.selected_default_language = selected_default_language
+
+	return TRUE
+
+/mob/living/carbon/human/proc/refresh_live_vocal_preferences()
+	if(!client?.prefs)
+		return FALSE
+
+	if(dna?.species)
+		var/default_soundpack_m = initial(dna.species.soundpack_m)
+		var/default_soundpack_f = initial(dna.species.soundpack_f)
+		if(default_soundpack_m)
+			dna.species.soundpack_m = GLOB.voice_packs[default_soundpack_m]
+		if(default_soundpack_f)
+			dna.species.soundpack_f = GLOB.voice_packs[default_soundpack_f]
+
+	voice_color = client.prefs.voice_color
+	voice_pitch = client.prefs.voice_pitch
+	voice_type = client.prefs.voice_type
+	set_bark(client.prefs.bark_id)
+	vocal_speed = client.prefs.bark_speed
+	vocal_pitch = client.prefs.bark_pitch
+	vocal_pitch_range = client.prefs.bark_variance
+	apply_voicepacks(src, client)
+	return TRUE

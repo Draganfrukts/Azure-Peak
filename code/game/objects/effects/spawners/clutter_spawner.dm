@@ -6,6 +6,7 @@
 	name = "cheap clutter spawner"
 	icon_state = "lowclutter"
 	lootcount = 1
+	loot_value = LOOT_VALUE_CHEAP_CLUTTER
 	loot = list(
 		/obj/item/jingle_bells = 1,
 		/obj/item/bouquet/rosa = 1,
@@ -27,12 +28,18 @@
 		/obj/item/roguestatue/iron = 1,
 		/obj/item/repair_kit/bad = 1,
 		/obj/item/repair_kit/metal/bad = 1,
+		/obj/item/natural/clay/porcelain/display = 1,
+		/obj/item/natural/clay/porcelain/duck = 1,
+		/obj/item/natural/clay/porcelain/bauble = 1,
+		/obj/item/natural/clay/porcelain/figurine = 1,
 	)
 
 /obj/effect/spawner/lootdrop/valuable_clutter_spawner
 	name = "valuable clutter spawner"
 	icon_state = "hiclutter"
 	lootcount = 1
+	loot_value = LOOT_VALUE_VALUABLE_CLUTTER
+	junk_loot = list(/obj/item/ash = 5, /obj/item/natural/glass_shard = 5)
 	loot = list(
 		/obj/item/reagent_containers/glass/bottle/clayfancyvase = 1,
 		/obj/item/roguestatue/glass = 1,
@@ -48,6 +55,7 @@
 	name = "cheap candle spawner"
 	icon_state = "lowcandle"
 	lootcount = 1
+	loot_value = LOOT_VALUE_CHEAP_CANDLE
 	loot = list(
 		/obj/item/candle/yellow/lit = 10,
 		/obj/item/candle/skull/lit = 1,
@@ -57,6 +65,8 @@
 	name = "valuable candle spawner"
 	icon_state = "hicandle"
 	lootcount = 1
+	loot_value = LOOT_VALUE_VALUABLE_CANDLE
+	junk_loot = list(/obj/item/candle/yellow = 5, /obj/item/ash = 3)
 	loot = list(
 		/obj/item/candle/candlestick/gold/lit = 2,
 		/obj/item/candle/candlestick/silver/lit = 1,
@@ -70,6 +80,7 @@
 	name = "valuable tableware spawner"
 	icon_state = "lowtableware"
 	lootcount = 1
+	loot_value = LOOT_VALUE_CHEAP_TABLEWARE
 	loot = list(
 		/obj/item/kitchen/fork/iron = 1,
 		/obj/item/kitchen/fork = 1,
@@ -79,12 +90,18 @@
 		/obj/item/kitchen/spoon/tin = 1,
 		/obj/item/reagent_containers/glass/bowl = 1,
 		/obj/item/reagent_containers/glass/bowl/iron = 1,
+		/obj/item/reagent_containers/glass/bowl/carved/porcelain = 1,
+		/obj/item/kitchen/fork/carved/porcelain = 1,
+		/obj/item/kitchen/spoon/carved/porcelain = 1,
+		/obj/item/cooking/platter/carved/porcelain = 1,
 	)
 
 /obj/effect/spawner/lootdrop/valuable_tableware_spawner
 	name = "valuable tableware spawner"
 	icon_state = "hitableware"
 	lootcount = 1
+	loot_value = LOOT_VALUE_VALUABLE_TABLEWARE
+	junk_loot = list(/obj/item/reagent_containers/glass/cup/wooden = 5, /obj/item/ash = 3)
 	loot = list(
 		/obj/item/reagent_containers/glass/cup/silver/small = 1,
 		/obj/item/reagent_containers/glass/cup/golden/small = 2,
@@ -100,6 +117,8 @@
 	name = "cheap jewelry spawner"
 	icon_state = "lowjewlery"
 	lootcount = 1
+	loot_value = LOOT_VALUE_CHEAP_JEWELRY
+	junk_loot = list(/obj/item/natural/glass_shard = 5, /obj/item/ash = 5)
 	loot = list(
 		/obj/item/clothing/ring/aalloy = 6,
 		/obj/item/clothing/neck/roguetown/psicross = 2,
@@ -119,12 +138,17 @@
 		/obj/item/clothing/neck/roguetown/psicross/pearl = 3,
 		/obj/item/clothing/neck/roguetown/horus = 1,
 		/obj/item/clothing/neck/roguetown/luckcharm = 1,
+		/obj/item/clothing/neck/roguetown/carved/shellamulet = 3,
+		/obj/item/clothing/neck/roguetown/carved/roseamulet = 1,
+
 	)
 
 /obj/effect/spawner/lootdrop/valuable_jewelry_spawner
 	name = "valuable jewelry spawner"
 	icon_state = "hijewlery"
 	lootcount = 1
+	loot_value = LOOT_VALUE_VALUABLE_JEWELRY
+	junk_loot = list(/obj/item/natural/glass_shard = 5, /obj/item/ash = 3)
 	loot = list(
 		/obj/item/clothing/ring/silver = 10,
 		/obj/item/clothing/ring/gold = 10,
@@ -153,4 +177,34 @@
 		/obj/item/clothing/ring/statrontz = 2,
 		/obj/item/clothing/neck/roguetown/psicross/malum/secret = 1,
 		/obj/item/clothing/neck/roguetown/psicross/weeping = 1,
+		/obj/item/heelkit = 1,
+		/obj/item/clothing/neck/roguetown/carved/goldjade = 2,
+		/obj/item/clothing/neck/roguetown/carved/goldshell = 6,
+		/obj/item/clothing/neck/roguetown/carved/goldturq = 3,
+		/obj/item/clothing/neck/roguetown/carved/goldopal = 1,
+		/obj/item/clothing/neck/roguetown/carved/goldamber = 5,
+		/obj/item/clothing/neck/roguetown/carved/goldonyxa = 6,
+		/obj/item/clothing/neck/roguetown/carved/goldcoral = 4,
+		/obj/item/clothing/neck/roguetown/carved/goldrose = 5,
+		/obj/item/clothing/neck/roguetown/carved/silveramber = 5,
+		/obj/item/clothing/neck/roguetown/carved/silveronyxa = 8,
+		/obj/item/clothing/neck/roguetown/carved/silvershell = 10,
+		/obj/item/clothing/neck/roguetown/carved/silveropal = 2,
+		/obj/item/clothing/neck/roguetown/carved/silverturq = 3,
+		/obj/item/clothing/neck/roguetown/carved/silverrose = 7,
+		/obj/item/clothing/neck/roguetown/carved/silverjade = 4,
+		/obj/item/clothing/neck/roguetown/carved/silvercoral = 5,
+
 	) //'Stat_' and 'Psicross_' rings at '2' or below provide statbuffs, and should be kept rare. Move to a seperate drop table if they become too common. Likeliest find is from high-end dungeons and mimics.
+
+/obj/effect/spawner/lootdrop/puzzlebox_rings
+	name = "royal puzzlebox ring spawner"
+	lootcount = 2
+	loot = list(
+		/obj/item/clothing/ring/statgemerald = 20,	// Swiftness
+		/obj/item/clothing/ring/statonyx = 20,		// Vitality
+		/obj/item/clothing/ring/statamythortz = 20, // Wisdom
+		/obj/item/clothing/ring/statrontz = 20,		// Courage
+		/obj/item/clothing/ring/dragon_ring = 10,	// Dragonstone
+		/obj/item/clothing/ring/statdorpel = 5		// Omnipotence
+	)

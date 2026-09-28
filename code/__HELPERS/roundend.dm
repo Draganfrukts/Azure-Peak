@@ -52,6 +52,7 @@
 				var/pos = length(file_data["[escaped]"]["[category]"]) + 1
 				file_data["[escaped]"]["[category]"]["[pos]"] = mob_data
 	WRITE_FILE(json_file, json_encode(file_data))
+	dump_chronicle_stats()
 	SSblackbox.record_feedback("nested tally", "round_end_stats", num_survivors, list("survivors", "total"))
 	SSblackbox.record_feedback("nested tally", "round_end_stats", num_escapees, list("escapees", "total"))
 	SSblackbox.record_feedback("nested tally", "round_end_stats", GLOB.joined_player_list.len, list("players", "total"))
@@ -95,8 +96,9 @@
 	status_flags |= GODMODE
 	ai_controller?.set_ai_status(AI_STATUS_OFF)
 	if(client)
-		client.verbs |= /client/proc/lobbyooc
-		client.verbs |= /client/proc/view_stats
+		add_verb(client, /client/proc/lobbyooc)
+		add_verb(client, /client/proc/view_stats)
+		client.init_verbs()
 		client.show_game_over()
 
 /mob/living/do_game_over()
@@ -111,36 +113,31 @@
 	if(ishostile(src))
 		var/mob/living/simple_animal/hostile/H = src
 		H.LoseTarget()
-	if(ishuman(src))
-		var/mob/living/carbon/human/H = src
-		H.mode = NPC_AI_OFF
 
 /client/proc/show_game_over()
 	var/atom/movable/screen/splash/credits/S = new(src, FALSE)
 	S.Fade(FALSE,FALSE)
 	RollCredits()
-	if(GLOB.credits_icons.len)
-		for(var/i=0, i<=GLOB.credits_icons.len, i++)
-			var/atom/movable/screen/P = new()
-			P.layer = SPLASHSCREEN_LAYER+1
-			P.appearance = GLOB.credits_icons
-			screen += P
 
 /datum/controller/subsystem/ticker/proc/declare_completion()
 	set waitfor = FALSE
 
 	log_game("The round has ended.")
 
-	to_chat(world, "<BR><BR><BR><span class='reallybig'>So ends this tale on [realm_name].</span>")
+	to_world("<BR><BR><BR><span class='reallybig'>So ends this tale on [realm_name].</span>")
 	get_end_reason()
 
 	var/list/key_list = list()
 	for(var/client/C in GLOB.clients)
 		if(C.mob)
 			SSdroning.kill_droning(C)
-			C.mob.playsound_local(C.mob, 'sound/music/roundend.ogg', 100, FALSE)
+			if(prob(93))
+				C.mob.playsound_local(C.mob, 'sound/music/roundend.ogg', 100, FALSE) //Unknown. Original narration given by Leslie Nielsen in 'National Geographic: Dive To The Edge Of Creation', circa 1979.
+			else
+				C.mob.playsound_local(C.mob, 'sound/music/roundend_mirthful.ogg', 100, FALSE) //Hildegard Von Blingin and Whitney Avalon's transformative cover of 'Manchild' by Sabrina Carpenter, circa 2026.
 		if(isliving(C.mob) && C.ckey)
 			key_list += C.ckey
+	var/favor_bonus = SSmerchant_trade ? SSmerchant_trade.favor_triumph_bonus() : 0
 	for(var/mob/living/carbon/human/H in GLOB.player_list)
 		if(H.stat != DEAD)
 			if(H.get_triumphs() < 0)
@@ -151,9 +148,13 @@
 				if(job && job.round_contrib_points)
 					to_chat(H, "\n<font color='purple'><b>[job.round_contrib_points]</b> ROUND CONTRIBUTOR POINTS AWARDED. Thank you for playing!</font>")
 					add_roundpoints(job.round_contrib_points, H.ckey)
+		if(favor_bonus > 0 && H.ckey && H.job && (H.job == "Merchant" || H.job == "Shophand"))
+			H.adjust_triumphs(favor_bonus)
+			to_chat(H, "\n<font color='purple'><b>+[favor_bonus] TRIUMPHS</b> awarded for trade volume earned with the Azurian Trading Company.</font>")
 	add_roundplayed(key_list)
+
 	update_god_rankings()
-	
+
 	for(var/mob/M in GLOB.mob_list)
 		M.do_game_over()
 
@@ -162,13 +163,13 @@
 		cb.InvokeAsync()
 	LAZYCLEARLIST(round_end_events)
 
-	to_chat(world, "Round ID: [GLOB.rogue_round_id]")
+	to_world("Round ID: [GLOB.rogue_round_id]")
 
 	sleep(5 SECONDS)
 
 	gamemode_report()
 
-	to_chat(world, personal_objectives_report())
+	to_world(personal_objectives_report())
 
 	sleep(10 SECONDS)
 
@@ -215,27 +216,38 @@
 	var/end_reason
 
 	if(!check_for_lord(forced = TRUE))
-		end_reason = pick("Without a Monarch, they were doomed to become slaves of Zizo.",
-						"Without a Monarch, they were doomed to be eaten by nite creachers.",
-						"Without a Monarch, they were doomed to become victims of Gehenna.",
-						"Without a Monarch, they were doomed to wander the wilderness as exiles.",
-						"Without a Monarch, the Lich made them his playthings.",
-						"Without a Monarch, some jealous rival reigned in tyranny.",
-						"Without a Monarch, the gnomes eventually destroyed the town with explosives.",
-						"Without a Monarch, the courtesans sucked the town dry and moved on to the next one.",
-						"Without a Monarch, the town was abandoned.")
+		end_reason = pick("So concluded another chapter of the story. Another begins shortly.",
+						"A blank page is filled; a new canvas presented.",
+						"Our actors hang up their masks, and a new cast begins to rehearse.",
+						"Thus the week's events have taken place. Eventful or mundane, lyfe continues.",
+						"Pawns of gods, preachers of nite, all come together to recite this tale.",
+						"Whether with loss or life, kingdom survives... for now.",
+						"The people of Azuria prepare to look forward; their actions locked in the impermeable past.")
 
 	if(vampire_werewolf() == "vampire")
-		end_reason = "When the Vampires finished sucking the town dry, they moved on to the next one."
+		end_reason = pick("None can attest to what truly happened this nite; they can only have faith that they did the right thing.",
+						"And so, another legend of the nite has chiseled itself into the annals of Azuria's history..",
+						"The morning's light shines upon a new week, driving away the darkness that threatened Azuria.. for now.",
+						"A blank page is filled; a new canvas presented.",
+						"Our actors hang up their masks, and a new cast begins to rehearse.",
+						"Thus the week's events have taken place. Eventful or mundane, lyfe continues.",
+						"Pawns of gods, preachers of nite, all come together to recite this tale.",
+						"Whether with loss or life, kingdom survives... for now.",
+						"The people of Azuria prepare to look forward; their actions locked in the impermeable past.")
+
 	if(vampire_werewolf() == "werewolf")
-		end_reason = "The Werevolves formed an unholy clan, marauding [realm_name] until the end of its daes."
-
-	if(SSmapping.retainer.head_rebel_decree)
-		end_reason = "The peasant rebels took control of the throne, hail the new community!"
-
+		end_reason = pick("None can attest to what truly happened this nite; they can only have faith that they did the right thing.",
+						"And so, another legend of the nite has chiseled itself into the annals of Azuria's history..",
+						"The morning's light shines upon a new week, driving away the darkness that threatened Azuria.. for now.",
+						"A blank page is filled; a new canvas presented.",
+						"Our actors hang up their masks, and a new cast begins to rehearse.",
+						"Thus the week's events have taken place. Eventful or mundane, lyfe continues.",
+						"Pawns of gods, preachers of nite, all come together to recite this tale.",
+						"Whether with loss or life, kingdom survives... for now.",
+						"The people of Azuria prepare to look forward; their actions locked in the impermeable past.")
 
 	if(end_reason)
-		to_chat(world, span_bigbold("[end_reason]."))
+		to_world(span_bigbold("[end_reason]."))
 	else
 		var/mob/living/ruler = rulermob
 		var/ruler_name = ruler?.real_name || "an unknown sovereign"
@@ -247,11 +259,11 @@
 			"[title] [ruler_name] has kept the realm together for another week.", \
 			"The rule of [title] [ruler_name] holds firm. [realm_name] endures.", \
 			"Through strife and struggle, [title] [ruler_name] has held [realm_name] together.")
-		to_chat(world, span_bigbold("[good_ending]"))
+		to_world(span_bigbold("[good_ending]"))
 
 	// Epilogue — additional flavor text set by usurpation rites
 	if(roundend_epilogue)
-		to_chat(world, "<BR><b><i>[roundend_epilogue]</i></b>")
+		to_world("<BR><b><i>[roundend_epilogue]</i></b>")
 
 /datum/controller/subsystem/ticker/proc/gamemode_report()
 	var/list/all_teams = list()
@@ -262,7 +274,7 @@
 		header_parts += "<br>"
 		header_parts += "<div style='text-align: center; font-size: 1.2em;'>VILLAINS:</div>"
 		header_parts += "<hr class='paneldivider'>"
-		to_chat(world, header_parts)
+		to_world(header_parts)
 
 	for(var/datum/team/A in GLOB.antagonist_teams)
 		if(!A.members)
@@ -371,7 +383,7 @@
 	if(!previous)
 		var/list/report_parts = list(personal_report(C), GLOB.common_report)
 		content = report_parts.Join()
-		C.verbs -= /client/proc/show_previous_roundend_report
+		remove_verb(C, /client/proc/show_previous_roundend_report)
 		fdel(filename)
 		text2file(content, filename)
 	else
@@ -678,3 +690,13 @@
 				return
 			qdel(query_update_everything_ranks)
 		qdel(query_check_everything_ranks)
+
+////////////////////////
+// CUTTING ROOM FLOOR //
+////////////////////////
+//Legacy versions of the original prompts, listed at the end of each round. Kept below for posterity, and - for creative minds - repurposement.
+//"Without a Monarch, they were doomed to become slaves of Zizo." //"Without a Monarch, they were doomed to be eaten by nite creachers." //"Without a Monarch, they were doomed to become victims of Gehenna."
+//"Without a Monarch, they were doomed to wander the wilderness as exiles." //"Without a Monarch, the Lich made them his playthings." //"Without a Monarch, some jealous rival reigned in tyranny."
+//"Without a Monarch, the gnomes eventually destroyed the town with explosives." //"Without a Monarch, the courtesans sucked the town dry and moved on to the next one."
+//"Without a Monarch, the town was abandoned." //"The peasant rebels took control of the throne, hail the new community!" //"When the Vampires finished sucking the town dry, they moved on to the next one."
+//"The Werevolves formed an unholy clan, marauding [realm_name] until the end of its daes."

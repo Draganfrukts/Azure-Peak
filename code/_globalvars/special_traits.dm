@@ -35,23 +35,25 @@ GLOBAL_LIST_INIT(special_traits, build_special_traits())
 	if(!player)
 		player = character.client
 	apply_charflaw_equipment(character, player)
-	apply_prefs_special(character, player)
 	apply_prefs_virtue(character, player)
 	apply_prefs_race_bonus(character, player)
-	apply_voicepacks(character, player)
-	if(player.prefs.dnr_pref)
+	if(!HAS_TRAIT(character, TRAIT_NO_VOICEPACK_OVERRIDE)) //Only roundstart roles that jobload in, should use this. Prevents prefloaded voicepacks overriding yours.
+		apply_voicepacks(character, player)
+	if(player.prefs.dnr_pref || SSgamemode?.dnr_round)
 		apply_dnr_trait(character, player)
 	if(player.prefs.qsr_pref)
 		apply_qsr_trait(character, player)
+	character.mind.triumph_discount_remaining = is_donator(player.ckey) ? 3 : 0 // donators get first 3 triumph points free, spent on retrieval
 	for(var/item_name in player.prefs.gear_list)
 		var/datum/loadout_item/LI = GLOB.loadout_items_by_name[item_name]
 		if(!LI)
 			continue
-		if(LI.triumph_cost && character.get_triumphs() < LI.triumph_cost)
-			continue
 		if(LI.triumph_cost)
-			character.adjust_triumphs(-LI.triumph_cost)
-		character.mind.special_items[LI.name] = LI.path
+			// Tag triumph cost items so that it is charged properly
+			character.mind.special_items["[LI.name][TRIUMPH_STASH_SUFFIX]"] = LI.path
+		else
+			character.mind.special_items[LI.name] = LI.path
+		character.mind.special_items_metadata[LI.name] = player.prefs.gear_list[item_name]
 	var/datum/job/assigned_job = SSjob.GetJob(character.mind?.assigned_role)
 	if(assigned_job)
 		assigned_job.clamp_stats(character)
@@ -67,13 +69,18 @@ GLOBAL_LIST_INIT(special_traits, build_special_traits())
 		REMOVE_TRAIT(H, TRAIT_EASYDISMEMBER, null) // Doesn't care for source, they ARE getting canceled
 		REMOVE_TRAIT(H, TRAIT_CRITICAL_RESISTANCE, null)
 		to_chat(H, span_warning("My limbs are too frail and my body too tough... the contradiction leaves me unable to resist critical wounds."))
+
+	var/datum/advclass/advclass = H.get_advclass_datum()
+	if(advclass?.tempo_capable && H.mind.assigned_role != "Court Agent" && H.mind.assigned_role != "Adventurer" && H.mind.assigned_role != "Towner") // (Easier to filter these out than apply the bool to every subclass)
+		if(!H.mind.has_antag_datum(/datum/antagonist/skeleton) && !H.mind.has_antag_datum(/datum/antagonist/lich) && !H.mind.has_antag_datum(/datum/antagonist/vampire) && !H.mind.has_antag_datum(/datum/antagonist/vampire/lord))
+			ADD_TRAIT(H, TRAIT_TEMPO, SPECIES_TRAIT)
 	return TRUE
 
 /proc/apply_voicepacks(mob/living/carbon/human/character, client/player)
 	if(player.prefs.voice_pack != "Default")
-		var/datum/voicepack/VP = GLOB.voice_packs_list[player.prefs.voice_pack]
-		character.dna.species.soundpack_m = new VP()
-		character.dna.species.soundpack_f = new VP()
+		var/datum/voicepack/VP = GLOB.voice_packs[GLOB.voice_packs_list[player.prefs.voice_pack]]
+		character.dna.species.soundpack_m = VP
+		character.dna.species.soundpack_f = VP
 
 
 /proc/apply_prefs_virtue(mob/living/carbon/human/character, client/player)
@@ -86,7 +93,7 @@ GLOBAL_LIST_INIT(special_traits, build_special_traits())
 
 	var/virtuous = FALSE
 	var/heretic = FALSE
-	var/species = character.dna.species.type
+	var/species = character.dna.species
 
 	if(istype(player.prefs.selected_patron, /datum/patron/inhumen))
 		heretic = TRUE
@@ -122,15 +129,17 @@ GLOBAL_LIST_INIT(special_traits, build_special_traits())
 				origin_type = new character.dna.species.origin_default
 				apply_virtue(character, origin_type)
 
-/proc/origin_check(var/datum/virtue/V, species)
+/proc/origin_check(datum/virtue/V, datum/species/species)
+	if(!species || !V)
+		return
 	if(V)
 		if(!istype(V,/datum/virtue/origin))
 			return FALSE
 		if(V.restricted == TRUE)
-			if((species in V.races))
+			if((species.type in V.races))
 				return FALSE
 		if(istype(V,/datum/virtue/origin/racial))
-			if(!(species in V.races))
+			if(!(species.type in V.races))
 				return FALSE
 		return TRUE
 	return FALSE
@@ -144,13 +153,21 @@ GLOBAL_LIST_INIT(special_traits, build_special_traits())
 		return
 	if (!player.prefs.race_bonus || player.prefs.race_bonus == "None")
 		return
+	if(!length(character.dna.species.custom_selection))
+		return
 	var/bonus = player.prefs.race_bonus
-	if(islist(bonus))
-		var/list/bonuslist = bonus
+	if(!(bonus in character.dna.species.custom_selection))
+		return
+	var/full_bonus
+	full_bonus = character.dna.species.custom_selection[bonus]
+	if(!full_bonus)
+		return
+	if(islist(full_bonus))
+		var/list/bonuslist = full_bonus
 		for(var/B in bonuslist)
 			process_race_bonus_option(character, B, bonuslist)
 	else
-		process_race_bonus_option(character, bonus)
+		process_race_bonus_option(character, full_bonus)
 
 /proc/process_race_bonus_option(mob/living/carbon/human/character, bonus, list/parentlist)
 	if(ispath(bonus))	//The bonus is a real path
@@ -165,36 +182,39 @@ GLOBAL_LIST_INIT(special_traits, build_special_traits())
 	if(bonus in GLOB.roguetraits)
 		ADD_TRAIT(character, bonus, SPECIES_TRAIT)
 
-/proc/virtue_check(var/datum/virtue/V, heretic = FALSE)
+/proc/virtue_check(datum/virtue/V, heretic = FALSE, datum/species/species)
 	if(V)
 		if(istype(V,/datum/virtue/heretic) && !heretic)
+			return FALSE
+		if(V.restricted)
+			if((species.type in V.races))
+				return FALSE
+		if(V.type in species.restricted_virtues)
 			return FALSE
 		return TRUE
 	return FALSE
 
 /proc/apply_charflaw_equipment(mob/living/carbon/human/character, client/player)
+	var/has_extra_vice = FALSE
+	var/needs_extra_vice = FALSE
+	for(var/datum/charflaw/cf in character.charflaws) // difficulty flaws don't count as each other's extra vice
+		if(cf.needs_extra_vice)
+			needs_extra_vice = TRUE
+		else
+			has_extra_vice = TRUE
 	for(var/datum/charflaw/cf in character.charflaws)
 		cf.apply_post_equipment(character)
 		record_featured_object_stat(FEATURED_STATS_VICES, cf.name)
+	if(needs_extra_vice && !has_extra_vice)
+		var/datum/charflaw/randflaw/rf = new()
+		character.charflaws.Add(rf)
+		rf.apply_post_equipment(character)
 
 /proc/apply_dnr_trait(mob/living/carbon/human/character, client/player)
 	ADD_TRAIT(player.mob, TRAIT_DNR, TRAIT_GENERIC)
 
 /proc/apply_qsr_trait(mob/living/carbon/human/character, client/player)
 	ADD_TRAIT(player.mob, TRAIT_QUICKSILVERRESISTANT, TRAIT_GENERIC)
-
-/proc/apply_prefs_special(mob/living/carbon/human/character, client/player)
-	if(!player)
-		player = character.client
-	if(!player)
-		return
-	if(!player.prefs)
-		return
-	var/trait_type = player.prefs.next_special_trait
-	if(!trait_type)
-		return
-	apply_special_trait_if_able(character, player, trait_type)
-	player.prefs.next_special_trait = null
 
 /proc/apply_special_trait_if_able(mob/living/carbon/human/character, client/player, trait_type)
 	if(!charactet_eligible_for_trait(character, player, trait_type))

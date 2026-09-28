@@ -34,6 +34,8 @@
 	dat += " | "
 	dat += individual_logging_panel_link(M, INDIVIDUAL_SAY_LOG, LOGSRC_MOB, "Say Log", source, ntype)
 	dat += " | "
+	dat += individual_logging_panel_link(M, INDIVIDUAL_NPC_SAY_LOG, LOGSRC_MOB, "NPC Say", source, ntype)
+	dat += " | "
 	dat += individual_logging_panel_link(M, INDIVIDUAL_EMOTE_LOG, LOGSRC_MOB, "Emote Log", source, ntype)
 	dat += " | "
 	dat += individual_logging_panel_link(M, INDIVIDUAL_COMMS_LOG, LOGSRC_MOB, "Comms Log", source, ntype)
@@ -64,7 +66,7 @@
 		dat += concatenated_logs.Join("<br>")
 		dat += "</font>"
 
-	var/datum/browser/popup = new(usr, "window=invidual_logging_[key_name(M)]", "Individual Logs", 600, 600)
+	var/datum/browser/popup = new(usr, "window=invidual_logging_[key_name(M)]", "Individual Logs", 800, 1000)
 	popup.set_content(dat.Join())
 	popup.open()
 

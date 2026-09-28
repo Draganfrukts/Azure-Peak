@@ -27,8 +27,10 @@
 							/obj/item/grown/log/tree/stick = 16,
 							/obj/structure/flora/roguetree/stump/log = 3,
 							/obj/structure/flora/roguetree/stump = 4,
+							/obj/structure/leyline/normal/grove = 1,
 							/obj/structure/closet/dirthole/closed/loot=3,
-							/obj/structure/flora/roguegrass/maneater/real=3)
+							/obj/structure/flora/roguegrass/maneater/real=3,
+							/obj/effect/hunting_track = 3)
 	spawnableTurfs = list(/turf/open/floor/rogue/dirt/road=2,
 						/turf/open/water/swamp=1)
 	allowed_areas = list(/area/rogue/outdoors/woods)
@@ -46,7 +48,7 @@
 	allowed_areas = list(/area/rogue/outdoors/woods)
 
 /datum/mapGeneratorModule/forestgrass
-	clusterCheckFlags =  CLUSTER_CHECK_SAME_ATOMS
+	clusterCheckFlags =	CLUSTER_CHECK_SAME_ATOMS
 	allowed_turfs = list(/turf/open/floor/rogue/grass, /turf/open/floor/rogue/grassred, /turf/open/floor/rogue/grassyel, /turf/open/floor/rogue/grasscold)
 	excluded_turfs = list()
 	allowed_areas = list(/area/rogue/outdoors/woods)
@@ -62,4 +64,6 @@
 							/obj/item/natural/stone = 6,
 							/obj/item/natural/rock = 1,
 							/obj/item/grown/log/tree/stick = 3,
-							/obj/structure/flora/roguetree/stump/log = 3)
+							/obj/structure/leyline/normal/grove = 0.25,
+							/obj/structure/flora/roguetree/stump/log = 3,
+							/obj/effect/hunting_track = 2)

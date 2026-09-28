@@ -239,7 +239,7 @@
 		var/obj/item/organ/penis/penis = top.getorganslot(ORGAN_SLOT_PENIS)
 		var/datum/sex_session/session = get_sex_session(top, btm)
 		if(session)
-			session.perform_sex_action(btm, penis?.penis_size > DEFAULT_PENIS_SIZE ? 6.0 : 3.0, 2, FALSE)
+			session.perform_sex_action(btm, penis?.penis_size > DEFAULT_PENIS_SIZE ? 6.0 : 3.0, 2, FALSE, session.speed, session.force)
 			var/datum/component/arousal/btm_arousal = btm.GetComponent(/datum/component/arousal)
 			btm_arousal?.try_ejaculate()
 		if(prob(50))
@@ -318,7 +318,7 @@
 
 	if(!btm.IsStun())
 		if(prob(5))
-			btm.emote("groan")
+			btm.emote("groan", forced = TRUE)
 			var/datum/component/arousal/btm_arousal = btm.GetComponent(/datum/component/arousal)
 			btm_arousal?.try_do_pain_effect(PAIN_MED_EFFECT, FALSE)
 			btm.Stun(15)
@@ -358,7 +358,7 @@
 	// Regular movement penalties
 	if(!btm.IsStun())
 		if(prob(10))
-			btm.emote("groan")
+			btm.emote("groan", forced = TRUE)
 			//! TODO: replace this with a sginal I'mtired boss
 			var/datum/component/arousal/btm_arousal = btm.GetComponent(/datum/component/arousal)
 			btm_arousal?.try_do_pain_effect(PAIN_MED_EFFECT, FALSE)

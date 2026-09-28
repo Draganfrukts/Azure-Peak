@@ -43,11 +43,8 @@
 		TRAIT_HARDDISMEMBER,
 		TRAIT_PIERCEIMMUNE,
 		TRAIT_LONGSTRIDER,
-		TRAIT_CRITICAL_RESISTANCE,
-		TRAIT_NOPAINSTUN,
 	)
 	inherent_biotypes = MOB_HUMANOID
-	armor = 5
 	no_equip = list(SLOT_SHIRT, SLOT_HEAD, SLOT_WEAR_MASK, SLOT_ARMOR, SLOT_GLOVES, SLOT_SHOES, SLOT_PANTS, SLOT_CLOAK, SLOT_BELT, SLOT_BACK_R, SLOT_BACK_L, SLOT_S_STORE)
 	nojumpsuit = 1
 	sexes = 1
@@ -62,6 +59,7 @@
 		ORGAN_SLOT_LIVER = /obj/item/organ/liver,
 		ORGAN_SLOT_STOMACH = /obj/item/organ/stomach,
 		ORGAN_SLOT_APPENDIX = /obj/item/organ/appendix,
+		ORGAN_SLOT_GUTS = /obj/item/organ/guts,
 		)
 
 	languages = list(
@@ -79,10 +77,6 @@
 	human.update_damage_overlays()
 	return TRUE
 
-/datum/species/shapebear/on_species_gain(mob/living/carbon/carbon, datum/species/old_species)
-	. = ..()
-	RegisterSignal(carbon, COMSIG_MOB_SAY, PROC_REF(handle_speech))
-
 /datum/species/shapebear/update_damage_overlays(mob/living/carbon/human/human)
 	human.remove_overlay(DAMAGE_LAYER)
 	return TRUE
@@ -95,26 +89,25 @@
 	body_parts_covered = FULL_BODY
 	body_parts_inherent = FULL_BODY
 	armor = ARMOR_LEATHER
-	prevent_crits = PREVENT_CRITS_NONE
 	blocksound = SOFTHIT
 	blade_dulling = DULLING_BASHCHOP
 	sewrepair = FALSE
-	max_integrity = 120
+	max_integrity = 300
 	item_flags = DROPDEL
 
 /datum/intent/simple/bear
 	name = "claw"
-	clickcd = 10
+	clickcd = CLICK_CD_QUICK
 	icon_state = "incut"
 	blade_class = BCLASS_CUT
 	attack_verb = list("claws", "mauls", "eviscerates")
 	animname = "cut"
 	hitsound = "genslash"
-	penfactor = 40
+	penfactor = PEN_MEDIUM
 	candodge = TRUE
 	canparry = TRUE
 	miss_text = "slashes the air!"
-	miss_sound = "bluntswoosh"
+	miss_sound = "bladewooshlarge"
 	item_d_type = "slash"
 
 /obj/item/rogueweapon/bear_claw
@@ -150,7 +143,7 @@
 /obj/item/rogueweapon/bear_claw/left
 	icon_state = "claw_l"
 
-/obj/item/rogueweapon/bear_claw/Initialize()
+/obj/item/rogueweapon/bear_claw/Initialize(mapload)
 	. = ..()
 	ADD_TRAIT(src, TRAIT_NODROP, TRAIT_GENERIC)
 	ADD_TRAIT(src, TRAIT_NOEMBED, TRAIT_GENERIC)

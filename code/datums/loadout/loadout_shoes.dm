@@ -1,4 +1,14 @@
 //SHOES
+/datum/loadout_item/leatherboots
+	name = "Leather Boots"
+	path = /obj/item/clothing/shoes/roguetown/boots/leather
+	sort_category = "Shoes"
+
+/datum/loadout_item/furboots
+	name = "Fur Boots"
+	path = /obj/item/clothing/shoes/roguetown/boots/furlinedboots
+	sort_category = "Shoes"
+
 /datum/loadout_item/darkboots
 	name = "Dark Boots"
 	path = /obj/item/clothing/shoes/roguetown/boots
@@ -44,8 +54,8 @@
 	path = /obj/item/clothing/shoes/roguetown/boots/furlinedanklets
 	sort_category = "Shoes"
 
-/datum/loadout_item/exoticanklets
-	name = "Exotic Anklets"
+/datum/loadout_item/silkanklets
+	name = "Silk Anklets"
 	path = /obj/item/clothing/shoes/roguetown/anklets
 	sort_category = "Shoes"
 	cost = 2
@@ -54,3 +64,9 @@
 	name = "Raised Sandals"
 	path = /obj/item/clothing/shoes/roguetown/armor/rumaclan/shitty
 	sort_category = "Shoes"
+
+/datum/loadout_item/classicsandals
+	name = "Classical Sandals"
+	path = /obj/item/clothing/shoes/roguetown/sandals/toga
+	sort_category = "Shoes"
+

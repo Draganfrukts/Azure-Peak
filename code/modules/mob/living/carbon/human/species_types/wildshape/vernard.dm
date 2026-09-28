@@ -41,7 +41,6 @@
 		TRAIT_LONGSTRIDER
 	)
 	inherent_biotypes = MOB_HUMANOID
-	armor = 5
 	no_equip = list(SLOT_SHIRT, SLOT_HEAD, SLOT_WEAR_MASK, SLOT_ARMOR, SLOT_GLOVES, SLOT_SHOES, SLOT_PANTS, SLOT_CLOAK, SLOT_BELT, SLOT_BACK_R, SLOT_BACK_L, SLOT_S_STORE)
 	nojumpsuit = 1
 	sexes = 1
@@ -56,6 +55,7 @@
 		ORGAN_SLOT_LIVER = /obj/item/organ/liver,
 		ORGAN_SLOT_STOMACH = /obj/item/organ/stomach,
 		ORGAN_SLOT_APPENDIX = /obj/item/organ/appendix,
+		ORGAN_SLOT_GUTS = /obj/item/organ/guts,
 		)
 
 	languages = list(
@@ -73,10 +73,6 @@
 	human.update_damage_overlays()
 	return TRUE
 
-/datum/species/shapefox/on_species_gain(mob/living/carbon/carbon, datum/species/old_species)
-	. = ..()
-	RegisterSignal(carbon, COMSIG_MOB_SAY, PROC_REF(handle_speech))
-
 /datum/species/shapefox/update_damage_overlays(mob/living/carbon/human/human)
 	human.remove_overlay(DAMAGE_LAYER)
 	return TRUE
@@ -89,7 +85,6 @@
 	body_parts_covered = FULL_BODY
 	body_parts_inherent = FULL_BODY
 	armor = ARMOR_LEATHER
-	prevent_crits = PREVENT_CRITS_NONE
 	blocksound = SOFTHIT
 	blade_dulling = DULLING_BASHCHOP
 	sewrepair = FALSE
@@ -98,17 +93,17 @@
 
 /datum/intent/simple/fox
 	name = "claw"
-	clickcd = 10
+	clickcd = CLICK_CD_QUICK
 	icon_state = "incut"
 	blade_class = BCLASS_CUT
 	attack_verb = list("claws", "mauls", "eviscerates")
 	animname = "cut"
 	hitsound = "genslash"
-	penfactor = 10
+	penfactor = PEN_NONE
 	candodge = TRUE
 	canparry = TRUE
 	miss_text = "slashes the air!"
-	miss_sound = "bluntswoosh"
+	miss_sound = "bladewooshsmall"
 	item_d_type = "slash"
 
 /obj/item/rogueweapon/fox_claw
@@ -144,7 +139,7 @@
 /obj/item/rogueweapon/fox_claw/left
 	icon_state = "claw_l"
 
-/obj/item/rogueweapon/fox_claw/Initialize()
+/obj/item/rogueweapon/fox_claw/Initialize(mapload)
 	. = ..()
 	ADD_TRAIT(src, TRAIT_NODROP, TRAIT_GENERIC)
 	ADD_TRAIT(src, TRAIT_NOEMBED, TRAIT_GENERIC)

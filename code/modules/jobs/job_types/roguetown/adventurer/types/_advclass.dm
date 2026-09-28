@@ -3,8 +3,12 @@
 	var/list/classes
 	var/outfit
 	var/tutorial = "Choose me!"
+	var/townie_contract_gate_exempt = FALSE
+	var/townie_contract_gate_hide_in_list = FALSE
+	/// Subclass-specific tutorial shown via to_chat on spawn, separate from the class-picker tutorial.
+	var/subclass_tutorial
 	var/list/allowed_sexes
-	var/list/allowed_races = RACES_ALL_KINDS
+	var/list/forbidden_races
 	var/list/allowed_patrons
 	var/list/allowed_ages
 	var/pickprob = 100
@@ -44,8 +48,9 @@
 	/// Subclass virtues.
 	var/list/subclass_virtues
 
-	/// Spellpoints. If More than 0, Gives Prestidigitation & the Learning Spell.
-	var/subclass_spellpoints = 0
+	/// Mage aspect system config. If set, opens the Grimoire on learnspell.
+	/// Keys: "mastery" (bool), "major" (int), "minor" (int), "utilities" (int)
+	var/list/subclass_mage_aspects
 
 	/// List of items to put in an item stash
 	var/list/subclass_stashed_items = list()
@@ -59,13 +64,27 @@
 	/// set to TRUE to reset stats in equipme, clearing any racial bonuses or bonuses the character had before becoming this class
 	var/reset_stats = FALSE
 
+	var/list/virtue_limits = list()
+	var/list/vice_limits = list()
+
 	var/datum/class_age_mod/age_mod = null
+
+	var/class_tempo_faction = null
+
+	var/tempo_capable = TRUE
 
 /datum/advclass/New()
 	if(ispath(age_mod) && !istype(age_mod))
 		var/datum/class_age_mod/newmod = new age_mod()
 		age_mod = newmod
 	. = ..()
+
+/mob/living/carbon/human/proc/get_advclass_datum()
+	RETURN_TYPE(/datum/advclass)
+	if(mind?.picked_advclass)
+		return mind.picked_advclass
+	if(advjob)
+		return SSrole_class_handler.get_advclass_by_name(advjob)
 
 /datum/advclass/proc/equipme(mob/living/carbon/human/H, dummy = FALSE)
 	// input sleeps....
@@ -80,6 +99,8 @@
 			return
 
 	post_equip(H)
+
+	H.flag_gear_as_worn()
 
 	H.advjob = name
 
@@ -96,7 +117,9 @@
 		ADD_TRAIT(H, trait, ADVENTURER_TRAIT)
 
 	if(noble_income)
+		var/already_has_income = !isnull(SStreasury.noble_incomes[H])
 		SStreasury.noble_incomes[H] = noble_income
+		SStreasury.grant_estate_income(H, noble_income, !already_has_income)
 
 	if(adaptive_name)
 		H.adaptive_name = TRUE
@@ -116,6 +139,10 @@
 		for(var/skill in subclass_skills)
 			H.adjust_skillrank_up_to(skill, subclass_skills[skill], TRUE)
 
+	// Set up spell systems before virtues so Arcyne Potential can detect and add to them
+	if(LAZYLEN(subclass_mage_aspects))
+		H.mind?.setup_mage_aspects(subclass_mage_aspects.Copy())
+
 	if(length(subclass_virtues))
 		for(var/virtue in subclass_virtues)
 			apply_virtue(H, new virtue)
@@ -129,18 +156,74 @@
 			return
 		for(var/stashed_item in subclass_stashed_items)
 			H.mind?.special_items[stashed_item] = subclass_stashed_items[stashed_item]
-	if(subclass_spellpoints > 0)
-		H.mind?.adjust_spellpoints(subclass_spellpoints)
 
 	// After the end of adv class equipping, apply a SPECIAL trait if able
 
 	if(applies_post_equipment)
 		apply_character_post_equipment(H)
+	H.set_advsetup(FALSE)
+	H.mind?.refresh_spell_buttons()
+//======== Massive shitcode, that works at least.
+/datum/advclass/proc/get_vice_limits(mob/living/carbon/human/H)
+	if(length(vice_limits))
+		return vice_limits.Copy()
+	return list()
 
+/datum/advclass/proc/get_prefs_vice_limits(client/player)
+	if(length(vice_limits))
+		return vice_limits.Copy()
+	return list()
+
+/datum/advclass/proc/is_vice_limited(vice, list/limited_vices)
+	if(isnull(limited_vices))
+		limited_vices = vice_limits
+	if(!length(limited_vices) || !vice)
+		return FALSE
+	for(var/vicetype in limited_vices)
+		if(ispath(vice, vicetype) || istype(vice, vicetype))
+			return TRUE
+	return FALSE
+
+/datum/advclass/proc/has_limited_vice(list/current_vices, list/limited_vices)
+	if(isnull(limited_vices))
+		limited_vices = vice_limits
+	if(!length(current_vices) || !length(limited_vices))
+		return FALSE
+	for(var/vice in current_vices)
+		if(is_vice_limited(vice, limited_vices))
+			return TRUE
+	return FALSE
+
+/datum/advclass/proc/get_limited_vice_names(list/current_vices, list/limited_vices)
+	. = list()
+	if(isnull(limited_vices))
+		limited_vices = vice_limits
+	if(!length(current_vices) || !length(limited_vices))
+		return
+	for(var/cf_type in current_vices)
+		if(is_vice_limited(cf_type, limited_vices))
+			var/datum/charflaw/cf = GLOB.character_flaws_singletons[cf_type]
+			. += cf.name
+
+/datum/advclass/proc/get_prefs_restriction_names(client/player)
+	. = list()
+	if(!player?.prefs)
+		return
+	if(length(virtue_limits))
+		for(var/virtuetype in virtue_limits)
+			if(istype(player.prefs.virtue, virtuetype))
+				. += player.prefs.virtue.name
+			if(istype(player.prefs.virtuetwo, virtuetype))
+				. += player.prefs.virtuetwo.name
+	. += get_limited_vice_names(player.prefs.charflaws, get_prefs_vice_limits(player))
+//===
 /datum/advclass/proc/post_equip(mob/living/carbon/human/H)
-	addtimer(CALLBACK(H,TYPE_PROC_REF(/mob/living/carbon/human, add_credit), TRUE), 20)
+	if(H.ckey)
+		SScrediticons.processing[H.ckey] = TRUE
 	if(cmode_music)
 		H.cmode_music = cmode_music
+	if(class_tempo_faction)
+		H.tempo_faction_flag = class_tempo_faction
 
 /*
 	Whoa! we are checking requirements here!
@@ -162,7 +245,7 @@
 	if(length(local_allowed_sexes) && !(H.gender in local_allowed_sexes))
 		return FALSE
 
-	if(length(allowed_races) && !(H.dna.species.type in allowed_races))
+	if(length(forbidden_races) && (H.dna.species.type in forbidden_races))
 		return FALSE
 
 	if(length(allowed_ages) && !(H.age in allowed_ages))
@@ -170,6 +253,16 @@
 
 	if(length(allowed_patrons) && !(H.patron.type in allowed_patrons))
 		return FALSE
+
+	if(length(virtue_limits) && H.client)
+		for(var/virtuetype in virtue_limits)
+			if(istype(H.client.prefs?.virtue, virtuetype) || istype(H.client.prefs?.virtuetwo, virtuetype))
+				return FALSE
+
+	var/list/current_vice_limits = get_vice_limits(H)
+	if(length(current_vice_limits) && H.client)
+		if(has_limited_vice(H.charflaws, current_vice_limits))
+			return FALSE
 
 	if(maximum_possible_slots > -1)
 		if(total_slots_occupied >= maximum_possible_slots)
@@ -184,6 +277,45 @@
 	if(prob(pickprob))
 		return TRUE
 
+/datum/advclass/proc/prefs_lock_reason(datum/preferences/prefs)
+	if(!prefs)
+		return "unavailable"
+
+	var/datum/species/pref_species = prefs.pref_species
+	if(length(allowed_sexes))
+		var/list/local_allowed_sexes = allowed_sexes.Copy()
+		if(!immune_to_genderswap && pref_species?.gender_swapping)
+			if(MALE in allowed_sexes)
+				local_allowed_sexes -= MALE
+				local_allowed_sexes += FEMALE
+			if(FEMALE in allowed_sexes)
+				local_allowed_sexes -= FEMALE
+				local_allowed_sexes += MALE
+		if(length(local_allowed_sexes) && !(prefs.gender in local_allowed_sexes))
+			return "sex"
+
+	if(length(forbidden_races) && (pref_species?.type in forbidden_races))
+		return "species"
+
+	if(length(allowed_ages) && !(prefs.age in allowed_ages))
+		return "age"
+
+	if(length(allowed_patrons) && !(prefs.selected_patron?.type in allowed_patrons))
+		return "faith"
+
+	if(length(virtue_limits))
+		for(var/virtuetype in virtue_limits)
+			if(istype(prefs.virtue, virtuetype) || istype(prefs.virtuetwo, virtuetype))
+				return "virtue"
+
+	#ifdef USES_PQ
+	if(min_pq != -100 && prefs.parent)
+		if(get_playerquality(prefs.parent.ckey) < min_pq)
+			return "reputation"
+	#endif
+
+	return null
+
 // Basically the handler has a chance to plus up a class, heres a generic proc you can override to handle behavior related to it.
 // For now you just get an extra stat in everything depending on how many plusses you managed to get.
 /datum/advclass/proc/boost_by_plus_power(plus_factor, mob/living/carbon/human/H)
@@ -193,4 +325,3 @@
 
 //Final proc in the set for really silly shit
 ///datum/advclass/proc/extra_slop_proc_ending(mob/living/carbon/human/H)
-

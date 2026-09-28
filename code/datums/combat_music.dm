@@ -5,26 +5,28 @@
 	As of writing they are never directly applied to mobs themselves, only the name and musicpath are.
 	Deleting these datums or renaming subtypes will not break preferences; invalid saves get redirected to /default.
 	When adding new songs, add a shortname around ~12 characters for the game preferences menu.
-	
+
 	IMPORTANT! Be careful about adding songs to this list that aren't used anywhere else, lest you needlessly inflate the RSC.
 */
 
 // Admins: please don't molest my lists. You can't add new types at runtime anyways. Kisses! - Zoktiik
-GLOBAL_LIST_EMPTY(cmode_tracks_by_type)
 GLOBAL_LIST_EMPTY(cmode_tracks_by_name)
+GLOBAL_LIST_INIT(cmode_tracks_by_type, build_cmode_tracks())
 
-// People make mistakes. This should help catch when that happens.
-/proc/cmode_track_to_namelist(var/datum/combat_music/track)
-	if(!track)
-		return
-	if(!track.name)
-		LAZYREMOVE(GLOB.cmode_tracks_by_type, track.type)
-		CRASH("CMODE MUSIC: type [track.type] has no name!") 
-	if(GLOB.cmode_tracks_by_name[track.name])
-		LAZYREMOVE(GLOB.cmode_tracks_by_type, track.type)
-		CRASH("CMODE MUSIC: type [track.type] has duplicate name \"[track.name]\"!")
-	GLOB.cmode_tracks_by_name[track.name] = track
-	return
+/proc/build_cmode_tracks()
+	. = list()
+	for(var/path in subtypesof(/datum/combat_music))
+		var/datum/combat_music/track = new path()
+		// People make mistakes. This should help catch when that happens.
+		if(!track.name)
+			stack_trace("CMODE MUSIC: type [track.type] has no name!")
+			continue
+		if(LAZYACCESS(GLOB.cmode_tracks_by_name, track.name))
+			stack_trace("CMODE MUSIC: type [track.type] has duplicate name \"[track.name]\"!")
+			continue
+
+		.[path] = track
+		LAZYSET(GLOB.cmode_tracks_by_name, track.name, track)
 
 /datum/combat_music
 	var/name
@@ -32,6 +34,15 @@ GLOBAL_LIST_EMPTY(cmode_tracks_by_name)
 	var/shortname
 	var/credits
 	var/musicpath = list()
+
+/datum/combat_music/proc/constant_ui_data()
+	return list(
+		"type" = type,
+		"name" = name,
+		"desc" = desc,
+		"shortname" = shortname,
+		"credits" = credits,
+	)
 
 // Shit WILL break if you change /default's typepath. Don't do it.
 /datum/combat_music/default
@@ -73,14 +84,14 @@ GLOBAL_LIST_EMPTY(cmode_tracks_by_name)
 	desc = ""
 	shortname = "Adv. 3"
 	credits = "T-87 SULFURHEAD - MORTEM OBIRE (https://www.youtube.com/@T87-Sulfurhead)"
-	musicpath = list('sound/music/cmode/adventurer/combat_outlander3.ogg') 
+	musicpath = list('sound/music/cmode/adventurer/combat_outlander3.ogg')
 
 /datum/combat_music/adventurer_4
 	name = "Adventurer 4"
 	desc = ""
 	shortname = "Adv. 4"
 	credits = "T-87 SULFURHEAD - Snicker Snacker (https://www.youtube.com/@T87-Sulfurhead)"
-	musicpath = list('sound/music/cmode/adventurer/combat_outlander4.ogg') 
+	musicpath = list('sound/music/cmode/adventurer/combat_outlander4.ogg')
 
 /datum/combat_music/ascended
 	name = "Ascended"
@@ -123,6 +134,13 @@ GLOBAL_LIST_EMPTY(cmode_tracks_by_name)
 	shortname = "Bandit Rogue"
 	credits = "T-87 SULFURHEAD - Cutpurse (https://www.youtube.com/@T87-Sulfurhead)"
 	musicpath = list('sound/music/cmode/antag/combat_cutpurse.ogg')
+
+/datum/combat_music/bandit_mage
+	name = "Bandit Mage (Hedge Mage)"
+	desc = "I probably wouldn't shove a lucid memory of my mynd being torn apart in a stranger's face, if I didn't want to get skullcracked."
+	shortname = "Bandit Mage"
+	credits = "corru.works - Timestopper Tactics (https://corruworks.bandcamp.com)"
+	musicpath = list('sound/music/cmode/antag/combat_timestopper.ogg')
 
 /datum/combat_music/barbarian
 	name = "Barbarian"
@@ -251,6 +269,20 @@ GLOBAL_LIST_EMPTY(cmode_tracks_by_name)
 	credits = "T87-Sulfurhead - Black Powder (https://www.youtube.com/@T87-Sulfurhead)"
 	musicpath = list('sound/music/combat_graggar.ogg')
 
+/datum/combat_music/graggar_bloodrage
+	name = "Graggarite Psychosis"
+	desc = "BLOOD AND FURY SPLITTING MY SKULL! LAMBS TO THE SLAUGHTER!"
+	shortname = "Bloodrage"
+	credits = "Ben_19M - THE WHOLE BODY IS BULLETPROOF (https://www.youtube.com/@Ben_19M)"
+	musicpath = list('sound/music/combat_bloodrage.ogg')
+
+/datum/combat_music/heretic_psydon
+	name = "Heretic - Psydon"
+	desc = "THERE IS A TUMOR DIRECTLY BEHIND MY LEFT EYEBALL."
+	shortname = "Psy-Heretic"
+	credits = "corru.works - BSTRD (https://corruworks.bandcamp.com)"
+	musicpath = list('sound/music/cmode/antag/combat_adonai.ogg')
+
 /datum/combat_music/heretic_baotha
 	name = "Heretic - Baotha"
 	desc = ""
@@ -266,17 +298,24 @@ GLOBAL_LIST_EMPTY(cmode_tracks_by_name)
 	musicpath = list('sound/music/Iconoclast.ogg')
 
 /datum/combat_music/inquisitor
-	name = "Inquisitor (Monster Hunter/Spellbreaker)"
-	desc = ""
+	name = "Inquisitor ('Exorcist' Mix)"
+	desc = "To have memories of those you have loved and lost is perhaps harder than to have no memories at all."
 	shortname = "Inquisitor"
 	credits = "Hellsing OST RAID Track 15: Survival on the Street of Insincerity"
 	musicpath = list('sound/music/inquisitorcombat.ogg')
 
 /datum/combat_music/inquis_ordinator
-	name = "Inquisitor - Ordinator"
+	name = "Inquisitor ('Ordinator' Mix)"
 	desc = ""
-	shortname = "Ordinator"
+	shortname = "Inq. Ordinator"
 	musicpath = list('sound/music/combat_inqordinator.ogg')
+
+/datum/combat_music/inquis_commander
+	name = "Inquisitor ('Commander' Mix)"
+	desc = "One last parlay at the end of the world. Finish the fight, no matter the odds."
+	shortname = "Inq. Commander"
+	credits = "Summit - TimG"
+	musicpath = list('sound/music/combat_inqcommander.ogg')
 
 /datum/combat_music/jester
 	name = "Jester"
@@ -290,6 +329,24 @@ GLOBAL_LIST_EMPTY(cmode_tracks_by_name)
 	desc = ""
 	shortname = "Kazengite"
 	musicpath = list('sound/music/combat_kazengite.ogg')
+
+/datum/combat_music/firestorm
+	name = "Firestorm (Kazengun)"
+	desc = ""
+	shortname = "Firestorm"
+	musicpath = list('sound/music/combat_Kazengun_Firestorm.ogg')
+
+/datum/combat_music/overlord
+	name = "Overlord (Kazengun)"
+	desc = ""
+	shortname = "Overlord"
+	musicpath = list('sound/music/combat_Kazengun_Overlord.ogg')
+
+/datum/combat_music/runaway_chariot
+	name = "Runaway Chariot (Kazengun)"
+	desc = ""
+	shortname = "Runaway Chariot"
+	musicpath = list('sound/music/combat_Kazengun_Runaway_Chariot.ogg')
 
 /datum/combat_music/knight
 	name = "Knight (Noble)"
@@ -352,7 +409,7 @@ GLOBAL_LIST_EMPTY(cmode_tracks_by_name)
 	musicpath = list('sound/music/cmode/church/combat_necra.ogg')
 
 /datum/combat_music/noble
-	name = "Noble (Merchant/Freifechter)"
+	name = "Noble (Merchant)"
 	desc = ""
 	shortname = "Noble"
 	musicpath = list('sound/music/combat_noble.ogg')
@@ -518,7 +575,7 @@ GLOBAL_LIST_EMPTY(cmode_tracks_by_name)
 
 /datum/combat_music/aavshepherd
 	name = "Aavnic Shepherd"
-	desc = "\"No saber in hand, they crush bones with their fokos!\""
+	desc = "\"No sabre in hand, they crush bones with their fokos!\""
 	shortname = "Shepherd"
 	credits = "MusicImaginary - Yendrek"
 	musicpath = list('sound/music/frei_shepherd.ogg')

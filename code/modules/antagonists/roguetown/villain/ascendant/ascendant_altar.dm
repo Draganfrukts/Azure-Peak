@@ -1,7 +1,7 @@
 // OH GOD IT'S SO SHITTY IM SO SORRY PLEASE PLEAS EPLEASEP ELEA
 
 GLOBAL_LIST_INIT(psydon_pool, list(
-	/obj/item/clothing/suit/roguetown/armor/chainmail/hauberk,  //todo: items lol
+	/obj/item/clothing/suit/roguetown/armor/chainmail/hauberk,	//todo: items lol
 	/obj/item/clothing/suit/roguetown/armor/gambeson,
 	/obj/item/clothing/suit/roguetown/armor/leather,
 	/obj/item/reagent_containers/glass/bottle/waterskin,
@@ -79,7 +79,11 @@ GLOBAL_LIST_INIT(capstone_pool, list(
 	//check what ascendpoint they are on and add that trait
 	switch(ascendpoints)
 		if(1)
-			ADD_TRAIT(user, TRAIT_DECEIVING_MEEKNESS, TRAIT_GENERIC)
+			ADD_TRAIT(user, TRAIT_DECEIVING_MEEKNESS, TRAIT_VIRTUE)
+			add_verb(user, /mob/living/carbon/human/proc/toggle_descriptors)
+			add_verb(user, /mob/living/carbon/human/proc/emote_ffsalute)
+			add_verb(user, /mob/living/carbon/human/proc/toggle_guarded)
+
 			ADD_TRAIT(user, TRAIT_EMPATH, TRAIT_GENERIC)
 			ADD_TRAIT(user, TRAIT_STEELHEARTED, TRAIT_GENERIC)
 			to_chat(user, span_userdanger("I bow my head in humility as I begin my journey. MAJOR ARCANA : TEMPERANCE, UPRIGHT."))
@@ -91,8 +95,7 @@ GLOBAL_LIST_INIT(capstone_pool, list(
 		if(3)
 			ADD_TRAIT(user, TRAIT_NOPAIN, TRAIT_GENERIC)
 			ADD_TRAIT(user, TRAIT_NOPAINSTUN, TRAIT_GENERIC)
-			user.mind.AddSpell(new /obj/effect/proc_holder/spell/invoked/projectile/fireball)
-			user.mind.AddSpell(new /obj/effect/proc_holder/spell/invoked/projectile/lightningbolt)
+			user.mind.AddSpell(new /datum/action/cooldown/spell/projectile/lightning_bolt)
 			to_chat(user, span_userdanger("I have many enemies- AND they HAVE NOTHING. TEN OF SWORDS, UPRIGHT"))
 		if(4)
 			ADD_TRAIT(user, TRAIT_STABLEHEART, TRAIT_GENERIC)
@@ -165,7 +168,7 @@ GLOBAL_LIST_INIT(capstone_pool, list(
 		if(3)
 			to_chat(user, span_danger("AGONY. SPLITTING HEADACHE. THROBBING OF THE SOUL."))
 			user.flash_fullscreen("redflash3")
-			user.emote("agony", forced = TRUE)
+			user.emote("superagony", forced = TRUE)
 			sleep(20)
 			to_chat(user, span_userdanger("THEW ORLD is not real. my BREATH IS gone. my heart barely baeats. my veins are empty."))
 			sleep(50)
@@ -173,13 +176,13 @@ GLOBAL_LIST_INIT(capstone_pool, list(
 			sleep(30)
 			to_chat(user, span_userdanger("i am god i am god i am go di am ogod I AM GOD I AM GOD I AM GOD I AM GOD I AM GOD I AM GOD I AM GOD"))
 			user.flash_fullscreen("redflash3")
-			user.emote("agony", forced = TRUE)
+			user.emote("superagony", forced = TRUE)
 			user.Stun(30)
 			user.Knockdown(30)
 			sleep(30)
 			to_chat(user, span_userdanger("i am god i am god i am go di am ogod I AM GOD I AM GOD I AM GOD I AM GOD I AM GOD I AM GOD I AM GOD"))
 			user.flash_fullscreen("redflash3")
-			user.emote("agony", forced = TRUE)
+			user.emote("superagony", forced = TRUE)
 			user.Stun(100)
 			user.Knockdown(100)
 			for(var/i = 1, i <= 10, i++)
@@ -220,4 +223,4 @@ GLOBAL_LIST_INIT(capstone_pool, list(
 /obj/structure/ascendant_altar/proc/heavensaysdanger()
 	priority_announce("THE DREAMER HAS ASCENDED - MAJOR ARCANA : T$yh3 TOW##ER, RE v3RSED", "GOD IS COMING", 'sound/villain/ascendant_intro.ogg')
 	sleep(15 SECONDS)
-	to_chat(world, span_danger("The ground underneath THE THRONE shakes. The sky is opening."))
+	to_world(span_danger("The ground underneath THE THRONE shakes. The sky is opening."))

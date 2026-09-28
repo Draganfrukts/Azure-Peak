@@ -9,9 +9,9 @@ SUBSYSTEM_DEF(nightshift)
 
 	var/nightshift_active = FALSE
 	var/nightshift_start_time = 576000	//4pm	//702000=7:30 PM, station time
-	var/nightshift_dawn_start = 288000		//198000=    530am
-	var/nightshift_day_start = 360000		//270000=    730am
-	var/nightshift_dusk_start = 504000		//630000=    530pm
+	var/nightshift_dawn_start = 288000		//198000=	530am
+	var/nightshift_day_start = 360000		//270000=	730am
+	var/nightshift_dusk_start = 504000		//630000=	530pm
 
 	/* Default STONEKEEP config.
 	var/nightshift_start_time = 756000	//9:00 PM - 2100 hrs
@@ -27,7 +27,7 @@ SUBSYSTEM_DEF(nightshift)
 
 	var/high_security_mode = FALSE
 
-/datum/controller/subsystem/nightshift/Initialize()
+/datum/controller/subsystem/nightshift/Initialize(mapload)
 	if(!CONFIG_GET(flag/enable_night_shifts))
 		can_fire = FALSE
 	current_tod = settod()
@@ -37,6 +37,8 @@ SUBSYSTEM_DEF(nightshift)
 	if(world.time - SSticker.round_start_time < nightshift_first_check)
 		return
 	check_nightshift()
+	if(SSticker?.sunscorched)
+		process_sunscorch()
 
 /datum/controller/subsystem/nightshift/proc/announce(message)
 	priority_announce(message, sound='sound/misc/bell.ogg')
@@ -71,6 +73,23 @@ SUBSYSTEM_DEF(nightshift)
 	for(var/mob/living/M in GLOB.mob_list)
 		M.update_tod(GLOB.tod)
 
+/datum/controller/subsystem/nightshift/proc/process_sunscorch()
+	if(world.time < SSticker.sunscorch_burn_start_time)
+		return
+	if(!SSticker.sunscorch_burn_warning_sent)
+		SSticker.sunscorch_burn_warning_sent = TRUE
+		to_world(span_userdanger("THE WORM CONSUMES THE SUN. Deadly radiance falls on Azuria. Those outside will be unmade. The back of my amygdala itches."))
+	for(var/mob/living/M as anything in GLOB.mob_living_list)
+		if(M.stat == DEAD || !isturf(M.loc))
+			continue
+		var/turf/current_turf = M.loc
+		if(!current_turf.can_see_sky())
+			continue
+		if(HAS_TRAIT(M, TRAIT_UNFORGIVABLE)) //Doesn't affect cultists of Vheslyn
+			continue
+		M.fire_act(1, 5)
+		CHECK_TICK
+
 /obj/proc/update_tod(todd)
 	return
 
@@ -83,7 +102,7 @@ SUBSYSTEM_DEF(nightshift)
 		if(!cmode)
 			SSdroning.play_area_sound(areal, src.client)
 		SSdroning.play_loop(areal, src.client)
-	if(mode != NPC_AI_OFF)
+	if(ai_controller)
 		return
 	switch(todd)
 		if("day")
@@ -91,12 +110,9 @@ SUBSYSTEM_DEF(nightshift)
 				apply_status_effect(/datum/status_effect/debuff/vamp_dreams)
 			if(HAS_TRAIT(src, TRAIT_NIGHT_OWL))
 				apply_status_effect(/datum/status_effect/debuff/sleepytime)
-			if(HAS_TRAIT(src, TRAIT_INFINITE_STAMINA))
-				handle_sleep_triumphs()
-			if(HAS_TRAIT(src, TRAIT_NOSLEEP))
-				if(prob(30))
-					handle_sleep_triumphs()
 		if("night")
+			SEND_SIGNAL(src, COMSIG_SLEEPY_TIME)
+			handle_sleep_triumphs()
 			if(HAS_TRAIT(src, TRAIT_INFINITE_STAMINA) || HAS_TRAIT(src, TRAIT_NOSLEEP))
 				return ..()
 			if(HAS_TRAIT(src, TRAIT_NIGHT_OWL))
@@ -109,10 +125,6 @@ SUBSYSTEM_DEF(nightshift)
 	if(!mind)
 		return
 	allmig_reward++
-	var/triumphs_to_add = 1
-	var/static/list/towner_jobs
-	towner_jobs = GLOB.peasant_positions | GLOB.burgher_positions | GLOB.sidefolk_positions
-	if(mind.assigned_role != "Unassigned" && istype(mind.assigned_role, /datum/job) && (mind.assigned_role.title in towner_jobs)) //If you play a towner-related role, you get an additonal triumph
-		triumphs_to_add++
-	adjust_triumphs(triumphs_to_add)
-	to_chat(src, span_danger("Nights Survived: \Roman[allmig_reward]"))
+	if(!has_flaw(/datum/charflaw/noflaw))
+		adjust_triumphs(1)
+	to_chat(src, span_danger("Days Survived: \Roman[allmig_reward]"))

@@ -9,6 +9,7 @@
 	valid_positions += GLOB.garrison_positions
 	valid_positions += GLOB.peasant_positions
 	valid_positions += GLOB.burgher_positions
+	valid_positions += GLOB.atc_positions
 	valid_positions += GLOB.antagonist_positions
 
 
@@ -23,6 +24,7 @@
 				continue
 			J.current_positions = max(J.current_positions-1, 0)
 			reopened_jobs += L.job
+	enforce_storyteller_soft_antag_slots()
 
 //////////////////////////
 //Reports player logouts//
@@ -33,7 +35,7 @@
 		var/mob/living/L = i
 		var/mob/living/carbon/C = L
 		if (istype(C) && !C.last_mind)
-			continue  // never had a client
+			continue	// never had a client
 
 		if(L.ckey && !GLOB.directory[L.ckey])
 			msg += "<b>[L.name]</b> ([L.key]), the [L.job] (<font color='#ffcc00'><b>Disconnected</b></font>)\n"

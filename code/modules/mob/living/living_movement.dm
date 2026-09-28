@@ -1,10 +1,8 @@
-/mob/living/Moved()
+/mob/living/Moved(atom/OldLoc, Dir)
 	. = ..()
 	stop_looking()
 	update_turf_movespeed(loc)
 	update_pixel_shifting(TRUE)
-//	if(m_intent == MOVE_INTENT_RUN)
-//		consider_ambush()
 
 /mob/living/setDir(newdir, ismousemovement)
 	. = ..()
@@ -63,22 +61,31 @@
 		if(MOVE_INTENT_RUN)
 			mod = CONFIG_GET(number/movedelay/run_delay)
 		if(MOVE_INTENT_SNEAK)
+			var/base_walk = CONFIG_GET(number/movedelay/walk_delay)
+			var/default_delay
 			if(HAS_TRAIT(src, TRAIT_LIGHT_STEP))
-				mod = CONFIG_GET(number/movedelay/walk_delay) * 1.3
+				default_delay = base_walk * 1.3
 			else
-				mod = 6
+				default_delay = 6
+			var/skill = src.get_skill_level(/datum/skill/misc/sneaking)
+			var/skill_mod = 1.6 - (skill * 0.1)
+			var/skill_delay = base_walk * skill_mod
+			mod = min(default_delay, skill_delay)
 
-	var/spdchange = (10-STASPD)*0.1
-	spdchange = clamp(spdchange, -0.5, 1)  //if this is not clamped, maniacs will run at unfathomable speed
+	var/spdchange = (10-get_effective_speed())*SPEED_MOVSPD_MOD
+	//spdchange = clamp(spdchange, -0.5, 1)	//Previous clamp when MOVSPD_MOD was at 0.1
 	mod = mod+spdchange
-	//maximum speed is achieved at 15spd, everything else results in insanity
 	add_movespeed_modifier(MOVESPEED_ID_MOB_WALK_RUN_CONFIG_SPEED, TRUE, 100, override = TRUE, multiplicative_slowdown = mod)
+
+/// The SPD stat used for movement-delay math. Overridden where things clamp it
+/mob/living/proc/get_effective_speed()
+	return STASPD
 
 /mob/living/proc/update_turf_movespeed(turf/open/T)
 	if(isopenturf(T))
-		var/usedslow = T.get_slowdown(src)
-		if(HAS_TRAIT(src, TRAIT_TRAM_MOVER))
-			usedslow = 0
+		var/usedslow = 0
+		if(!HAS_TRAIT(src, TRAIT_TRAM_MOVER))
+			usedslow = T.get_slowdown(src)
 		if(usedslow != 0)
 			add_movespeed_modifier(MOVESPEED_ID_LIVING_TURF_SPEEDMOD, update=TRUE, priority=100, multiplicative_slowdown=usedslow, movetypes=GROUND)
 		else
@@ -119,7 +126,7 @@
 	remove_movespeed_modifier(MOVESPEED_ID_BULKY_DRAGGING)
 
 /mob/living/can_zFall(turf/T, levels)
-	if(HAS_TRAIT(src, TRAIT_WOODWALKER))
+	if(HAS_TRAIT(src, TRAIT_WOODWALKER) && !HAS_TRAIT(src, TRAIT_DEADITE)) //Zombies just fall through leaves, we're not doing that. Stop.
 		for(var/leaf in T.contents)
 			if(istype(leaf, /obj/structure/flora/newleaf))
 				return FALSE

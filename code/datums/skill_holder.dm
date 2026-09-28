@@ -11,6 +11,7 @@
 /mob/proc/get_skill_level(skill)
 	return ensure_skills().get_skill_level(skill)
 
+/// You almost certainly do not want to call this proc directly, as it will bypass the sleep levelling system and can bypass trait caps as well. Use the global proc add_sleep_experience instead, which does respect both of those systems.
 /mob/proc/adjust_experience(skill, amt, silent=FALSE, check_apprentice=TRUE)
 	return ensure_skills().adjust_experience(skill, amt, silent, check_apprentice)
 
@@ -29,6 +30,25 @@
 /mob/proc/print_levels()
 	return ensure_skills().print_levels(src)
 
+/mob/living/carbon/human/proc/update_adaptive_name()
+	if(!adaptive_name)
+		return
+	if(adaptive_name_title)
+		advjob = adaptive_name_title
+		return
+
+	var/list/jobnames = list()
+	for(var/skillt in SSskills.all_skills)
+		var/datum/skill/sk = GetSkillRef(skillt)
+		var/title = initial(sk.expert_name)
+		if(!title)
+			continue
+		if(get_skill_level(sk.type) >= SKILL_LEVEL_EXPERT)
+			jobnames.Add(title)
+	if(!length(jobnames))
+		return
+	advjob = jointext(jobnames, "-")
+
 /mob/proc/get_mentor()
 	return ensure_skills().mentor
 
@@ -40,6 +60,27 @@
 
 /mob/proc/set_apprentice(mob/living/carbon/human/A)
 	ensure_skills().my_apprentice = A
+
+/mob/proc/get_knight_lord()
+	return ensure_skills().knight_lord
+
+/mob/proc/set_knight_lord(mob/living/carbon/human/M)
+	ensure_skills().knight_lord = M
+
+/mob/proc/get_squire()
+	return ensure_skills().my_squire
+
+/mob/proc/set_squire(mob/living/carbon/human/S)
+	ensure_skills().my_squire = S
+
+// TRUE if src can read empath-only reveals on target. Anyone with TRAIT_EMPATH gets the global
+// version; a Knight gets it for free against their own bonded protégé and nobody else.
+/mob/proc/has_empath_for(mob/target)
+	if(HAS_TRAIT(src, TRAIT_EMPATH))
+		return TRUE
+	if(target && get_squire() == target)
+		return TRUE
+	return FALSE
 
 /datum/skill_holder
 	///our current host
@@ -54,6 +95,10 @@
 	// This is used by the Take Apprentice spell.
 	var/mob/living/carbon/human/mentor = null
 	var/mob/living/carbon/human/my_apprentice = null
+	// Knight-Squire protégé bond. Independent of the trade-skill apprentice system above; a Squire
+	// may simultaneously be someone's trade apprentice and a Knight's protégé.
+	var/mob/living/carbon/human/knight_lord = null
+	var/mob/living/carbon/human/my_squire = null
 
 /datum/skill_holder/New()
 	. = ..()
@@ -226,22 +271,7 @@
 	if(ishuman(current))
 		var/mob/living/carbon/human/H = current
 		if(H.adaptive_name)
-			var/str
-			var/list/jobnames = list()
-			for(var/skillt in SSskills.all_skills)
-				var/datum/skill/sk = GetSkillRef(skillt)
-				if(current.get_skill_level(sk.type) >= SKILL_LEVEL_EXPERT)
-					jobnames.Add(initial(sk.expert_name))
-			if(length(jobnames))
-				if(length(jobnames) == 1)
-					current.advjob = jobnames[1]
-				else
-					for(var/i in 1 to length(jobnames))
-						if(i == 1)
-							str += "[jobnames[i]]"
-						else
-							str += "-[jobnames[i]]"
-					current.advjob = str
+			H.update_adaptive_name()
 
 /datum/skill_holder/proc/get_skill_speed_modifier(skill)
 	var/datum/skill/S = GetSkillRef(skill)
@@ -256,6 +286,50 @@
 		return SKILL_LEVEL_NONE
 	return known_skills[S] + modifier || SKILL_LEVEL_NONE
 
+/datum/skill_holder/proc/get_effective_skill_cap(datum/skill/skill_ref)
+	var/cap = skill_ref.max_untraited_level
+	#ifdef USES_TRAIT_SKILL_GATING
+	if(LAZYLEN(skill_ref.trait_uncap))
+		for(var/trait_name in skill_ref.trait_uncap)
+			if(HAS_TRAIT(current, trait_name) && (skill_ref.trait_uncap[trait_name] > cap))
+				cap = skill_ref.trait_uncap[trait_name]
+	#endif
+	#ifndef USES_TRAIT_SKILL_GATING
+	cap = SKILL_LEVEL_LEGENDARY
+	#endif
+	return cap
+
+/datum/skill_holder/proc/get_xp_brackets(skill_level)
+	switch(skill_level)
+		if(SKILL_LEVEL_NONE)
+			return list(0, SKILL_EXP_NOVICE)
+		if(SKILL_LEVEL_NOVICE)
+			return list(SKILL_EXP_NOVICE, SKILL_EXP_APPRENTICE)
+		if(SKILL_LEVEL_APPRENTICE)
+			return list(SKILL_EXP_APPRENTICE, SKILL_EXP_JOURNEYMAN)
+		if(SKILL_LEVEL_JOURNEYMAN)
+			return list(SKILL_EXP_JOURNEYMAN, SKILL_EXP_EXPERT)
+		if(SKILL_LEVEL_EXPERT)
+			return list(SKILL_EXP_EXPERT, SKILL_EXP_MASTER)
+		if(SKILL_LEVEL_MASTER)
+			return list(SKILL_EXP_MASTER, SKILL_EXP_LEGENDARY)
+		if(SKILL_LEVEL_LEGENDARY)
+			return list(SKILL_EXP_LEGENDARY, SKILL_EXP_LEGENDARY)
+	return list(0, SKILL_EXP_NOVICE)
+
+/// Returns a color hex for a given XP percentage threshold
+/datum/skill_holder/proc/get_progress_color(percent)
+	switch(percent)
+		if(0 to 24)
+			return "#cc3333" // Red
+		if(25 to 49)
+			return "#cc9933" // Orange/Yellow
+		if(50 to 74)
+			return "#3399cc" // Blue
+		if(75 to 100)
+			return "#33cc66" // Green
+	return "#cc3333"
+
 /datum/skill_holder/proc/print_levels(user)
 	var/list/shown_skills = list()
 	for(var/i in known_skills)
@@ -264,17 +338,62 @@
 	if(!length(shown_skills))
 		to_chat(user, span_warning("I don't have any skills."))
 		return
-	var/msg = ""
-	msg += span_info("*---------*\n")
+
 	var/list/sorted_skills = sortList(shown_skills, GLOBAL_PROC_REF(cmp_skills_for_display))
+	var/bc = "#555555"
+	var/msg = {"<table style='border-collapse: collapse; border: 1px solid [bc];'>"}
+	msg += {"<tr style='border-bottom: 1px solid [bc];'>"}
+	msg += {"<td style='padding: 1px 4px; border-right: 1px solid [bc]; color: #aaaaaa;'><b>Skill</b></td>"}
+	msg += {"<td style='padding: 1px 4px; border-right: 1px solid [bc]; color: #aaaaaa;'><b>Level</b></td>"}
+	msg += {"<td style='padding: 1px 4px; border-right: 1px solid [bc]; color: #aaaaaa;'><b>XP</b></td>"}
+	msg += {"<td style='padding: 1px 2px;'></td>"}
+	msg += "</tr>"
 	for(var/datum/skill/i in sorted_skills)
+		var/skill_level = known_skills[i]
+		var/effective_cap = get_effective_skill_cap(i)
+		var/is_legendary = (skill_level >= SKILL_LEVEL_LEGENDARY)
+		var/is_capped = !is_legendary && (skill_level >= effective_cap)
+
 		var/can_advance_post = current?.mind?.sleep_adv.enough_sleep_xp_to_advance(i.type, 1)
 		var/capped_post = current?.mind?.sleep_adv.enough_sleep_xp_to_advance(i.type, 2)
-		var/rankup_postfix = capped_post ? span_nicegreen(" ★ ") : can_advance_post ? span_nicegreen(" ☆ ") : ""
-		var/skill_name = "<span style='color: [i.color]'>[i]</span>"
-		msg += "[skill_name] - [SSskills.level_names[known_skills[i]]][rankup_postfix] <a href='?src=[REF(i)];skill_detail=1' style='font-size: 0.5em;'>{?}</a>\n"
-	msg += "</span>"
+		var/rankup_postfix = capped_post ? span_nicegreen(" ★") : can_advance_post ? span_nicegreen(" ☆") : ""
 
+		// Progress column
+		var/progress_col
+		if(is_capped)
+			progress_col = "<b style='color: #cc3333;'>CAPPED</b>"
+		else if(is_legendary)
+			progress_col = "<span style='color: #555555;'>---</span>"
+		else
+			var/percent = 0
+			if(skill_level >= SKILL_LEVEL_APPRENTICE)
+				// Apprentice+ uses sleep XP system for progression
+				var/datum/sleep_adv/sadv = current?.mind?.sleep_adv
+				if(sadv)
+					var/sleep_xp = sadv.get_sleep_xp(i.type)
+					var/needed_xp = sadv.get_requried_sleep_xp_for_skill(i.type, 1)
+					if(needed_xp > 0)
+						percent = clamp(round(sleep_xp * 100 / needed_xp), 0, 200)
+			else
+				// Below Apprentice, XP is tracked directly on skill_experience
+				var/list/brackets = get_xp_brackets(skill_level)
+				var/current_xp = skill_experience[i]
+				var/bracket_start = brackets[1]
+				var/bracket_end = brackets[2]
+				var/bracket_range = bracket_end - bracket_start
+				if(bracket_range > 0)
+					percent = clamp(round((current_xp - bracket_start) * 100 / bracket_range), 0, 100)
+			var/pct_color = get_progress_color(percent)
+			progress_col = "<span style='color: [pct_color];'>[percent]%</span>"
+
+		msg += "<tr style='border-bottom: 1px solid [bc];'>"
+		msg += {"<td style='padding: 1px 4px; border-right: 1px solid [bc];'><span style='color: [i.color]'>[i]</span></td>"}
+		msg += {"<td style='padding: 1px 4px; border-right: 1px solid [bc]; white-space: nowrap;'>[SSskills.level_names[skill_level]][rankup_postfix]</td>"}
+		msg += {"<td style='padding: 1px 4px; border-right: 1px solid [bc]; white-space: nowrap;'>[progress_col]</td>"}
+		msg += {"<td style='padding: 1px 2px;'><a href='?src=[REF(i)];skill_detail=1' style='font-size: 0.5em;'>{?}</a></td>"}
+		msg += "</tr>"
+
+	msg += "</table>"
 	to_chat(user, msg)
 
 /mob/proc/get_inspirational_bonus()

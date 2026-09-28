@@ -30,6 +30,14 @@
 /mob/living/carbon/human/death(gibbed, nocutscene = FALSE)
 	if(stat == DEAD)
 		return
+	if(QDELETED(src) || !loc)
+		return
+
+	if(SScity_assembly?.is_alderman(src))
+		var/departing_name = real_name
+		var/departing_job = job
+		SScity_assembly.demote_alderman("Alderman has died")
+		SScity_assembly.notify_alderman_lost_ref(departing_name, departing_job, "died")
 
 	var/area/A = get_area(src)
 	dna?.species?.stop_wagging_tail(src)
@@ -38,6 +46,22 @@
 		SSdroning.kill_droning(client)
 		SSdroning.kill_loop(client)
 		SSdroning.kill_rain(client)
+
+	if(!gibbed && HAS_TRAIT(src, TRAIT_SKELETAL_GIB_ON_DEATH))
+		playsound(src, pick('sound/vo/mobs/skel/skeleton_death (1).ogg','sound/vo/mobs/skel/skeleton_death (2).ogg','sound/vo/mobs/skel/skeleton_death (3).ogg','sound/vo/mobs/skel/skeleton_death (4).ogg','sound/vo/mobs/skel/skeleton_death (5).ogg'), 60, TRUE)
+		gib(no_brain = TRUE, no_organs = TRUE)
+
+	if(!gibbed && HAS_TRAIT(src, TRAIT_DUSTABLE))
+		if(HAS_TRAIT(src, TRAIT_DUST_LEAVE_HEAD))
+			var/obj/item/bodypart/head/head = get_bodypart(BODY_ZONE_HEAD)
+			if(head)
+				head.drop_limb()
+		var/delete_gear = HAS_TRAIT(src, TRAIT_DUST_DELETE_GEAR)
+		if(delete_gear)
+			for(var/obj/item/gear in get_equipped_items(TRUE) + held_items)
+				qdel(gear)
+		dust(just_ash=TRUE, drop_items=!delete_gear)
+		return
 
 	if(mind)
 		if(!gibbed)
@@ -48,11 +72,6 @@
 				var/datum/mind/playermind = mind
 				addtimer(CALLBACK(src, PROC_REF(secondliferespawn), playermind), respawn_time, TIMER_UNIQUE)
 				REMOVE_TRAIT(mind.current,TRAIT_SECONDLIFE,TRAIT_GENERIC)
-
-			var/has_dust_trait = HAS_TRAIT(mind.current, TRAIT_DUSTABLE)
-			if(has_dust_trait)
-				dust(just_ash=TRUE,drop_items=TRUE)
-				return
 
 		var/datum/antagonist/lich/L = mind.has_antag_datum(/datum/antagonist/lich)
 		if (L && !L.out_of_lives)
@@ -68,7 +87,7 @@
 
 	if(client || mind)
 		record_round_statistic(STATS_DEATHS)
-		var/area_of_death = lowertext(get_area_name(src))
+		var/area_of_death = LOWER_TEXT(get_area_name(src))
 		if(area_of_death == "wilderness")
 			record_round_statistic(STATS_FOREST_DEATHS)
 		if(is_noble())
@@ -76,6 +95,7 @@
 		if(ishumannorthern(src))
 			record_round_statistic(STATS_HUMEN_DEATHS)
 		if(mind)
+			cmode = FALSE
 			if(mind.assigned_role in GLOB.church_positions)
 				record_round_statistic(STATS_CLERGY_DEATHS)
 			if(mind.has_antag_datum(/datum/antagonist/vampire))
@@ -108,7 +128,7 @@
 //		else
 //			if(get_triumphs() > 0)
 //				tris2take += -1
-		if(H in SStreasury.bank_accounts)
+		if(SStreasury.has_account(H))
 			for(var/obj/structure/roguemachine/camera/C in view(7, src))
 				var/area_name = A.name
 				var/texty = "<CENTER><B>Death of a Living Being</B><br>---<br></CENTER>"

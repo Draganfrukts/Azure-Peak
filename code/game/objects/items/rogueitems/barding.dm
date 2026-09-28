@@ -11,7 +11,7 @@
 	var/list/valid_animal_types = list(
 		/mob/living/simple_animal/hostile/retaliate/rogue/saiga
 	)
-	armor = ARMOR_PADDED_GOOD
+	armor = ARMOR_PADDED
 	max_integrity = ARMOR_INT_CHEST_LIGHT_MASTER
 	break_sound = 'sound/foley/cloth_rip.ogg'
 	drop_sound = 'sound/foley/dropsound/cloth_drop.ogg'
@@ -39,6 +39,9 @@
 		return
 	if(!animal.ssaddle)
 		to_chat(user, span_warning("[animal] needs to be saddled before you can fit a bard onto it!"))
+		return
+	if(user.buckled)
+		to_chat(user, span_warning("You need to hop off [user.buckled] before you can drape [src] on [animal]."))
 		return
 
 	user.visible_message(span_notice("[user] is fitting a bard onto [animal]..."), span_notice("I start fitting a bard onto [animal]..."))

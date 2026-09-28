@@ -1,16 +1,16 @@
 /datum/advclass/heartfelt/retinue/servant
-	name = "Heartfelt Servant"		
+	name = "Heartfelt Servant"
 	tutorial = "You are Servant of Heartfelt, a Servant of the prosperous borderlands. \
 	However, with the increase in banditry, necromancy, deadite risings, and increasing sea raider raids, there are rumors abound that Heartfelt is not what it used to be. \
 	Travellers often warn of Heartfelt having fallen already, and words of secretive cultists isn't unheard of."
 	allowed_sexes = list(MALE, FEMALE)
-	allowed_races = ACCEPTED_RACES
+	forbidden_races = list(RACES_DESPISED)
 	outfit = /datum/outfit/job/roguetown/heartfelt/retinue/servant
 	maximum_possible_slots = 4
 	pickprob = 100
 	category_tags = list(CTAG_HFT_RETINUE)
 	class_select_category = CLASS_CAT_HFT_WORKER
-	traits_applied = list(TRAIT_CICERONE, TRAIT_KEENEARS, TRAIT_SLEUTH, TRAIT_HOMESTEAD_EXPERT, TRAIT_SEWING_EXPERT, TRAIT_HEARTFELT)
+	traits_applied = list(TRAIT_CICERONE, TRAIT_KEENEARS, TRAIT_HOMESTEAD_EXPERT, TRAIT_SEWING_EXPERT, TRAIT_HEARTFELT)
 
 	subclass_stats = list(
 		STATKEY_INT = 2,

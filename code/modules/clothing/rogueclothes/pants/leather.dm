@@ -8,9 +8,7 @@
 //	adjustable = CAN_CADJUST
 	sewrepair = TRUE
 	armor = ARMOR_PADDED_BAD
-	prevent_crits = PREVENT_CRITS_NONE
 	blocksound = SOFTHIT
-	blade_dulling = DULLING_BASHCHOP
 	r_sleeve_status = SLEEVE_NORMAL
 	l_sleeve_status = SLEEVE_NORMAL
 	armor_class = ARMOR_CLASS_LIGHT
@@ -53,7 +51,7 @@
 
 /obj/item/clothing/under/roguetown/trou/artipants
 	name = "tinker trousers"
-	desc = "Thick leather trousers designed to protect the wearer from sparks or stray gear projectiles. Judging by the scouring, its had plenty of use."
+	desc = "Thick leather trousers designed to protect the wearer from sparks or stray gear projectiles. Judging by the scouring, it's had plenty of use."
 	icon_state = "artipants"
 	item_state = "artipants"
 
@@ -71,6 +69,13 @@
 	item_state = "monkpants"
 	naledicolor = TRUE
 	salvage_result = /obj/item/natural/hide/cured
+
+/obj/item/clothing/under/roguetown/trou/leather/pontifex/loadout
+	name = "aesthetic pontifex's chaqchur"
+
+/obj/item/clothing/under/roguetown/trou/leather/pontifex/loadout/Initialize(mapload)
+	. = ..()
+	loadoutize()
 
 /obj/item/clothing/under/roguetown/trou/leather/pontifex/raneshen
 	name = "baggy desert pants"

@@ -10,57 +10,87 @@
 	var/deposit_amount = 0
 	var/complete = FALSE
 
-	/// Progress tracking
+	var/source = QUEST_SOURCE_HANDLER
+	var/created_at = 0
+	var/issued_day = 0
+
 	var/progress_current = 0
 	var/progress_required = 1
 
-	/// Target item type for fetch quests
 	var/obj/item/target_item_type
-	/// Target item type for courier quests
 	var/obj/item/target_delivery_item
-	/// Target mob type for kill quests
-	var/mob/target_mob_type
-	/// Location for courier quests
+	var/mob/living/target_mob_type
 	var/area/rogue/indoors/town/target_delivery_location
-	/// Location name for kill/clear quests
 	var/target_spawn_area = ""
 
-	/// Scroll icon state
 	var/quest_icon = "scroll_quest"
 
-	/// Fallback reference to the spawned scroll
-	var/obj/item/paper/scroll/quest/quest_scroll
-	/// Weak reference to the quest scroll
+	var/obj/item/quest_writ/quest_scroll
 	var/datum/weakref/quest_scroll_ref
-	/// List of weakrefs to actual quest items/mobs for reducing overhead of compass.
 	var/list/datum/weakref/tracked_atoms = list()
+	var/datum/weakref/pending_landmark_ref
+	var/materialized = FALSE
+	var/region = ""
+	var/faction_id
+	var/datum/quest_faction/faction
+	var/required_fellowship_size = 0
+	var/levy_exempt = FALSE
+	var/guild_cut_exempt = FALSE
+	var/is_directive = FALSE
+	var/list/datum/weakref/spawners = list()
+	var/list/rolled_crimes
+	var/sacral_hook = FALSE
+	var/oath_breach = FALSE
+	var/condemnation_variant = ""
+	var/band_leader_name = ""
+	var/writ_type = WRIT_TYPE_OUTLAWRY
+	var/circumstance_text = ""
+	var/list/funding_sources
+	var/funding_rumor_points = 0
+	var/warrant_consumed = 0
+	var/list/issue_log_entry
+	var/last_claimed_at = 0
+	var/engaged = FALSE
+	var/datum/fund/deposit_payer
+	var/deposit_paid = 0
+
+/datum/quest/proc/get_lapse_time()
+	var/window = (source == QUEST_SOURCE_POOL) ? QUEST_POOL_STALE_THRESHOLD : QUEST_PLAYER_STALE_THRESHOLD
+	return created_at + window
 
 /datum/quest/Destroy()
-	// Clean up mobs with quest components
-	for(var/mob/living/M in GLOB.mob_list)
-		var/datum/component/quest_object/Q = M.GetComponent(/datum/component/quest_object)
-		if(Q && Q.quest_ref?.resolve() == src)
-			M.remove_filter("quest_item_outline")
-			qdel(Q)
+	var/obj/effect/landmark/quest_spawner/held_landmark = pending_landmark_ref?.resolve()
+	if(held_landmark)
+		if(held_landmark.claimed_by?.resolve() == src)
+			held_landmark.claimed_by = null
+		if(materialized)
+			held_landmark.cooldown_until = world.time + QUEST_LANDMARK_COOLDOWN
+
+	for(var/datum/weakref/spawner_ref in spawners)
+		var/obj/effect/quest_spawn/spawner = spawner_ref.resolve()
+		if(!QDELETED(spawner))
+			qdel(spawner)
+	spawners.Cut()
 
 	for(var/datum/weakref/tracked_weakref in tracked_atoms)
 		var/atom/target_atom = tracked_weakref.resolve()
-		if(QDELETED(target_atom))
-			continue
-
-		// Only delete the item if it's part of a fetch or courier quest
-		if(quest_type == QUEST_RETRIEVAL && istype(target_atom, target_item_type))
-			qdel(target_atom)
-		else if(quest_type == QUEST_COURIER && istype(target_atom, target_delivery_item))
-			qdel(target_atom)
-
-		tracked_atoms -= tracked_weakref
-		qdel(tracked_weakref)
+		if(!QDELETED(target_atom))
+			if(ismob(target_atom))
+				var/mob/M = target_atom
+				var/datum/component/quest_object/Q = M.GetComponent(/datum/component/quest_object)
+				if(Q && Q.quest_ref?.resolve() == src)
+					M.remove_filter("quest_item_outline")
+					qdel(Q)
+			else if(!complete && target_item_type && quest_type == QUEST_RETRIEVAL && istype(target_atom, target_item_type))
+				qdel(target_atom)
+			else if(!complete && target_delivery_item && quest_type == QUEST_COURIER && istype(target_atom, target_delivery_item))
+				qdel(target_atom)
+	tracked_atoms.Cut()
 
 	// Clean up references
 	quest_scroll = null
 	if(quest_scroll_ref)
-		var/obj/item/paper/scroll/quest/Q = quest_scroll_ref.resolve()
+		var/obj/item/quest_writ/Q = quest_scroll_ref.resolve()
 		if(Q && !QDELETED(Q))
 			Q.assigned_quest = null
 			qdel(Q)
@@ -71,61 +101,104 @@
 /datum/quest/proc/add_tracked_atom(atom/movable/to_track)
 	tracked_atoms += WEAKREF(to_track)
 
-/// Generate quest content - override in subtypes
-/datum/quest/proc/generate(obj/effect/landmark/quest_spawner/landmark)
-	if(!title)
-		title = get_title()
+/datum/quest/proc/preview(obj/effect/landmark/quest_spawner/landmark)
+	if(!landmark)
+		return FALSE
+	pending_landmark_ref = WEAKREF(landmark)
+	target_spawn_area = get_area_name(get_turf(landmark))
+	region = landmark.region
 	return TRUE
 
-/// Get the quest title - override in subtypes for dynamic titles
+/datum/quest/proc/finalize_preview_title()
+	if(!title)
+		title = get_title()
+	if(!rolled_crimes && faction)
+		faction.compose_preamble(src)
+	if(!circumstance_text)
+		circumstance_text = roll_circumstance()
+
+/datum/quest/proc/roll_circumstance()
+	switch(writ_type)
+		if(WRIT_TYPE_RECOVERY)
+			return pick_recovery_circumstance()
+		if(WRIT_TYPE_CARRIAGE)
+			return pick_carriage_circumstance()
+	return ""
+
+/datum/quest/proc/get_named_target()
+	return null
+
+/datum/quest/proc/get_recovery_shipment_name()
+	return null
+
+/datum/quest/proc/register_spawner(obj/effect/quest_spawn/spawner)
+	spawners += WEAKREF(spawner)
+
+/datum/quest/proc/pop_all_spawners()
+	if(length(spawners))
+		engaged = TRUE
+		on_first_pop()
+	for(var/datum/weakref/ref in spawners)
+		var/obj/effect/quest_spawn/spawner = ref.resolve()
+		if(QDELETED(spawner) || !spawner.contained_atom)
+			continue
+		spawner.reveal_contained()
+	spawners.Cut()
+
+/datum/quest/proc/on_first_pop()
+	return
+
+/datum/quest/proc/materialize(obj/effect/landmark/quest_spawner/landmark)
+	return TRUE
+
 /datum/quest/proc/get_title()
 	return title
 
-/// Get objective text for scroll display
 /datum/quest/proc/get_objective_text()
 	return "Complete the objective."
 
-/// Get location text for scroll display
-/datum/quest/proc/get_location_text()
-	return target_spawn_area ? "Reported sighting in [target_spawn_area] region." : "Location unknown."
+/datum/quest/proc/populate_scroll_ui_data(list/data)
+	return
 
-/// Check if quest objectives are complete
+/datum/quest/proc/populate_scroll_ui_static_data(list/data)
+	return
+
 /datum/quest/proc/check_completion()
 	return progress_current >= progress_required
 
-/// Called when progress is updated
 /datum/quest/proc/on_progress_update()
 	if(check_completion())
 		mark_complete()
-	else
-		quest_scroll?.update_quest_text()
 
-/// Mark quest as complete
 /datum/quest/proc/mark_complete()
 	complete = TRUE
 	quest_scroll?.update_quest_text()
 
-// Base reward scaled only to difficulty
 /datum/quest/proc/get_base_reward()
-	switch(quest_difficulty)
-		if(QUEST_DIFFICULTY_EASY)
-			return rand(QUEST_REWARD_EASY_LOW, QUEST_REWARD_EASY_HIGH)
-		if(QUEST_DIFFICULTY_MEDIUM)
-			return rand(QUEST_REWARD_MEDIUM_LOW, QUEST_REWARD_MEDIUM_HIGH)
-		if(QUEST_DIFFICULTY_HARD)
-			return rand(QUEST_REWARD_HARD_LOW, QUEST_REWARD_HARD_HIGH)
+	return QUEST_REWARD_BASE_FLAT
 
-// Additional reward, override in subtypes for specific calculations. Called AFTER generation.
-/datum/quest/proc/get_additional_reward(turf/target_turf)
+/datum/quest/proc/get_additional_reward(turf/origin_turf, turf/target_turf)
 	return 0
 
-/// Calculate reward based on base + additional reward. Called AFTER generation.
-/datum/quest/proc/calculate_reward(turf/target_turf)
+/datum/quest/proc/calculate_reward(turf/origin_turf, turf/target_turf)
 	var/base = get_base_reward()
-	var/additional = get_additional_reward(target_turf)
-	return base + additional
+	var/additional = get_additional_reward(origin_turf, target_turf)
+	var/payout_mult = QUEST_REWARD_GLOBAL_MULT
+	var/datum/threat_region/TR = SSregionthreat.get_region(region)
+	if(TR)
+		payout_mult *= TR.payout_multiplier
+	return round((base + additional + get_difficulty_bonus()) * payout_mult)
 
-/// Calculate deposit based on difficulty
+/datum/quest/proc/get_difficulty_bonus()
+	switch(quest_difficulty)
+		if(QUEST_DIFFICULTY_MEDIUM)
+			return QUEST_DIFFICULTY_BONUS_MEDIUM
+		if(QUEST_DIFFICULTY_HARD)
+			return QUEST_DIFFICULTY_BONUS_HARD
+		if(QUEST_DIFFICULTY_NOTORIOUS)
+			return QUEST_DIFFICULTY_BONUS_NOTORIOUS
+	return QUEST_DIFFICULTY_BONUS_EASY
+
 /datum/quest/proc/calculate_deposit()
 	switch(quest_difficulty)
 		if(QUEST_DIFFICULTY_EASY)
@@ -134,9 +207,13 @@
 			return QUEST_DEPOSIT_MEDIUM
 		if(QUEST_DIFFICULTY_HARD)
 			return QUEST_DEPOSIT_HARD
+		if(QUEST_DIFFICULTY_NOTORIOUS)
+			return QUEST_DEPOSIT_NOTORIOUS
 	return 0
 
-/// Get icon for scroll based on difficulty
+/datum/quest/proc/get_scroll_type()
+	return /obj/item/quest_writ
+
 /datum/quest/proc/get_scroll_icon()
 	switch(quest_difficulty)
 		if(QUEST_DIFFICULTY_EASY)
@@ -145,9 +222,10 @@
 			return "scroll_quest_mid"
 		if(QUEST_DIFFICULTY_HARD)
 			return "scroll_quest_high"
+		if(QUEST_DIFFICULTY_NOTORIOUS)
+			return "scroll_quest_notorious"
 	return quest_icon
 
-/// Get target location for compass - returns turf of nearest tracked atom
 /datum/quest/proc/get_target_location()
 	var/turf/user_turf = quest_scroll ? get_turf(quest_scroll) : null
 	if(!user_turf)
@@ -161,6 +239,11 @@
 		if(!A || QDELETED(A))
 			continue
 
+		if(isliving(A))
+			var/mob/living/L = A
+			if(L.stat == DEAD)
+				continue
+
 		var/turf/A_turf = get_turf(A)
 		if(!A_turf)
 			continue
@@ -172,11 +255,104 @@
 
 	return closest
 
-/// Check if a user can claim this quest - override for restrictions
-/datum/quest/proc/can_claim(mob/user)
+/datum/quest/proc/can_claim(mob/living/user)
+	if(required_fellowship_size > 0)
+		var/datum/fellowship/F = user?.current_fellowship
+		if(!F)
+			return FALSE
+		if(length(F.get_members()) < required_fellowship_size)
+			return FALSE
 	return TRUE
 
-/// Called when quest is claimed by a user
+/datum/quest/proc/claim_failure_reason(mob/living/user)
+	if(required_fellowship_size > 0)
+		var/datum/fellowship/F = user?.current_fellowship
+		if(!F)
+			return "This contract requires a Fellowship of [required_fellowship_size]."
+		if(length(F.get_members()) < required_fellowship_size)
+			return "Your Fellowship is too small - requires [required_fellowship_size] members."
+	return "You cannot sign that contract."
+
 /datum/quest/proc/on_claim(mob/user)
 	quest_receiver_reference = WEAKREF(user)
 	quest_receiver_name = user.real_name
+	last_claimed_at = world.time
+
+/datum/quest/proc/has_started()
+	if(complete || engaged || progress_current > 0)
+		return TRUE
+	for(var/datum/weakref/ref in tracked_atoms)
+		var/atom/movable/tracked = ref.resolve()
+		if(QDELETED(tracked) || isliving(tracked))
+			continue
+		if(!isturf(tracked.loc))
+			return TRUE
+	return FALSE
+
+/datum/quest/proc/issuer_cancel_blocker()
+	if(complete)
+		return "the contract is already fulfilled"
+	if(has_started())
+		return "the work has already begun"
+	if(!quest_receiver_reference)
+		return null
+	var/remaining = last_claimed_at + QUEST_ISSUER_CANCEL_WINDOW - world.time
+	if(remaining > 0)
+		return "its bearer has [max(1, round(remaining / (1 MINUTES)))] more minute(s) before it can be withdrawn"
+	return null
+
+/datum/quest/proc/add_funding(datum/fund/fund, amount, datum/fund/escrow)
+	if(!fund || amount <= 0)
+		return
+	if(!funding_sources)
+		funding_sources = list()
+	funding_sources += list(list("fund" = fund, "amount" = amount, "escrow" = escrow))
+
+/datum/quest/proc/get_funding_total()
+	. = 0
+	for(var/list/source as anything in funding_sources)
+		. += source["amount"]
+
+/datum/quest/proc/describe_issuer_refund()
+	var/list/parts = list()
+	for(var/list/source as anything in funding_sources)
+		var/datum/fund/fund = source["fund"]
+		parts += "[source["amount"]]m to [fund.name]"
+	if(funding_rumor_points > 0)
+		parts += "[funding_rumor_points] Rumor Points"
+	if(warrant_consumed > 0)
+		parts += "[warrant_consumed]p to the defense warrant"
+	return english_list(parts, nothing_text = "")
+
+/datum/quest/proc/refund_issuer_funding(reason, mob/actor)
+	. = describe_issuer_refund()
+	var/label = get_title() || quest_type
+	for(var/list/source as anything in funding_sources)
+		var/datum/fund/fund = source["fund"]
+		var/datum/fund/escrow = source["escrow"]
+		var/amount = source["amount"]
+		if(!escrow || !SStreasury.transfer(escrow, fund, amount, "[reason] - [label]"))
+			SStreasury.mint(fund, amount, "[reason] - [label]")
+		if(fund == SStreasury.burgher_pledge_fund)
+			record_round_statistic(STATS_PLEDGE_CONSUMED, -amount)
+		record_round_statistic(STATS_CONTRACT_MAMMONS_REFUNDED, amount)
+	funding_sources = null
+	if(funding_rumor_points > 0)
+		SStreasury.rumor_points += funding_rumor_points
+		record_round_statistic(STATS_RUMOR_POINTS_CONSUMED, -funding_rumor_points)
+		funding_rumor_points = 0
+	if(warrant_consumed > 0)
+		SScity_assembly?.refund_defense(warrant_consumed, actor, "[reason] - [label]")
+		warrant_consumed = 0
+
+/datum/quest/proc/mark_issue_log(status, refund_text)
+	if(!issue_log_entry)
+		return
+	issue_log_entry["status"] = status
+	issue_log_entry["refund"] = refund_text
+
+/datum/quest/proc/on_issuer_withdrawn(mob/withdrawer)
+	return
+
+/datum/quest/proc/office_may_withdraw()
+	return TRUE

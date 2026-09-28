@@ -68,10 +68,10 @@
 		to_chat(owner, span_notice("You feel divinely empowered and radiant!"))
 	else if(current_boost == 0)
 		REMOVE_TRAIT(owner, TRAIT_BEAUTIFUL, TRAIT_MIRACLE)
-		to_chat(owner, span_warning("Your divine beauty fades..."))
+		to_chat(owner, span_warning("Your divine beauty fades away.."))
 	else if (current_boost == -5)
 		ADD_TRAIT(owner, TRAIT_UNSEEMLY, TRAIT_MIRACLE)
-		to_chat(owner, span_notice("Your flesh is flaky and disgusting."))
+		to_chat(owner, span_warning("Your divine beauty is rotting away!"))
 
 	// Set visual appearance based on boost level
 	switch(current_boost)
@@ -170,7 +170,7 @@
 
 		if (M.mind)
 			waiting_for_prompt = TRUE
-			if(alert(M, "Are you ready to face the world, once more?", "Revival", "I must go on", "Let me rest") != "I must go on")
+			if(alert(M, "Are you ready to face the world, once more?", "HAS YOUR TIME COME?", "I must go on!", "Let me rest..") != "I must go on!")
 				M.visible_message(span_warning("[M]'s body shudders but falls still again."))
 				M.remove_status_effect(src)
 				return
@@ -189,6 +189,10 @@
 		M.mind.remove_antag_datum(/datum/antagonist/zombie)
 		M.remove_status_effect(/datum/status_effect/debuff/rotted_zombie)
 		M.apply_status_effect(/datum/status_effect/debuff/revived)
+		if(HAS_TRAIT(M, TRAIT_IRONMAN))
+			M.apply_status_effect(/datum/status_effect/debuff/integrity_rig, 11 MINUTES)
+			M.visible_message(span_danger("[M] is looking on the verge of exploding again! Their core may need an extra whack from a hammer."))
+		addtimer(CALLBACK(src, GLOBAL_PROC_REF(deathmark), M), 5 MINUTES) //Performs a check after the listed time has elapsed, post-resurrection. If the target is still alive by then, it'll apply the 'DNR' trait.
 		M.remove_status_effect(src)
 
 #define POM_FILTER "pom_aura"
@@ -250,16 +254,28 @@
 
 	if(ishuman(owner))
 		var/mob/living/carbon/human/H = owner
-		// Ugly people might get hurt
-		if(HAS_TRAIT(H, TRAIT_UNSEEMLY) && prob(2))
+		//Beautiful people have a chance to be healed.
+		if(HAS_TRAIT(H, TRAIT_BEAUTIFUL) && prob(10))
+			to_chat(H, span_rose("The tree's beauty revitalizes you!"))
+			H.apply_status_effect(/datum/status_effect/buff/healing, 1)
+
+		//People cursed by Eora will suffer visual disorientation and damage over time.
+		else if(HAS_TRAIT(H, TRAIT_CURSE_EORA) && prob(2))
 			to_chat(H, span_warning("The tree's beauty burns your eyes!"))
 			H.Dizzy(5)
 			H.blur_eyes(5)
 			H.adjustBruteLoss(10, 0)
 
-		// Beautiful people might get healed
-		else if(HAS_TRAIT(H, TRAIT_BEAUTIFUL) && prob(10))
-			to_chat(H, span_good("The tree's beauty revitalizes you!"))
+		//Unsightly people have a lower chance to have their beauty temporarily returned.
+		else if(HAS_TRAIT(H, TRAIT_UNSEEMLY) && prob(1))
+			to_chat(H, span_rose("The tree's beauty leeches into you, momentarily lightening your features.."))
+			H.apply_status_effect(/datum/status_effect/buff/healing, 1)
+
+		//People marred by trama have a very, very low chance to be healed - and to proc a unique sight.
+		else if(HAS_TRAIT(H, TRAIT_LEPROSY) && prob(1))
+			to_chat(H, span_love("Her divine love graces you, gently drawing the pain away from your marred flesh.."))
+			to_chat(span_rose("The tree's branches sway in the breeze, and the howling gusts swill into an angelic tune.."))
+			playsound('sound/misc/otavanlament.ogg', 50, FALSE, -1)
 			H.apply_status_effect(/datum/status_effect/buff/healing, 1)
 
 	// There is no beauty in death. Feed my tree.
@@ -270,6 +286,51 @@
 	name = "Eora's Blessing"
 	desc = "You feel a sense of peace near this sacred tree."
 	icon_state = "pom_peace"
+
+//
+
+/datum/status_effect/debuff/pomegranate_beauty
+	id = "pomegranate_beauty"
+	duration = -1
+	alert_type = /atom/movable/screen/alert/status_effect/pomegranate_aura
+	var/outline_colour ="#42001f"
+	var/datum/weakref/source_ref
+	effectedstats = list(STATKEY_CON = -2, STATKEY_LCK = 2)
+
+/datum/status_effect/debuff/pomegranate_beauty/on_apply()
+	. = ..()
+	var/filter = owner.get_filter(POM_FILTER)
+	if (!filter)
+		owner.add_filter(POM_FILTER, 2, list("type" = "outline", "color" = outline_colour, "alpha" = 180, "size" = 1))
+	to_chat(owner, span_rose("Wisps of rose seep into my features, as the tree blesses me with beauty once more! The divine energy strains my body, yet my guise has never looked prettier!"))
+	ADD_TRAIT(owner, TRAIT_BEAUTIFUL, TRAIT_GENERIC)
+	REMOVE_TRAIT(owner, TRAIT_UNSEEMLY, TRAIT_GENERIC)
+
+/datum/status_effect/debuff/pomegranate_beauty/on_remove()
+	. = ..()
+	owner.remove_filter(POM_FILTER)
+	to_chat(owner, span_warning("Wisps of rose seep from my features, as the tree's blessings - and my gifted beauty - fades away. The divine energy's burden is no more, and my body relaxes once again.."))
+	REMOVE_TRAIT(owner, TRAIT_BEAUTIFUL, TRAIT_GENERIC)
+	ADD_TRAIT(owner, TRAIT_UNSEEMLY, TRAIT_GENERIC)
+
+/datum/status_effect/debuff/pomegranate_beauty/tick()
+	// Check if source tree still exists
+	var/obj/structure/eoran_pomegranate_tree/tree = source_ref?.resolve()
+	if(QDELETED(tree) || !istype(tree))
+		owner.remove_status_effect(src)
+		return
+
+	// Check distance to tree. This is a sanity check given the aura SHOULD remove already, but you can never be too safe :)
+	if(get_dist(owner, tree) > tree.aura_range)
+		owner.remove_status_effect(src)
+		return
+
+/atom/movable/screen/alert/status_effect/pomegranate_beauty
+	name = "Eora's Beauty"
+	desc = "As long as you linger by the sacred tree, your body will harbor its divine beauty - and all the strain it commands."
+	icon_state = "pom_peace"
+
+//
 
 #undef POM_FILTER
 
@@ -297,14 +358,14 @@
 	if(isliving(owner))
 		var/mob/living/L = owner
 		L.remove_filter(WILTING_FILTER)
-	
+
 	dismember_owner()
 
 /datum/status_effect/debuff/eoran_wilting/tick()
 	if(isliving(owner))
 		var/mob/living/L = owner
 		L.flash_fullscreen("redflash3", 1)
-		
+
 		// Small damage to limbs as warning
 		if(iscarbon(L))
 			var/mob/living/carbon/C = L
@@ -334,8 +395,9 @@
 		var/obj/item/bodypart/BP = C.get_bodypart(zone)
 		if(BP)
 			C.adjustBruteLoss(50)
-			BP.dismember()
+			BP.dismember(skip_checks = TRUE)
 			sleep(0.5 SECONDS)
+	C.death()
 
 #undef WILTING_FILTER
 
@@ -357,17 +419,17 @@
 /datum/status_effect/pearlescent_aril/tick()
 	if(!owner.reagents || !iscarbon(owner))
 		return
-	
+
 	var/mob/living/carbon/C = owner
 	var/datum/reagents/R = C.reagents
 	var/conversion_occurred = FALSE
-	
+
 	for(var/datum/reagent/RG in R.reagent_list)
 		if(RG.harmful || istype(RG, /datum/reagent/medicine/stronghealth) && RG.volume > 0.1)
 			R.remove_reagent(RG.type, 1)
 			R.add_reagent(/datum/reagent/medicine/healthpot, 1)
 			conversion_occurred = TRUE
-	
+
 	// Visual feedback if conversion occurred
 	if(conversion_occurred)
 		new /obj/effect/temp_visual/heal(get_turf(C), "#d8d8d8")

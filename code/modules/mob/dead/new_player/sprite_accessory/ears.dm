@@ -3,12 +3,22 @@
 	icon = 'icons/mob/sprite_accessory/ears/ears.dmi'
 	color_key_name = "Ears"
 	relevant_layers = list(BODY_ADJ_LAYER, BODY_FRONT_LAYER)
+	var/can_flick = FALSE
 
 /datum/sprite_accessory/ears/is_visible(obj/item/organ/organ, obj/item/bodypart/bodypart, mob/living/carbon/owner)
 	return is_human_part_visible(owner, HIDEEARS)
 
 /datum/sprite_accessory/ears/adjust_appearance_list(list/appearance_list, obj/item/organ/organ, obj/item/bodypart/bodypart, mob/living/carbon/owner)
 	generic_gender_feature_adjust(appearance_list, organ, bodypart, owner, OFFSET_FACE, OFFSET_FACE_F)
+
+/datum/sprite_accessory/ears/get_icon_state(obj/item/organ/organ, obj/item/bodypart/bodypart, mob/living/carbon/owner)
+	if(!can_flick)
+		return ..()
+	var/obj/item/organ/ears/ear_organ = organ
+	if(!owner || !ear_organ.is_flicking)
+		return ..()
+	if(ear_organ.is_flicking && can_flick)
+		return "[icon_state]_flick"
 
 /datum/sprite_accessory/ears/big
 	icon = 'icons/mob/sprite_accessory/ears/ears_big.dmi'
@@ -59,6 +69,14 @@
 	color_keys = 3
 	color_key_names = list("Ears", "Inner", "Tips")
 
+
+/datum/sprite_accessory/ears/big/bunny_floppy
+	name = "Bunny Ears (Droopy)"
+	icon_state = "bunny_floppy"
+	color_keys = 3
+	color_key_names = list("Ears", "Inner", "Tips")
+	relevant_layers = list(BODY_BEHIND_LAYER, BODY_FRONT_LAYER, BODY_ADJ_LAYER)
+
 /datum/sprite_accessory/ears/cat_big
 	name = "Cat, Big"
 	icon_state = "catbig"
@@ -92,6 +110,7 @@
 /datum/sprite_accessory/ears/elf
 	name = "Elf"
 	icon_state = "elf"
+	can_flick = TRUE
 
 /datum/sprite_accessory/ears/elephant
 	name = "Elephant"
@@ -166,6 +185,34 @@
 /datum/sprite_accessory/ears/big/rabbit_large
 	name = "Rabbit Ears (Large)"
 	icon_state = "rabbit_large"
+	color_keys = 3
+	color_key_names = list("Ears", "Inner", "Tips")
+	relevant_layers = list(BODY_ADJ_LAYER)
+
+/datum/sprite_accessory/ears/big/rabbit_medium
+	name = "Rabbit Ears (Medium)"
+	icon_state = "rabbit_medium"
+	color_keys = 3
+	color_key_names = list("Ears", "Inner", "Tips")
+	relevant_layers = list(BODY_ADJ_LAYER)
+
+/datum/sprite_accessory/ears/big/rabbit_small
+	name = "Rabbit Ears (Small)"
+	icon_state = "rabbit_small"
+	color_keys = 3
+	color_key_names = list("Ears", "Inner", "Tips")
+	relevant_layers = list(BODY_ADJ_LAYER)
+
+/datum/sprite_accessory/ears/big/rabbit_floppy
+	name = "Rabbit Ears (Floppy)"
+	icon_state = "rabbit_floppy"
+	color_keys = 3
+	color_key_names = list("Ears", "Inner", "Tips")
+	relevant_layers = list(BODY_ADJ_LAYER)
+
+/datum/sprite_accessory/ears/big/rabbit_floppyalt
+	name = "Rabbit Ears (Floppy R.)"
+	icon_state = "rabbit_floppy_flip"
 	color_keys = 3
 	color_key_names = list("Ears", "Inner", "Tips")
 	relevant_layers = list(BODY_ADJ_LAYER)
@@ -291,6 +338,30 @@
 	color_keys = 2
 	color_key_names = list("Ears", "Inner")
 
+/datum/sprite_accessory/ears/dormouse
+	name = "Mouse (Dormouse Grayscaled)"
+	icon_state = "dormouse"
+	color_keys = 2
+	color_key_names = list("Ears", "Inner")
+
+/datum/sprite_accessory/ears/dormouse_skin
+	name = "Mouse (Dormouse Skin Grayscaled)"
+	icon_state = "dormouse2"
+	color_keys = 2
+	color_key_names = list("Ears", "Inner")
+
+/datum/sprite_accessory/ears/dormouse_rings
+	name = "Mouse (Dormouse Grayscaled, Rings)"
+	icon_state = "dormouse"
+	color_keys = 3
+	color_key_names = list("Ears", "Inner", "Piercing")
+
+/datum/sprite_accessory/ears/dormouse_skin_rings
+	name = "Mouse (Dormouse Skin Grayscaled, Rings)"
+	icon_state = "dormouse2"
+	color_keys = 3
+	color_key_names = list("Ears", "Inner", "Piercing")
+
 /datum/sprite_accessory/ears/elf
 	name = "Elf"
 	icon = 'icons/mob/sprite_accessory/elf.dmi'
@@ -302,12 +373,27 @@
 	icon = 'icons/mob/sprite_accessory/elf.dmi'
 	icon_state = "elfw"
 	color_key_defaults = list(KEY_SKIN_COLOR)
+	can_flick = TRUE
 
 /datum/sprite_accessory/ears/elf_short
 	name = "Elf (Short)"
 	icon = 'icons/mob/sprite_accessory/elf.dmi'
 	icon_state = "elfshort"
 	color_key_defaults = list(KEY_SKIN_COLOR)
+
+/datum/sprite_accessory/ears/elf_long
+	name = "Elf (Long)"
+	icon = 'icons/mob/sprite_accessory/elf.dmi'
+	icon_state = "elflong"
+	color_key_defaults = list(KEY_SKIN_COLOR)
+	can_flick = TRUE
+
+/datum/sprite_accessory/ears/elf_small
+	name = "Elf (Small)"
+	icon = 'icons/mob/sprite_accessory/elf.dmi'
+	icon_state = "elfsmall"
+	color_key_defaults = list(KEY_SKIN_COLOR)
+	can_flick = TRUE
 
 /datum/sprite_accessory/ears/halforc
 	name = "Half Orc"
@@ -322,13 +408,13 @@
 	color_key_defaults = list(KEY_SKIN_COLOR)
 
 /datum/sprite_accessory/ears/goblin_alt
-	name = "Goblin Alt"
+	name = "Goblin (Alt)"
 	icon = 'icons/mob/sprite_accessory/halforc.dmi'
 	icon_state = "goblinalt"
 	color_key_defaults = list(KEY_SKIN_COLOR)
 
 /datum/sprite_accessory/ears/goblin_small
-	name = "Goblin Small"
+	name = "Goblin (Small)"
 	icon = 'icons/mob/sprite_accessory/halforc.dmi'
 	icon_state = "goblinsmall"
 	color_key_defaults = list(KEY_SKIN_COLOR)
@@ -377,3 +463,26 @@
 	color_keys = 3
 	color_key_names = list("Ears", "Inner", "Tips")
 	relevant_layers = list(BODY_BEHIND_LAYER, BODY_FRONT_LAYER, BODY_ADJ_LAYER)
+
+/datum/sprite_accessory/ears/naja_hood
+	name = "Naja Hood"
+	icon_state = "naja_hood"
+	color_keys = 2
+	color_key_names = list("Outer", "Inner")
+	relevant_layers = list(BODY_ADJ_LAYER)
+
+/datum/sprite_accessory/ears/wispy
+	name = "Wispy Headwings"
+	icon_state = "wispy"
+	color_keys = 2
+	color_key_names = list("Wings", "Tips")
+	default_colors = list("#EAEAEA", "#EAEAEA")
+	relevant_layers = list(BODY_ADJ_LAYER, BODY_FRONT_LAYER)
+
+/datum/sprite_accessory/ears/small
+	name = "Small Headwings"
+	icon_state = "small"
+	color_keys = 2
+	color_key_names = list("Wings", "Tips")
+	default_colors = list("#EAEAEA", "#EAEAEA")
+	relevant_layers = list(BODY_ADJ_LAYER, BODY_FRONT_LAYER)

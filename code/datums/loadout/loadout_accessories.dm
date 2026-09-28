@@ -29,20 +29,40 @@
 	path = /obj/item/clothing/gloves/roguetown/bandages
 	sort_category = "Accessories"
 
-/datum/loadout_item/exoticsilkbelt
-	name = "Exotic Silk Belt"
-	path = /obj/item/storage/belt/rogue/leather/exoticsilkbelt
+/datum/loadout_item/leathergloves
+	name = "Leather Gloves"
+	path = /obj/item/clothing/gloves/roguetown/leather
+	sort_category = "Accessories"
+
+/datum/loadout_item/silkbelt
+	name = "Giltsilk Belt"
+	path = /obj/item/storage/belt/rogue/leather/silkbelt
 	sort_category = "Accessories"
 	cost = 2
+
+/datum/loadout_item/beltshawl
+	name = "Belt Shawl"
+	path = /obj/item/storage/belt/rogue/leather/beltshawl
+	sort_category = "Accessories"
 
 /datum/loadout_item/ragmask
 	name = "Rag Mask"
 	path = /obj/item/clothing/mask/rogue/ragmask
 	sort_category = "Accessories"
 
+/datum/loadout_item/flimsy_visor
+	name = "Helmetless Visor"
+	path = /obj/item/clothing/mask/rogue/facemask/steel/visor/flimsy
+	sort_category = "Accessories"
+
 /datum/loadout_item/halfmask
 	name = "Halfmask"
 	path = /obj/item/clothing/mask/rogue/shepherd
+	sort_category = "Accessories"
+
+/datum/loadout_item/shadowmask
+	name = "Purple Halfmask"
+	path = /obj/item/clothing/mask/rogue/shepherd/shadowmask
 	sort_category = "Accessories"
 
 /datum/loadout_item/dendormask
@@ -55,9 +75,9 @@
 	path = /obj/item/clothing/head/roguetown/roguehood/eorahood
 	sort_category = "Accessories"
 
-/datum/loadout_item/exoticsilkmask
-	name = "Exotic Silk Mask"
-	path = /obj/item/clothing/mask/rogue/exoticsilkmask
+/datum/loadout_item/silkmask
+	name = "Giltsilk Mask"
+	path = /obj/item/clothing/mask/rogue/silkmask
 	sort_category = "Accessories"
 	cost = 2
 
@@ -96,9 +116,24 @@
 	path = /obj/item/clothing/neck/roguetown/collar/bell_collar
 	sort_category = "Accessories"
 
+/datum/loadout_item/faceveil
+	name= "Face Veil"
+	path = /obj/item/clothing/mask/rogue/faceveil
+	sort_category = "Accessories"
+
 /datum/loadout_item/cursed_collar
 	name = "Cursed Collar"
 	path = /obj/item/clothing/neck/roguetown/gorget/cursed_collar
+	sort_category = "Accessories"
+
+/datum/loadout_item/woolencollar
+	name = "Woolen Collar"
+	path = /obj/item/clothing/neck/roguetown/collar/woolen
+	sort_category = "Accessories"
+
+/datum/loadout_item/furcollar
+	name = "Fur Collar"
+	path = /obj/item/clothing/neck/roguetown/collar/fur
 	sort_category = "Accessories"
 
 /datum/loadout_item/cloth_blindfold
@@ -131,138 +166,24 @@
 	path = /obj/item/storage/belt/rogue/leather/battleskirt/breechcloth/blackbelt
 	sort_category = "Accessories"
 
-/datum/loadout_item/psicross
-	name = "Psydonian Cross"
-	path = /obj/item/clothing/neck/roguetown/psicross
+/datum/loadout_item/doublebelt
+	name = "Paired Slim Belts"
+	path = /obj/item/storage/belt/rogue/leather/double
 	sort_category = "Accessories"
 
-/datum/loadout_item/psicross/reform
-	name = "Reformist Psydonian Cross"
-	path = /obj/item/clothing/neck/roguetown/psicross/reform
-
-/datum/loadout_item/psicross/astrata
-	name = "Amulet of Astrata"
-	path = /obj/item/clothing/neck/roguetown/psicross/astrata
+/datum/loadout_item/knifebelt // comes empty
+	name = "Tossblade Belt"
+	path = /obj/item/storage/belt/rogue/leather/knifebelt/black
 	sort_category = "Accessories"
 
-/datum/loadout_item/psicross/noc
-	name = "Amulet of Noc"
-	path = /obj/item/clothing/neck/roguetown/psicross/noc
+/datum/loadout_item/blackbelt
+	name = "Black Belt"
+	path = /obj/item/storage/belt/rogue/leather/black
 	sort_category = "Accessories"
 
-/datum/loadout_item/psicross/abyssor
-	name = "Amulet of Abyssor"
-	path = /obj/item/clothing/neck/roguetown/psicross/abyssor
-	sort_category = "Accessories"
-
-/datum/loadout_item/psicross/xylix
-	name = "Amulet of Xylix"
-	path = /obj/item/clothing/neck/roguetown/psicross/xylix
-	sort_category = "Accessories"
-
-/datum/loadout_item/psicross/dendor
-	name = "Amulet of Dendor"
-	path = /obj/item/clothing/neck/roguetown/psicross/dendor
-	sort_category = "Accessories"
-
-/datum/loadout_item/psicross/necra
-	name = "Amulet of Necra"
-	path = /obj/item/clothing/neck/roguetown/psicross/necra
-	sort_category = "Accessories"
-
-/datum/loadout_item/psicross/pestra
-	name = "Amulet of Pestra"
-	path = /obj/item/clothing/neck/roguetown/psicross/pestra
-	sort_category = "Accessories"
-
-/datum/loadout_item/psicross/ravox
-	name = "Amulet of Ravox"
-	path = /obj/item/clothing/neck/roguetown/psicross/ravox
-	sort_category = "Accessories"
-
-/datum/loadout_item/psicross/malum
-	name = "Amulet of Malum"
-	path = /obj/item/clothing/neck/roguetown/psicross/malum
-	sort_category = "Accessories"
-
-/datum/loadout_item/psicross/eora
-	name = "Amulet of Eora"
-	path = /obj/item/clothing/neck/roguetown/psicross/eora
-	sort_category = "Accessories"
-
-/datum/loadout_item/psicross/undivided
-	name = "Amulet of Ten"
-	path = /obj/item/clothing/neck/roguetown/psicross/undivided
-	sort_category = "Accessories"
-
-/datum/loadout_item/psicross/zizo
-	name = "Decrepit Zcross"
-	path = /obj/item/clothing/neck/roguetown/psicross/inhumen/aalloy
-	sort_category = "Accessories"
-
-/datum/loadout_item/zcross_iron
-	name = "Iron Zcross"
-	path = /obj/item/clothing/neck/roguetown/psicross/inhumen/iron
-	sort_category = "Accessories"
-
-/datum/loadout_item/psicross/matthios
-	name = "Amulet of Matthios"
-	path = /obj/item/clothing/neck/roguetown/psicross/inhumen/matthios
-	sort_category = "Accessories"
-
-/datum/loadout_item/psicross/graggar
-	name = "Amulet of Graggar"
-	path = /obj/item/clothing/neck/roguetown/psicross/inhumen/graggar
-	sort_category = "Accessories"
-
-/datum/loadout_item/psicross/gronnzizo
-	name = "Wolf Talisman"
-	path = /obj/item/clothing/neck/roguetown/psicross/inhumen/gronn
-	sort_category = "Accessories"
-
-/datum/loadout_item/psicross/gronnbaotha
-	name = "Leopard Talisman"
-	path = /obj/item/clothing/neck/roguetown/psicross/inhumen/baothagronn
-	sort_category = "Accessories"
-
-/datum/loadout_item/psicross/gronnmatthios
-	name = "Bear Talisman"
-	path = /obj/item/clothing/neck/roguetown/psicross/inhumen/matthios/gronn
-	sort_category = "Accessories"
-
-/datum/loadout_item/psicross/gronngraggar
-	name = "Moose Talisman"
-	path = /obj/item/clothing/neck/roguetown/psicross/inhumen/graggar/gronn
-	sort_category = "Accessories"
-
-/datum/loadout_item/psicross/gronndendor
-	name = "Volfskinned Talisman"
-	path = /obj/item/clothing/neck/roguetown/psicross/dendor/gronn
-	sort_category = "Accessories"
-
-/datum/loadout_item/psicross/gronnabyssor
-	name = "Hadal Talisman"
-	path = /obj/item/clothing/neck/roguetown/psicross/abyssor/gronn
-	sort_category = "Accessories"
-
-/datum/loadout_item/wedding_band
-	name = "Wedding Band, Silver"
-	path = /obj/item/clothing/ring/band
-	sort_category = "Accessories"
-
-/datum/loadout_item/wedding_band_gold
-	name = "Wedding Band, Gold"
-	path = /obj/item/clothing/ring/band/gold
-	sort_category = "Accessories"
-
-/datum/loadout_item/wedding_band_bronze
-	name = "Wedding Band, Bronze"
-	path = /obj/item/clothing/ring/band/bronze
-	sort_category = "Accessories"
-
-/datum/loadout_item/wedding_band_ancient
-	name = "Wedding Band, Ancient"
-	path = /obj/item/clothing/ring/band/paalloy
+/datum/loadout_item/suspenders
+	name = "Suspenders"
+	path = /obj/item/storage/belt/rogue/leather/suspenders
 	sort_category = "Accessories"
 
 /datum/loadout_item/chaperon
@@ -295,7 +216,17 @@
 	path = /obj/item/clothing/shoes/roguetown/jester
 	sort_category = "Accessories"
 
+/datum/loadout_item/jestermask
+	name = "Jester's Mask"
+	path = /obj/item/clothing/mask/rogue/xylixmask
+	sort_category = "Accessories"
+
 /datum/loadout_item/cotehardie
 	name = "Fitted Coat"
 	path = /obj/item/clothing/cloak/cotehardie
+	sort_category = "Accessories"
+
+/datum/loadout_item/weatheredmask
+	name = "Weathered Xylixian Mask"
+	path = /obj/item/clothing/mask/rogue/xylixmask/weathered
 	sort_category = "Accessories"

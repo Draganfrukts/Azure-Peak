@@ -17,7 +17,7 @@
 // Hotsprings
 #define DETAIL_TEXT_EORAN_SHRINE "An Eoran shrine, nestled high in the mountains, hidden away from well-trodden paths. Cherry blossom, a symbol of both love and the fleeting nature of lyfe in Kazengun, are planted and maintained here by Eoran devotees.\n\
 	Oddly, the trees here seem to bloom year-round."
-#define DETAIL_TEXT_ABANDONED_HOT_SPRINGS ""
+#define DETAIL_TEXT_ABANDONED_HOT_SPRINGS "A pit of silken webs, nestled deep within the bog. The love that once bloomed here has curdled into venom, and stranger things now bud and scuttle through the water."
 
 // Azure Grove
 #define DETAIL_TEXT_AZURE_GROVE ""
@@ -36,7 +36,7 @@
 // Undercoast
 #define DETAIL_TEXT_UNDERCOAST ""
 #define DETAIL_TEXT_TEMPLE_SHATTERED_GOD "Masonry now forms impenetrable islands of purposeless granite. Cobblestone fractals underfoot. \n\ A sense of holiness lingers here, despite time."
-#define DETAIL_TEXT_ORC_RUIN ""
+#define DETAIL_TEXT_ORC_RUIN "An old coastal wayfort, now filed with Inhumenity like pus in a wound. Beneath salt-stained cliffs, iron-masked raiders sharpen their blades, and prepare for war."
 
 // Terrorbog
 #define DETAIL_TEXT_TERRORBOG "Fetid sulfuric smell. The land is in misery; my feet find sogging ground choked in vine and scumwater. The land itself is engulfed in its own anguish. Somewhere, a baby bird has tumbled out of its nest and landed in a dark puddle, left to an uncertain fate.\n\
@@ -46,8 +46,9 @@ One must wonder if those stygian-filligreed constructs have survived in the peat
 // North Coast
 #define DETAIL_TEXT_NORTH_COAST "Chilly winds blow from the palagic northways. This is the part of land where the trading ships hook 'round to return to land after months' voyages- and where they are plundered by ne'er-do-wells. \n\
 Abyssor rests offshore. Even his quietest exhale is enough to send waves from the hadal to crash onto sand."
-#define DETAIL_TEXT_NORTH_COAST_HAMLET ""
+#define DETAIL_TEXT_NORTH_COAST_HAMLET "Empty houses, and rotting fields. A half-hundred homesteaders broke ground here, before the touch of Zizo swept the north. Some of their bones still yet remain, clustered around their once-chapel in a twisted pantomime of lyfe. Above the altar, a promise has been scratched into stained glass: This too shall stand."
 #define DETAIL_TEXT_MAD_DUKE_COURT ""
+#define DETAIL_TEXT_FALLEN_MANOR "A once-grand attempt at nobility now reduced to no more than a crumbling mess of what was once overly optimistic expansion, destroyed by the fallen 'Duke's' greed and lust for more control than he could truly handle. Not happy with simply being a serf, he sought more, and fell to ruin because of it. Now known as the Fallen 'Duke', he rots in his decayed manor, surrounded by his undead minions."
 
 // Actual Azure Coast
 #define DETAIL_TEXT_ACTUAL_COAST ""
@@ -61,6 +62,7 @@ Abyssor rests offshore. Even his quietest exhale is enough to send waves from th
 #define DETAIL_TEXT_DECAP_GOBLIN_FORTRESS ""
 #define DETAIL_TEXT_DECAP_NECRAN_LABYRINTH ""
 #define DETAIL_TEXT_DECAP_MINOTAUR_FORTRESS ""
+#define DETAIL_TEXT_DECAP_DWARFSHOP ""
 
 // Azure Basin & Nearby
 #define DETAIL_TEXT_AZURE_BASIN ""
@@ -75,6 +77,7 @@ Rusted metals distantly grind in anoxic pus-condensate in-tune with the Signal. 
 
 #define DETAIL_TEXT_HIS_VAULT ""
 #define DETAIL_TEXT_FISHMAN_DUNGEON ""
+#define DETAIL_TEXT_WATER_TEMPLE "An ancient cistern lost to time and neglect, now overrun with the indescribable- only those brave enough to delve it's inner sanctums able to say for sure what lurks within"
 
 // Forsaken Cathedral
 #define DETAIL_TEXT_FORSAKEN_CATHEDRAL ""
@@ -87,8 +90,3 @@ Rusted metals distantly grind in anoxic pus-condensate in-tune with the Signal. 
 #define DETAIL_TEXT_CHAPEL "Narthex of faith, roosting the Flock."
 #define DETAIL_TEXT_INQUISITION_HQ ""
 #define DETAIL_TEXT_AZUREAN_GUILD_OF_CRAFT "\"We had a name fer it, eh? Called it the Dwarven Quarter. Forges an' 'ammers, underground an' wrapped in stone. Joos' like 'ome! Bu' then tha bloody bluebloods started complainin' aboot tha' dirt whenever they visited. Bloody brash-polishers! Well, we 'ad to move tha shop topside. \n\ \n\ Not as charmin, no moor.\""
-
-
-// Tomb of Alotheos
-#define DETAIL_TEXT_TOMB_OF_ALOTHEOS ""
-

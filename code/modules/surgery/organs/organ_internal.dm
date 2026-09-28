@@ -12,8 +12,8 @@
 	var/maxHealth = STANDARD_ORGAN_THRESHOLD
 	var/damage = 0		//total damage this organ has sustained
 	///Healing factor and decay factor function on % of maxhealth, and do not work by applying a static number per tick
-	var/healing_factor 	= 0										//fraction of maxhealth healed per on_life(), set to 0 for generic organs
-	var/decay_factor 	= 0										//same as above but when without a living owner, set to 0 for generic organs
+	var/healing_factor	= 0										//fraction of maxhealth healed per on_life(), set to 0 for generic organs
+	var/decay_factor	= 0										//same as above but when without a living owner, set to 0 for generic organs
 	var/high_threshold	= STANDARD_ORGAN_THRESHOLD * 0.45		//when severe organ damage occurs
 	var/low_threshold	= STANDARD_ORGAN_THRESHOLD * 0.1		//when minor organ damage occurs
 
@@ -47,8 +47,10 @@
 	var/organ_dna_type = /datum/organ_dna
 	/// What food typepath should be used when eaten
 	var/food_type = /obj/item/reagent_containers/food/snacks/organ
-	/// Original owner of the organ, the one who had it inside them last
-	var/mob/living/carbon/last_owner = null
+	/// Whether this organ has ever been inside a mob
+	var/had_owner = FALSE
+
+	embedding = list("embed_chance" = 0) // ...they're not sharp
 
 	grid_width = 32
 	grid_height = 32
@@ -66,7 +68,7 @@
 			qdel(replaced)
 
 	owner = M
-	last_owner = M
+	had_owner = TRUE
 
 	if (visible_organ)
 		M.visible_organs |= src
@@ -108,7 +110,7 @@
 //	START_PROCESSING(SSobj, src)
 
 /obj/item/organ/forceMove(atom/destination)
-	if((organ_flags & ORGAN_INTERNAL_ONLY) && last_owner)
+	if((organ_flags & ORGAN_INTERNAL_ONLY) && had_owner)
 		qdel(src)
 		return
 	..()
@@ -186,16 +188,16 @@
 	QDEL_NULL(organ_inside)
 	return ..()
 
-/obj/item/reagent_containers/food/snacks/organ/proc/check_culling(mob/living/eater)
-	return
-
 /obj/item/reagent_containers/food/snacks/organ/heart
 	list_reagents = list(/datum/reagent/consumable/nutriment = 6, /datum/reagent/organpoison = 2)
 	grind_results = list(/datum/reagent/organpoison = 6)
 
-/obj/item/reagent_containers/food/snacks/organ/heart/check_culling(mob/living/eater)
+/obj/item/reagent_containers/food/snacks/organ/proc/check_culling(mob/living/eater)
+	return
+
+/obj/item/reagent_containers/food/snacks/organ/check_culling(mob/living/eater)
 	. = ..()
-	if(!organ_inside)
+	if(QDELETED(organ_inside) || !istype(organ_inside, /obj/item/organ/heart))
 		return
 
 	for(var/datum/culling_duel/D in GLOB.graggar_cullings)
@@ -211,7 +213,7 @@
 			D.process_win(winner = eater, loser = challenger)
 			return TRUE
 
-/obj/item/organ/Initialize()
+/obj/item/organ/Initialize(mapload)
 	. = ..()
 	if(accessory_type && owner)
 		set_accessory_type(accessory_type)
@@ -222,7 +224,7 @@
 		// The special flag is important, because otherwise mobs can die
 		// while undergoing transformation into different mobs.
 		Remove(owner, special=TRUE)
-	last_owner = null
+	had_owner = FALSE
 	STOP_PROCESSING(SSobj, src)
 	return ..()
 
@@ -256,11 +258,11 @@
 	applyOrganDamage(d - damage)
 
 /** check_damage_thresholds
-  * input: M (a mob, the owner of the organ we call the proc on)
-  * output: returns a message should get displayed.
-  * description: By checking our current damage against our previous damage, we can decide whether we've passed an organ threshold.
-  *				 If we have, send the corresponding threshold message to the owner, if such a message exists.
-  */
+	* input: M (a mob, the owner of the organ we call the proc on)
+	* output: returns a message should get displayed.
+	* description: By checking our current damage against our previous damage, we can decide whether we've passed an organ threshold.
+	*					If we have, send the corresponding threshold message to the owner, if such a message exists.
+	*/
 /obj/item/organ/proc/check_damage_thresholds(mob/M)
 	if(damage == prev_damage)
 		return
@@ -330,6 +332,9 @@
 		bodypart_overlays(organ_overlay)
 		return organ_overlay
 
+/obj/item/organ/proc/get_cache_key()
+	return "[accessory_type]-[accessory_colors]-[bodypart_icon]-[bodypart_icon_state]-[color]-[bodypart_layer]"
+
 /// Proc to customize the base icon of the organ.
 /obj/item/organ/proc/bodypart_icon(mutable_appearance/standing)
 	return
@@ -358,6 +363,8 @@
 			return
 		source_key_list = color_key_source_list_from_carbon(owner)
 	var/datum/sprite_accessory/accessory = SPRITE_ACCESSORY(accessory_type)
+	if(!accessory)
+		return
 	accessory_colors = accessory.get_default_colors(source_key_list)
 	accessory_colors = accessory.validate_color_keys_for_owner(owner, accessory_colors)
 	update_accessory_colors()

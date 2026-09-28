@@ -1,5 +1,4 @@
 /datum/ai_controller/undead
-	movement_delay = MOSSBACK_MOVEMENT_SPEED
 
 	ai_movement = /datum/ai_movement/basic_avoidance
 
@@ -14,8 +13,9 @@
 		/datum/ai_planning_subtree/basic_melee_attack_subtree,
 	)
 
-	idle_behavior = /datum/idle_behavior/idle_random_walk
-
 
 /datum/ai_controller/undead/wolf
-    movement_delay = WOLF_MOVEMENT_SPEED
+
+/datum/ai_controller/undead/fox
+
+/datum/ai_controller/undead/cabbit

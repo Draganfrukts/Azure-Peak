@@ -1,5 +1,4 @@
 /datum/ai_controller/dragger //maybe eat limbs
-	movement_delay = DRAGGER_MOVEMENT_SPEED
 
 	ai_movement = /datum/ai_movement/hybrid_pathing
 
@@ -12,5 +11,3 @@
 		/datum/ai_planning_subtree/attack_obstacle_in_path,
 		/datum/ai_planning_subtree/basic_melee_attack_subtree,
 	)
-
-	idle_behavior = /datum/idle_behavior/idle_random_walk

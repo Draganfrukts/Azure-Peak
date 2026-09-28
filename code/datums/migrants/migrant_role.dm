@@ -2,8 +2,10 @@
 	abstract_type = /datum/migrant_role
 	/// Name of the role
 	var/name = "MIGRANT ROLE"
+	/// Umbrella category used by systems that group roles (e.g. talkstatue lists every "Adventurer" role together)
+	var/role_category = ""
 	/// Restricts species if the list is not null
-	var/list/allowed_races
+	var/list/forbidden_races
 	/// Restricts sexes if list is not null
 	var/list/allowed_sexes
 	/// Restricts ages if list is not null
@@ -21,6 +23,10 @@
 	/// Whether to show wanderer examine like adventurers or pilgrims
 	var/show_wanderer_examine = TRUE
 	var/advjob_examine = TRUE
+	/// Restricts the flaws a person can have if list != null
+	var/list/banned_flaws
+	/// Restricts the virtues a person can have if list != null
+	var/list/banned_virtues
 
 /datum/migrant_role/proc/after_spawn(mob/living/carbon/human/character)
 	return
@@ -31,6 +37,7 @@
 
 /datum/migrant_role/adventurer
 	name = "Adventurer"
+	role_category = "Adventurer"
 	advclass_cat_rolls = list(CTAG_ADVENTURER = 20)
 
 /datum/migrant_role/bandit
@@ -43,8 +50,11 @@
 	name = "Assassin"
 	antag_datum = /datum/antagonist/assassin
 	advclass_cat_rolls = list(CTAG_ASSASSIN = 20)
+	banned_flaws = list(/datum/charflaw/hunted, /datum/charflaw/targeted)
+	banned_virtues = list(/datum/virtue/utility/feytouched)
 
 /datum/migrant_role/gnoll
 	name = "Gnoll"
 	antag_datum = /datum/antagonist/gnoll
 	advclass_cat_rolls = list(CTAG_GNOLL = 20)
+	banned_flaws = list(/datum/charflaw/hunted, /datum/charflaw/targeted)

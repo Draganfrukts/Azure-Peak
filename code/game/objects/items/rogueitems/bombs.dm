@@ -1,21 +1,30 @@
+#define MT_BOMB_HIT "bomb_hit"
+#define BOMB_HIT_IMMUNITY_DURATION 1 SECONDS
 
 /obj/item/bomb
 	name = "bottle bomb"
 	desc = "A fiery explosion waiting to be coaxed from its glass prison."
 	icon_state = "bbomb"
 	icon = 'icons/roguetown/items/misc.dmi'
-	w_class = WEIGHT_CLASS_NORMAL
+	w_class = WEIGHT_CLASS_SMALL
 	throwforce = 0
 	slot_flags = ITEM_SLOT_HIP
 	throw_speed = 0.5
+	flags_ai_inventory = AI_ITEM_THROWING
 	var/fuze = null
 	var/lit = FALSE
 	var/prob2fail = 5
-	var/PVE_damage = 160
+	var/PVE_damage = 75
+	var/spawn_shard = TRUE
 	grid_width = 32
 	grid_height = 64
 
-/obj/item/bomb/Initialize()
+/obj/item/bomb/get_mechanics_examine(mob/user)
+	. = ..()
+	. += span_info("Left-click with a torch, lamptern, flint, or another ignitioneer to light its fuse. Alternatively, the fuse can be lit by using it on a hearth, brazier, scone, or another source of ignition.")
+	. += span_info("Once lit, most bombs will detonate after a very short period of time.")
+
+/obj/item/bomb/Initialize(mapload)
 	..()
 	fuze = rand(40,60)
 
@@ -66,10 +75,19 @@
 	qdel(src)
 	playsound(T, 'sound/items/firesnuff.ogg', 100)
 	for(var/mob/living/target in range(1, T))
-		if(!target.mind || istype(target, /mob/living/simple_animal))
-			target.adjustFireLoss(PVE_damage) //fireball damage + 40. That
-	new /obj/item/natural/glass_shard(T)
-	explosion(T, light_impact_range = 1, flame_range = 2, smoke = TRUE, soundin = pick('sound/misc/explode/bottlebomb (1).ogg','sound/misc/explode/bottlebomb (2).ogg'))
+		if(istype(target, /mob/living/simple_animal))
+			var/mob/living/simple_animal/SA = target
+			if(SA.can_buckle) // rideable/saddleborn animals are excluded
+				continue
+		if(target.mob_timers[MT_BOMB_HIT] && world.time < target.mob_timers[MT_BOMB_HIT] + BOMB_HIT_IMMUNITY_DURATION)
+			continue
+		target.mob_timers[MT_BOMB_HIT] = world.time
+		var/armor_block = target.run_armor_check(BODY_ZONE_CHEST, "fire", blade_dulling = BCLASS_BURN, damage = PVE_damage, no_debuff = TRUE)
+		target.apply_damage(PVE_damage, BURN, BODY_ZONE_CHEST, armor_block)
+		apply_scorch_stack(target, 3)
+	if(spawn_shard)
+		new /obj/item/natural/glass_shard(T)
+	explosion(T, light_impact_range = 1, smoke = TRUE, soundin = pick('sound/misc/explode/bottlebomb (1).ogg','sound/misc/explode/bottlebomb (2).ogg'))
 	return TRUE
 
 /obj/item/bomb/throw_impact(atom/hit_atom, datum/thrownthing/throwingdatum)
@@ -87,7 +105,7 @@
 
 	if(!istype(I, /obj/item/natural/fibers))
 		return
-	
+
 	I.visible_message(
 		span_warning("[user] begins to prepare [src].."),
 		span_notice("I begin to set-up [src] with [I].")
@@ -102,7 +120,7 @@
 			to_chat(user, span_warningbig("Uh oh."))
 			light()
 		return
-	
+
 	var/obj/item/bomb/tripbomb/trip = new /obj/item/bomb/tripbomb(get_turf(src))
 	trip.b_type = type
 	trip.icon_state = icon_state
@@ -125,6 +143,9 @@
 	)
 	return
 
+/obj/item/bomb/noshard
+	spawn_shard = FALSE
+
 /obj/item/bomb/tripbomb
 	name = "trip bomb"
 	desc = "A detonation waiting to be coaxed from its glass prison. This one lies in wait."
@@ -140,7 +161,7 @@
 	var/obj/item/bomb/b_type = /obj/item/bomb
 	var/list/obj/item/tripwire/wire_trigger = list()
 
-/obj/item/bomb/tripbomb/Initialize()
+/obj/item/bomb/tripbomb/Initialize(mapload)
 	..()
 	icon_state = b_type.icon_state
 
@@ -178,7 +199,7 @@
 /obj/item/tripwire
 	name = "fibre tripwire"
 	desc = "You almost missed it - phew. Best cut it with a blade to disarm it."
-	icon = 'icons/roguetown/items/misc.dmi'	
+	icon = 'icons/roguetown/items/misc.dmi'
 	icon_state = "wire"
 	anchored = TRUE
 	var/obj/item/bomb/tripbomb/payload
@@ -206,7 +227,7 @@
 		qdel(I)
 	/*if(istype(I, /obj/item/natural/fibers))
 		if(payload.wire_trigger.len == 2)
-			to_chat(span_warning("I can not extend [src] anymore."))
+			to_chat(user, span_warning("I can not extend [src] anymore."))
 			return ..()
 		if(!do_after(user, 7 SECONDS - user.get_skill_level(/datum/skill/craft/traps), TRUE, src))
 			to_chat(user, span_warning("I stop extending [src]."))
@@ -246,7 +267,7 @@
 	desc = "A soft sphere with an alchemical mixture and a dispersion mechanism hidden inside. Any pressure will detonate it."
 	icon_state = "smokebomb"
 	icon = 'icons/roguetown/items/misc.dmi'
-	w_class = WEIGHT_CLASS_NORMAL
+	w_class = WEIGHT_CLASS_SMALL
 	throwforce = 0
 	slot_flags = ITEM_SLOT_HIP
 	throw_speed = 0.5
@@ -256,8 +277,8 @@
 	var/radius = 3
 
 /obj/item/bomb/smoke/attack_self(mob/user)
-    ..()
-    light()
+	..()
+	light()
 
 /obj/item/bomb/smoke/ex_act()
 	if(!QDELETED(src))
@@ -280,7 +301,7 @@
 
 /obj/item/bomb/smoke/explode()
 	var/turf/T = get_turf(src)
-	if(!T) 
+	if(!T)
 		return FALSE
 	playsound(loc, 'sound/items/smokebomb.ogg', 50)
 	var/datum/effect_system/smoke_spread/smoke = new /datum/effect_system/smoke_spread
@@ -288,7 +309,7 @@
 	smoke.start()
 	new /obj/item/ash(T)
 	qdel(src)
-	
+
 /obj/item/tntstick
 	name = "blastpowder stick"
 	desc = "A bewicked vessel, filled to the brim with explosive powder. Ignition begets eruption; a dizzying shockwave which pulverizes stone, wood, and flesh alike with little discrimination."
@@ -301,7 +322,7 @@
 	throw_speed = 0.5
 	var/fuze = 50
 	var/lit = FALSE
-	var/prob2fail = 1 
+	var/prob2fail = 1
 	var/PVE_damage = 160
 	grid_width = 32
 	grid_height = 64
@@ -367,7 +388,7 @@
 
 	if(!istype(I, /obj/item/natural/fibers))
 		return
-	
+
 	I.visible_message(
 		span_warning("[user] begins to prepare [src].."),
 		span_notice("I begin to set-up [src] with [I].")
@@ -382,7 +403,7 @@
 			to_chat(user, span_warningbig("Uh oh."))
 			light()
 		return
-	
+
 	var/obj/item/bomb/tripbomb/trip = new /obj/item/bomb/tripbomb(get_turf(src))
 	trip.b_type = type
 	trip.icon_state = icon_state
@@ -407,19 +428,42 @@
 
 /obj/item/satchel_bomb
 	name = "blastpowder satchel"
-	desc = "A bewicked satchel, stuffed with a multitude of explosive-filled sticks. Too heavy to throw, and too powerful to withstand - for nothing but dust and echoes will remain, once the shockwave abates."
+	desc = "A bewicked satchel, stuffed with a multitude of explosive-filled sticks. Too heavy to throw, and too powerful to withstand - for nothing but dust and echoes will remain, once \
+	the shockwave abates. </br>'When the fuse reaches its zenith, the blastpowder will detonate. The explosion will generate a temperature of almost one hundred million thermes. Don't be \
+	here when it blows.'"
 	icon_state = "satchel_bomb"
 	var/lit_state = "satchel_bomb-lit"
 	icon = 'icons/roguetown/items/misc.dmi'
-	w_class = WEIGHT_CLASS_BULKY 
+	w_class = WEIGHT_CLASS_BULKY
 	throwforce = 0
 	throw_range = 2
 	slot_flags = ITEM_SLOT_HIP
 	throw_speed = 0.3
 	var/fuze = 50
 	var/lit = FALSE
-	var/prob2fail = 1 
+	var/prob2fail = 1
 	var/PVE_damage = 300
+	grid_width = 256
+	grid_height = 256
+
+//admin only mega bomb, should never be made craftable
+/obj/item/satchel_bomb/mega
+	name = "mega blastpowder satchel"
+	desc = "An overfilled satchel of blastpowder originally made by Lubbin Bleat, Otava's famed sheep-kin bathhouse attendant and ruler of the slumberbeat.. \
+	</br>This bomb has been outlawed by all of Psydonia's kingdoms, and labled as a threat by both the Churches of the Pantheon and Orthodoxy. \
+	</br> <font color='FF0000'>IF YOU SEE A LIT WICK, YOU BEST RUN AWAY QUICK!</font>"
+	icon_state = "satchel_bomb"
+	lit_state = "satchel_bomb-lit"
+	icon = 'icons/roguetown/items/misc.dmi'
+	w_class = WEIGHT_CLASS_BULKY
+	dropshrink = 5
+	throwforce = 0
+	throw_range = 1
+	throw_speed = 0.3
+	fuze = 50
+	lit = FALSE
+	prob2fail = 0
+	PVE_damage = 500
 	grid_width = 256
 	grid_height = 256
 
@@ -430,9 +474,9 @@
 	light()
 
 /obj/item/satchel_bomb/ex_act()
-    if(!QDELETED(src))
-        lit = TRUE
-        explode(TRUE)
+	if(!QDELETED(src))
+		lit = TRUE
+		explode(TRUE)
 
 /obj/item/satchel_bomb/proc/light()
 	if(!lit)
@@ -465,14 +509,22 @@
 			if(!skipprob && prob(prob2fail))
 				snuff()
 			else
-				for(var/mob/living/target in range(3, T))
-					if(!target.mind || istype(target, /mob/living/simple_animal))
+				if (istype(src, /obj/item/satchel_bomb/mega)) //removing restrictions, may the gods have mercy on you all
+					for(var/mob/living/target in range(3, T))
 						target.adjustFireLoss(PVE_damage) //summary 500
-				for(var/mob/living/target in range(8, T))
-					if(!target.mind || istype(target, /mob/living/simple_animal))
+					for(var/mob/living/target in range(8, T))
 						target.adjustFireLoss(PVE_damage - 100)
-				explosion(T, devastation_range = 2, heavy_impact_range = 3, light_impact_range = 8, flame_range = 2, smoke = TRUE, soundin = pick('sound/misc/explode/bottlebomb (1).ogg','sound/misc/explode/bottlebomb (2).ogg'))
-				qdel(src)
+					explosion(T, devastation_range = 10, heavy_impact_range = 15, light_impact_range = 40, adminlog = TRUE, ignorecap = TRUE, flame_range = 10, smoke = TRUE, soundin = pick('sound/misc/explode/bottlebomb (1).ogg','sound/misc/explode/bottlebomb (2).ogg')) //5 times the size
+					qdel(src)
+				else
+					for(var/mob/living/target in range(3, T))
+						if(!target.mind || istype(target, /mob/living/simple_animal))
+							target.adjustFireLoss(PVE_damage) //summary 500
+					for(var/mob/living/target in range(8, T))
+						if(!target.mind || istype(target, /mob/living/simple_animal))
+							target.adjustFireLoss(PVE_damage - 100)
+					explosion(T, devastation_range = 2, heavy_impact_range = 3, light_impact_range = 8, flame_range = 2, smoke = TRUE, soundin = pick('sound/misc/explode/bottlebomb (1).ogg','sound/misc/explode/bottlebomb (2).ogg'))
+					qdel(src)
 
 		else
 			if(prob(prob2fail))
@@ -488,7 +540,7 @@
 
 	if(!istype(I, /obj/item/natural/fibers))
 		return
-	
+
 	I.visible_message(
 		span_warning("[user] begins to prepare [src].."),
 		span_notice("I begin to set-up [src] with [I].")
@@ -503,7 +555,7 @@
 			to_chat(user, span_warningbig("Uh oh."))
 			light()
 		return
-	
+
 	var/obj/item/bomb/tripbomb/trip = new /obj/item/bomb/tripbomb(get_turf(src))
 	trip.b_type = type
 	trip.icon_state = icon_state
@@ -539,7 +591,7 @@
 	grid_width = 32
 	grid_height = 32
 
-/obj/item/impact_grenade/Initialize()
+/obj/item/impact_grenade/Initialize(mapload)
 	. = ..()
 
 // Define a base explodes() proc that subtypes can override because its now explodes proc
@@ -554,14 +606,14 @@
 
 /obj/item/impact_grenade/attack_self(mob/user)
 	..()
-	explodes() 
+	explodes()
 
 /obj/item/impact_grenade/attackby(obj/item/I, mob/user, params)
 	..()
 
 	if(!istype(I, /obj/item/natural/fibers))
 		return
-	
+
 	I.visible_message(
 		span_warning("[user] begins to prepare [src].."),
 		span_notice("I begin to set-up [src] with [I].")
@@ -576,7 +628,7 @@
 			to_chat(user, span_warningbig("Uh oh."))
 			explodes()
 		return
-	
+
 	var/obj/item/bomb/tripbomb/trip = new /obj/item/bomb/tripbomb(get_turf(src))
 	trip.b_type = type
 	trip.icon_state = icon_state
@@ -610,7 +662,7 @@
 		for(var/mob/living/target in range(2, T))
 			if(!target.mind || istype(target, /mob/living/simple_animal))
 				target.adjustFireLoss(PVE_damage) //fireball damage + 40. That
-		explosion(T, heavy_impact_range = 1, light_impact_range = 2, flame_range = 2, smoke = TRUE, soundin = pick('sound/misc/explode/bottlebomb (1).ogg','sound/misc/explode/bottlebomb (2).ogg'))
+		explosion(T, heavy_impact_range = 1, light_impact_range = 3, flame_range = 2, smoke = TRUE, soundin = pick('sound/misc/explode/bottlebomb (1).ogg','sound/misc/explode/bottlebomb (2).ogg'))
 		qdel(src)
 
 /obj/item/smokeshell
@@ -633,7 +685,6 @@
 	var/datum/effect_system/smoke_spread/smoke_type = /datum/effect_system/smoke_spread
 	grid_width = 32
 	grid_height = 32
-
 
 /obj/item/impact_grenade/smoke/explodes()
 	var/turf/T = get_turf(src)
@@ -673,4 +724,7 @@
 	name = "silent gas belcher"
 	desc = "A vented canister, filled with a numbing payload. A strange prickling sensation graces your mind and throat, not unlike the 'pins and needles' of a sleeping limb."
 	icon_state = "smokeshell_purple"
-	smoke_type = /datum/effect_system/smoke_spread/mute_gas	
+	smoke_type = /datum/effect_system/smoke_spread/mute_gas
+
+#undef MT_BOMB_HIT
+#undef BOMB_HIT_IMMUNITY_DURATION

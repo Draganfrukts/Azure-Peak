@@ -26,7 +26,9 @@
 	if (notransform)
 		return
 
-	if(!client && mode == NPC_AI_SLEEP)
+	// Sleep gate: skip Life() for idle NPCs to save cycles, but only if fully conscious.
+	// If not conscious, we must run Life() so update_stat() can transition us back and re-wake the AI.
+	if(!client && stat == CONSCIOUS && ai_controller?.ai_status != AI_STATUS_ON)
 		return
 
 	. = ..()
@@ -35,12 +37,6 @@
 		return 0
 
 	SEND_SIGNAL(src, COMSIG_HUMAN_LIFE)
-
-	if(. && (mode != NPC_AI_OFF))
-		handle_ai()
-
-	if(advsetup)
-		Stun(50)
 
 	if(mind)
 		mind.sleep_adv.add_stress_cycle(get_stress_amount())
@@ -55,19 +51,11 @@
 				remove_stress(/datum/stressevent/sleepytime)
 				if(mind)
 					mind.sleep_adv.advance_cycle()
-					handle_sleep_triumphs()
 	if(leprosy == 1)
 		adjustToxLoss(2)
 	else if(leprosy == 2)
 		if(client)
-			if(check_blacklist(client.ckey))
-				ADD_TRAIT(src, TRAIT_NOPAIN, TRAIT_GENERIC)
-				leprosy = 1
-				var/obj/item/bodypart/B = get_bodypart(BODY_ZONE_HEAD)
-				if(B)
-					B.sellprice = rand(16, 33)
-			else
-				leprosy = 3
+			leprosy = 3
 	//heart attack stuff
 	handle_heart()
 	update_energy()
@@ -77,7 +65,7 @@
 			cf.flaw_on_life(src)
 	if(health <= 0)
 		adjustOxyLoss(0.5)
-	if(mode == NPC_AI_OFF && !client && !HAS_TRAIT(src, TRAIT_NOSLEEP))
+	if(!client && !ai_controller && !HAS_TRAIT(src, TRAIT_NOSLEEP))
 		if(mob_timers["slo"])
 			if(world.time > mob_timers["slo"] + 90 SECONDS)
 				Sleeping(100)
@@ -114,7 +102,6 @@
 
 	. = ..()
 	name = get_visible_name()
-
 /mob/living/carbon/human/proc/on_daypass()
 	if(dna?.species)
 		if(STUBBLE in dna.species.species_traits)
@@ -145,12 +132,14 @@
 			var/datum/status_effect/fire_handler/fire_stacks/fire_status = has_status_effect(/datum/status_effect/fire_handler/fire_stacks)
 			var/datum/status_effect/fire_handler/fire_stacks/sunder_status = has_status_effect(/datum/status_effect/fire_handler/fire_stacks/sunder)
 			var/datum/status_effect/fire_handler/fire_stacks/divine_status = has_status_effect(/datum/status_effect/fire_handler/fire_stacks/divine)
+			var/datum/status_effect/fire_handler/fire_stacks/vheslyn_status = has_status_effect(/datum/status_effect/fire_handler/fire_stacks/vheslyn)
 			var/datum/status_effect/fire_handler/fire_stacks/sunder/blessed/blessed_sunder = has_status_effect(/datum/status_effect/fire_handler/fire_stacks/sunder/blessed)
-			if(fire_status?.stacks + sunder_status?.stacks + divine_status?.stacks + blessed_sunder?.stacks > 10)
-				Immobilize(30)
-				emote("firescream", TRUE)
-			else
-				emote("pain", TRUE)
+			if(!HAS_TRAIT(src, TRAIT_UNFORGIVABLE)) //VHESLYNITES DO NOT CARE, THEY UNIQUELY CAN PUSH THROUGH LETHAL FIRESTACKS WITHOUT A STUN. FUCKING RUN.
+				if(fire_status?.stacks + sunder_status?.stacks + divine_status?.stacks + vheslyn_status?.stacks + blessed_sunder?.stacks > 10)
+					Immobilize(30)
+					emote("firescream", TRUE)
+				else
+					emote("pain", TRUE)
 		return ..()
 	. = FALSE //No ignition
 
@@ -196,7 +185,7 @@
 			mask_sound = pick('sound/items/confessormask1.ogg', 'sound/items/confessormask2.ogg', 'sound/items/confessormask3.ogg',
 							'sound/items/confessormask4.ogg', 'sound/items/confessormask5.ogg', 'sound/items/confessormask6.ogg',
 							'sound/items/confessormask7.ogg', 'sound/items/confessormask8.ogg', 'sound/items/confessormask9.ogg',
-					 		'sound/items/confessormask10.ogg')
+								'sound/items/confessormask10.ogg')
 			playsound(src, mask_sound, 90, FALSE, 4, 0)
 			return
 

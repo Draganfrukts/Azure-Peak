@@ -9,6 +9,7 @@
 	icon_gib = "cow_gib"
 	gender = FEMALE
 	mob_biotypes = MOB_ORGANIC|MOB_BEAST
+	blood_toll_bucket = STATS_KILLED_LIVESTOCK
 	emote_hear = list("brays.")
 	emote_see = list("shakes its head.", "chews her cud.")
 	speak_chance = 1
@@ -24,13 +25,13 @@
 	base_intents = list(/datum/intent/simple/headbutt)
 	health = 80
 	maxHealth = 80
-	food_type = list(/obj/item/reagent_containers/food/snacks/grown/wheat,/obj/item/reagent_containers/food/snacks/grown/oat)
+	food_type = list(/obj/item/reagent_containers/food/snacks/grown/wheat,/obj/item/reagent_containers/food/snacks/grown/oat,/obj/item/reagent_containers/food/snacks/grown/maize)
 	tame_chance = 25
 	bonus_tame_chance = 15
 	footstep_type = FOOTSTEP_MOB_SHOE
 	pooptype = /obj/item/natural/poo/cow
 	milkies = TRUE
-	faction = list("cows")
+	faction = list(FACTION_COWS)
 	attack_verb_continuous = "headbutts"
 	attack_verb_simple = "headbutt"
 	melee_damage_lower = 10
@@ -45,6 +46,7 @@
 	AIStatus = AI_OFF
 	can_have_ai = FALSE
 	ai_controller = /datum/ai_controller/generic
+	move_base_delay = MOVEMENT_DELAY_SLOW
 
 /obj/effect/decal/remains/cow
 	name = "remains"
@@ -82,7 +84,6 @@
 	STACON = 5
 	STASTR = 5
 	STASPD = 5
-	defprob = 50
 	adult_growth = /mob/living/simple_animal/hostile/retaliate/rogue/cow
 
 /mob/living/simple_animal/hostile/retaliate/rogue/cow/simple_limb_hit(zone)
@@ -160,7 +161,7 @@
 						/obj/item/natural/hide=1, /obj/item/natural/bundle/bone/full = 1, /obj/item/alch/sinew = 3, /obj/item/alch/bone = 1, /obj/item/alch/viscera = 2)
 	perfect_butcher_results = list(/obj/item/reagent_containers/food/snacks/rogue/meat/steak = 6,
 						/obj/item/natural/hide=2, /obj/item/natural/bundle/bone/full = 1, /obj/item/alch/sinew = 4, /obj/item/alch/bone = 1, /obj/item/alch/viscera = 2)
-	faction = list("cows")
+	faction = list(FACTION_COWS)
 	mob_biotypes = MOB_ORGANIC|MOB_BEAST
 	attack_same = 0
 	attack_verb_continuous = "headbutts"
@@ -185,6 +186,7 @@
 	AIStatus = AI_OFF
 	can_have_ai = FALSE
 	ai_controller = /datum/ai_controller/generic
+	move_base_delay = MOVEMENT_DELAY_SLOW
 
 /mob/living/simple_animal/hostile/retaliate/rogue/bull/get_sound(input)
 	switch(input)
@@ -248,10 +250,10 @@
 	GiveTarget(user)
 	return
 
-/mob/living/simple_animal/hostile/retaliate/rogue/bull/Initialize()
+/mob/living/simple_animal/hostile/retaliate/rogue/bull/Initialize(mapload)
 	. = ..()
 	AddElement(/datum/element/ai_retaliate)
-	ai_controller.set_blackboard_key(BB_BASIC_FOODS, food_type)
+	ai_controller.set_blackboard_key(BB_BASIC_FOODS, typecacheof(food_type))
 
 /mob/living/simple_animal/hostile/retaliate/rogue/cow/bullet
 	name = "calf"
@@ -274,9 +276,9 @@
 	STASPD = 5
 	adult_growth = /mob/living/simple_animal/hostile/retaliate/rogue/bull
 
-/mob/living/simple_animal/hostile/retaliate/rogue/cow/Initialize()
+/mob/living/simple_animal/hostile/retaliate/rogue/cow/Initialize(mapload)
 	. = ..()
 	AddElement(/datum/element/ai_retaliate)
-	ai_controller.set_blackboard_key(BB_BASIC_FOODS, food_type)
+	ai_controller.set_blackboard_key(BB_BASIC_FOODS, typecacheof(food_type))
 
 

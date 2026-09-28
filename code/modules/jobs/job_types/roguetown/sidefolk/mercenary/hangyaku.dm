@@ -2,15 +2,16 @@
 	name = "Hangyaku-Kounen"
 	tutorial = "Rebel. Outlaw. Failure. Once, you served the upper echelons of Kazengun society as more than just a 'knight'- you were a champion, a beacon of virtue, a legend in the making. Now you wander distant Psydonia, seeking a fresh start... or fresh coin, at least."
 	allowed_sexes = list(MALE, FEMALE)
-	allowed_races = RACES_NO_CONSTRUCT //do they have constructs in kazengun?
+	forbidden_races = list(RACES_CONSTRUCT RACES_DESPISED) //do they have constructs in kazengun?
 	outfit = /datum/outfit/job/roguetown/mercenary/hangyaku
 	subclass_languages = list(/datum/language/kazengunese)
 	class_select_category = CLASS_CAT_KAZENGUN
-	category_tags = list(CTAG_MERCENARY)
+	category_tags = list(CTAG_MERCENARY, CTAG_MERCPARTY_VANGUARD)
 	traits_applied = list(TRAIT_NOBLE) //i hate nobles but it's thematic
-	cmode_music = 'sound/music/combat_kazengite.ogg'
+	noble_income = 15
+	cmode_music = 'sound/music/combat_Kazengun_Firestorm.ogg'
 	maximum_possible_slots = 3
-	subclass_stats = list(  // mounted knight, but slower.
+	subclass_stats = list(	// mounted knight, but slower.
 		STATKEY_STR = 2,
 		STATKEY_INT = 1,
 		STATKEY_CON = 1,
@@ -40,7 +41,7 @@
 	has_loadout = TRUE
 	to_chat(H, span_warning("Rebel. Outlaw. Failure. Once, you served the upper echelons of Kazengun society as more than just a 'knight'- you were a champion, a beacon of virtue, a legend in the making. Now you wander distant Psydonia, seeking a fresh start... or fresh coin, at least."))
 	head = /obj/item/clothing/head/roguetown/helmet/heavy/kabuto
-	belt = /obj/item/storage/belt/rogue/leather/cloth
+	belt = /obj/item/storage/belt/rogue/leather/cloth/upgraded
 	neck = /obj/item/clothing/neck/roguetown/gorget/steel/kazengun
 	cloak = /obj/item/clothing/cloak/kazengun
 	shoes = /obj/item/clothing/shoes/roguetown/boots/leather/reinforced/kazengun
@@ -58,25 +59,29 @@
 
 /datum/outfit/job/roguetown/mercenary/hangyaku/choose_loadout(mob/living/carbon/human/H)
 	. = ..()
-	var/weapons = list("Sword","Great Mace","Spear","Bow")
+	var/weapons = list("Sword","Kodachi","Great Mace","Spear","Bow")
 	var/weapon_choice = input(H, "Choose your weapon.", "WHEN STEEL MUST SPEAK...") as anything in weapons
 	switch(weapon_choice)
 		if("Sword")
 			H.adjust_skillrank_up_to(/datum/skill/combat/swords, SKILL_LEVEL_EXPERT, TRUE)
 			H.put_in_hands(new /obj/item/rogueweapon/sword/long/kriegmesser/ssangsudo)
-			H.equip_to_slot_or_del(new /obj/item/rogueweapon/scabbard/sword/kazengun/noparry, SLOT_BELT_L, TRUE)	
+			H.equip_to_slot_or_del(new /obj/item/rogueweapon/scabbard/sword/kazengun/noparry, SLOT_BELT_L, TRUE)
+		if("Kodachi")
+			H.adjust_skillrank_up_to(/datum/skill/combat/swords, SKILL_LEVEL_EXPERT, TRUE)
+			H.put_in_hands(new /obj/item/rogueweapon/sword/short/kazengun)
+			H.equip_to_slot_or_del(new /obj/item/rogueweapon/scabbard/sword/kazengun/kodachi, SLOT_BELT_L, TRUE)
 		if("Great Mace")
 			H.adjust_skillrank_up_to(/datum/skill/combat/maces, SKILL_LEVEL_EXPERT, TRUE)
-			H.put_in_hands(new /obj/item/rogueweapon/mace/goden/kanabo)
+			H.put_in_hands(new /obj/item/rogueweapon/mace/goden/steel/kanabo)
 			H.equip_to_slot_or_del(new /obj/item/rogueweapon/scabbard/gwstrap, SLOT_BACK_R, TRUE)
 		if("Spear")
 			H.adjust_skillrank_up_to(/datum/skill/combat/polearms, SKILL_LEVEL_EXPERT, TRUE)
-			H.put_in_hands(new /obj/item/rogueweapon/spear/naginata) 
+			H.put_in_hands(new /obj/item/rogueweapon/spear/naginata)
 			H.equip_to_slot_or_del(new /obj/item/rogueweapon/scabbard/gwstrap, SLOT_BACK_R, TRUE)
 		if("Bow")
 			H.adjust_skillrank_up_to(/datum/skill/combat/bows, SKILL_LEVEL_EXPERT, TRUE)
-			H.put_in_hands(new /obj/item/gun/ballistic/revolver/grenadelauncher/bow/recurve) 
-			H.equip_to_slot_or_del(new /obj/item/quiver/arrows, SLOT_BELT_L, TRUE) 
+			H.put_in_hands(new /obj/item/gun/ballistic/revolver/grenadelauncher/bow)
+			H.equip_to_slot_or_del(new /obj/item/quiver/arrows, SLOT_BELT_L, TRUE)
 	var/armors = list("Heavy Armor","Medium Armor")
 	var/armor_choice = input(H, "Choose your armor.", "...THE TONGUE MUST STAY QUIET.") as anything in armors
 	switch(armor_choice)
@@ -103,27 +108,30 @@
 	name = "Hangyaku-Chonin"
 	tutorial = "Once, you were a farmer, a miner, a seamstress, a commoner. Now the sword is your plow and war your field. You’ve hammered your scythes into spears and recast your knives into swords. Past the door, your daimyo is calling - and destiny awaits."
 	allowed_sexes = list(MALE, FEMALE)
-	allowed_races = ALL //do they have constructs in kazengun?
+	forbidden_races = list(RACES_CONSTRUCT)//do they have constructs in kazengun?
 	outfit = /datum/outfit/job/roguetown/mercenary/chonin
 	subclass_languages = list(/datum/language/kazengunese)
 	class_select_category = CLASS_CAT_KAZENGUN
-	category_tags = list(CTAG_MERCENARY)
-	traits_applied = list(TRAIT_DECEIVING_MEEKNESS, TRAIT_MEDIUMARMOR) //peasant levy turned mercenary. the underdog.
+	category_tags = list(CTAG_MERCENARY, CTAG_MERCPARTY_VANGUARD)
+	traits_applied = list(TRAIT_MEDIUMARMOR) //peasant levy turned mercenary. the underdog.
+	subclass_virtues = list(
+		/datum/virtue/combat/guarded
+	)
 	cmode_music = 'sound/music/combat_kazengite.ogg'
-	subclass_stats = list(  
+	subclass_stats = list(
 		STATKEY_STR = 2,
 		STATKEY_CON = 2,
 		STATKEY_WIL = 2,
 		STATKEY_PER = 1,
 	)
-	subclass_skills = list( 
+	subclass_skills = list(
 		/datum/skill/misc/swimming = SKILL_LEVEL_APPRENTICE,
 		/datum/skill/misc/climbing = SKILL_LEVEL_APPRENTICE,
 		/datum/skill/combat/wrestling = SKILL_LEVEL_APPRENTICE,
 		/datum/skill/combat/unarmed = SKILL_LEVEL_JOURNEYMAN,
 		/datum/skill/combat/knives = SKILL_LEVEL_APPRENTICE,
 		/datum/skill/combat/polearms = SKILL_LEVEL_APPRENTICE,
-		/datum/skill/misc/reading = SKILL_LEVEL_NOVICE, 
+		/datum/skill/misc/reading = SKILL_LEVEL_NOVICE,
 		/datum/skill/misc/athletics = SKILL_LEVEL_JOURNEYMAN,
 		/datum/skill/craft/crafting = SKILL_LEVEL_JOURNEYMAN
 	)
@@ -194,7 +202,7 @@
 			ADD_TRAIT(H, TRAIT_SEEPRICES, TRAIT_GENERIC)
 			H.adjust_skillrank_up_to(/datum/skill/combat/knives, SKILL_LEVEL_JOURNEYMAN, TRUE)
 			H.adjust_skillrank_up_to(/datum/skill/misc/sneaking, SKILL_LEVEL_JOURNEYMAN, TRUE)
-			H.equip_to_slot_or_del(new /obj/item/storage/belt/rogue/pouch/coins/mid, SLOT_BELT_L, TRUE) 
+			H.equip_to_slot_or_del(new /obj/item/storage/belt/rogue/pouch/coins/mid, SLOT_BELT_L, TRUE)
 			H.equip_to_slot_or_del(new /obj/item/rogueweapon/scabbard/sheath/kazengun, SLOT_BELT_R, TRUE)
 			H.put_in_hands(new /obj/item/rogueweapon/huntingknife/idagger/steel/kazengun)
 		if("Levy") //straight-up fighter. gets a naginata AND a tanto.

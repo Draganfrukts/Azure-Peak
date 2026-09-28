@@ -5,7 +5,7 @@
 	However, with the increase in banditry, necromancy, deadite risings, and increasing sea raider raids, there are rumors abound that Heartfelt is not what it used to be. \
 	Travellers often warn of Heartfelt having fallen already, and words of secretive cultists isn't unheard of."
 	allowed_sexes = list(MALE, FEMALE)
-	allowed_races = ACCEPTED_RACES
+	forbidden_races = list(RACES_DESPISED)
 	outfit = /datum/outfit/job/roguetown/heartfelt/retinue/houseguard
 	maximum_possible_slots = 4
 	pickprob = 100
@@ -13,7 +13,7 @@
 	class_select_category = CLASS_CAT_HFT_GUARD
 	traits_applied = list(TRAIT_MEDIUMARMOR, TRAIT_STEELHEARTED, TRAIT_HEARTFELT) // MAA footman W/O Guardsman Trait
 	subclass_stats = list( //
-		STATKEY_STR = 2, 
+		STATKEY_STR = 2,
 		STATKEY_WIL = 2,
 		STATKEY_SPD = 1,
 	)
@@ -55,7 +55,7 @@
 
 	H.adjust_blindness(-3)
 	var/weapons = list("Warhammer & Shield","Axe & Shield","Halberd","Greataxe")
-	var/weapon_choice = input("Choose your weapon.", "TAKE UP ARMS") as anything in weapons
+	var/weapon_choice = input(H, "Choose your weapon.", "TAKE UP ARMS") as anything in weapons
 	H.set_blindness(0)
 	switch(weapon_choice)
 		if("Warhammer & Shield")
@@ -79,26 +79,28 @@
 		/obj/item/rogueweapon/scabbard/sheath = 1,
 		/obj/item/storage/belt/rogue/pouch/coins/mid = 1,
 	)
-	H.verbs |= /mob/proc/haltyell
+	add_verb(H, /mob/proc/haltyell)
 
-	var/helmet = list("Etruscan Bascinet","Volf Plate Helmet","Visored Sallet","Slitted Kettle","Simple Helmet","Kettle Helmet","Sallet Helmet","Winged Helmet",)
-	var/helmet_choice = input("Choose your Helm.", "TAKE UP HELMS") as anything in helmet
+	var/helmet = list("Etruscan Bascinet","Volf Plate Helmet","Visored Sallet","Snouted Visored Sallet","Slitted Kettle","Simple Helmet","Kettle Helmet","Sallet Helmet","Winged Helmet",)
+	var/helmet_choice = input(H, "Choose your Helm.", "TAKE UP HELMS") as anything in helmet
 	switch(helmet_choice)
 		if("Etruscan Bascinet")
 			head = /obj/item/clothing/head/roguetown/helmet/bascinet/etruscan
-		if("Volf Plate Helmet") 
+		if("Volf Plate Helmet")
 			head = /obj/item/clothing/head/roguetown/helmet/heavy/volfplate
-		if("Visored Sallet")	
+		if("Visored Sallet")
 			head = /obj/item/clothing/head/roguetown/helmet/sallet/visored
-		if("Slitted Kettle") 
+		if("Snouted Visored Sallet")
+			head = /obj/item/clothing/head/roguetown/helmet/sallet/visored/snouted
+		if("Slitted Kettle")
 			head = /obj/item/clothing/head/roguetown/helmet/heavy/knight/skettle
-		if("Simple Helmet")		
+		if("Simple Helmet")
 			head = /obj/item/clothing/head/roguetown/helmet
-		if("Kettle Helmet")		
+		if("Kettle Helmet")
 			head = /obj/item/clothing/head/roguetown/helmet/kettle
-		if("Sallet Helmet")		
+		if("Sallet Helmet")
 			head = /obj/item/clothing/head/roguetown/helmet/sallet
-		if("Winged Helmet") 
+		if("Winged Helmet")
 			head = /obj/item/clothing/head/roguetown/helmet/winged
 		else //In case they DC or don't choose close the panel, etc
 			head = /obj/item/clothing/head/roguetown/helmet/bascinet/etruscan
@@ -118,7 +120,7 @@
 	subclass_stats = list(
 		STATKEY_SPD = 2,
 		STATKEY_PER = 2,
-		STATKEY_LCK = 2	
+		STATKEY_LCK = 2
 	)
 
 	subclass_skills = list(
@@ -149,30 +151,30 @@
 	l_hand = /obj/item/rogueweapon/sword
 	belt = /obj/item/storage/belt/rogue/leather/black
 	backr = /obj/item/storage/backpack/rogue/satchel/black
-	shirt = /obj/item/clothing/suit/roguetown/armor/gambeson/lord
+	shirt = /obj/item/clothing/suit/roguetown/armor/gambeson/lord/light
 	armor = /obj/item/clothing/suit/roguetown/armor/brigandine/light
 	pants = /obj/item/clothing/under/roguetown/heavy_leather_pants
 	neck = /obj/item/clothing/neck/roguetown/gorget/
 
 	H.adjust_blindness(-3)
 	var/weapons = list("Crossbow","Bow","Sling")
-	var/weapon_choice = input("Choose your weapon.", "TAKE UP ARMS") as anything in weapons
+	var/weapon_choice = input(H, "Choose your weapon.", "TAKE UP ARMS") as anything in weapons
 	H.set_blindness(0)
 	switch(weapon_choice)
 		if("Crossbow")
-			beltr = /obj/item/quiver/bolts
+			beltr = /obj/item/quiver/bolt/standard
 			backl = /obj/item/gun/ballistic/revolver/grenadelauncher/crossbow
 			H.change_stat(STATKEY_STR, 1)
 		if("Bow")
 			beltr = /obj/item/quiver/arrows
-			backl = /obj/item/gun/ballistic/revolver/grenadelauncher/bow/recurve
+			backl = /obj/item/gun/ballistic/revolver/grenadelauncher/bow
 			H.change_stat(STATKEY_PER, 1)
 		if("Sling")
 			beltr = /obj/item/quiver/sling/iron
 			r_hand = /obj/item/gun/ballistic/revolver/grenadelauncher/sling // Both are belt slots and it's not worth setting where the cugel goes for everyone else, sad.
 			H.change_stat(STATKEY_SPD, 1)
 		else
-			beltr = /obj/item/quiver/bolts
+			beltr = /obj/item/quiver/bolt/standard
 			backl = /obj/item/gun/ballistic/revolver/grenadelauncher/crossbow
 
 	backpack_contents = list(
@@ -182,33 +184,35 @@
 		/obj/item/storage/belt/rogue/pouch/coins/mid = 1,
 		/obj/item/reagent_containers/glass/bottle/alchemical/healthpotnew = 1,
 	)
-	H.verbs |= /mob/proc/haltyell
+	add_verb(H, /mob/proc/haltyell)
 
-	var/helmet = list("Etruscan Bascinet","Volf Plate Helmet","Visored Sallet","Slitted Kettle","Simple Helmet","Kettle Helmet","Sallet Helmet","Winged Helmet",)
-	var/helmet_choice = input("Choose your Helm.", "TAKE UP HELMS") as anything in helmet
+	var/helmet = list("Etruscan Bascinet","Volf Plate Helmet","Visored Sallet","Snouted Visored Sallet","Slitted Kettle","Simple Helmet","Kettle Helmet","Sallet Helmet","Winged Helmet",)
+	var/helmet_choice = input(H, "Choose your Helm.", "TAKE UP HELMS") as anything in helmet
 	switch(helmet_choice)
 		if("Etruscan Bascinet")
 			head = /obj/item/clothing/head/roguetown/helmet/bascinet/etruscan
-		if("Volf Plate Helmet") 
+		if("Volf Plate Helmet")
 			head = /obj/item/clothing/head/roguetown/helmet/heavy/volfplate
-		if("Visored Sallet")	
+		if("Visored Sallet")
 			head = /obj/item/clothing/head/roguetown/helmet/sallet/visored
-		if("Slitted Kettle") 
+		if("Snouted Visored Sallet")
+			head = /obj/item/clothing/head/roguetown/helmet/sallet/visored/snouted
+		if("Slitted Kettle")
 			head = /obj/item/clothing/head/roguetown/helmet/heavy/knight/skettle
-		if("Simple Helmet")		
+		if("Simple Helmet")
 			head = /obj/item/clothing/head/roguetown/helmet
-		if("Kettle Helmet")		
+		if("Kettle Helmet")
 			head = /obj/item/clothing/head/roguetown/helmet/kettle
-		if("Sallet Helmet")		
+		if("Sallet Helmet")
 			head = /obj/item/clothing/head/roguetown/helmet/sallet
-		if("Winged Helmet") 
+		if("Winged Helmet")
 			head = /obj/item/clothing/head/roguetown/helmet/winged
 		else //In case they DC or don't choose close the panel, etc
 			head = /obj/item/clothing/head/roguetown/helmet/bascinet/etruscan
 
 // No Cavalry Option.
 
-//  SQUIRE - Pseudo Cavalry/MAA/Skirmisher. Jack of All Trades. Master of None. Can't get trained due to Knight not getting good training.
+//	SQUIRE - Pseudo Cavalry/MAA/Skirmisher. Jack of All Trades. Master of None. Can't get trained due to Knight not getting good training.
 
 /datum/advclass/heartfelt/retinue/squire
 	name = "Heartfelt Squire"
@@ -216,7 +220,7 @@
 	However, with the increase in banditry, necromancy, deadite risings, and increasing sea raider raids, there are rumors abound that Heartfelt is not what it used to be. \
 	Travellers often warn of Heartfelt having fallen already, and words of secretive cultists isn't unheard of."
 	allowed_sexes = list(MALE, FEMALE)
-	allowed_races = RACES_NO_CONSTRUCT
+	forbidden_races = list(RACES_CONSTRUCT RACES_DESPISED)
 	outfit = /datum/outfit/job/roguetown/heartfelt/retinue/squire
 	maximum_possible_slots = 2
 	pickprob = 100
@@ -232,11 +236,11 @@
 	cmode_music = 'sound/music/combat_squire.ogg'
 
 	subclass_skills = list(
-		/datum/skill/combat/swords = SKILL_LEVEL_NOVICE,		
+		/datum/skill/combat/swords = SKILL_LEVEL_NOVICE,
 		/datum/skill/combat/polearms = SKILL_LEVEL_NOVICE,
 		/datum/skill/combat/maces = SKILL_LEVEL_NOVICE,
 		/datum/skill/combat/shields = SKILL_LEVEL_NOVICE,
-		/datum/skill/combat/knives = SKILL_LEVEL_NOVICE,		
+		/datum/skill/combat/knives = SKILL_LEVEL_NOVICE,
 		/datum/skill/combat/crossbows = SKILL_LEVEL_NOVICE,
 		/datum/skill/combat/bows = SKILL_LEVEL_NOVICE,
 		/datum/skill/combat/wrestling = SKILL_LEVEL_JOURNEYMAN,
@@ -263,16 +267,16 @@
 	neck = /obj/item/clothing/neck/roguetown/chaincoif
 	backr = /obj/item/storage/backpack/rogue/satchel
 	backpack_contents = list(
-		/obj/item/rogueweapon/huntingknife/idagger = 1,  
+		/obj/item/rogueweapon/huntingknife/idagger = 1,
 		/obj/item/storage/belt/rogue/pouch/coins/mid = 1,
 		/obj/item/rogueweapon/hammer/iron = 1,
 		/obj/item/polishing_cream = 1,
 		/obj/item/armor_brush = 1,
 		/obj/item/reagent_containers/glass/bottle/alchemical/healthpotnew = 1,
-	) 
+	)
 
 	var/weapons = list("Sword & Shield","Mace & Shield","Spear","Crossbow", "Bow")
-	var/weapon_choice = input("Choose your weapon.", "TAKE UP ARMS") as anything in weapons
+	var/weapon_choice = input(H, "Choose your weapon.", "TAKE UP ARMS") as anything in weapons
 	H.set_blindness(0)
 	switch(weapon_choice)
 		if("Sword & Shield")
@@ -289,35 +293,37 @@
 			backl = /obj/item/rogueweapon/scabbard/gwstrap
 			H.adjust_skillrank_up_to(/datum/skill/combat/polearms, SKILL_LEVEL_JOURNEYMAN, TRUE)
 		if("Crossbow")
-			beltr = /obj/item/quiver/bolts
+			beltr = /obj/item/quiver/bolt/standard
 			backl = /obj/item/gun/ballistic/revolver/grenadelauncher/crossbow
 			H.adjust_skillrank_up_to(/datum/skill/combat/crossbows, SKILL_LEVEL_JOURNEYMAN, TRUE)
 		if("Bow")
 			beltr = /obj/item/quiver/arrows
-			backl = /obj/item/gun/ballistic/revolver/grenadelauncher/bow/recurve
+			backl = /obj/item/gun/ballistic/revolver/grenadelauncher/bow
 			H.adjust_skillrank_up_to(/datum/skill/combat/bows, SKILL_LEVEL_JOURNEYMAN, TRUE)
 		else
 			beltr = /obj/item/rogueweapon/sword
 			backl = /obj/item/rogueweapon/shield/iron
 
-	var/helmet = list("Etruscan Bascinet","Volf Plate Helmet","Visored Sallet","Slitted Kettle","Simple Helmet","Kettle Helmet","Sallet Helmet","Winged Helmet",)
-	var/helmet_choice = input("Choose your Helm.", "TAKE UP HELMS") as anything in helmet
+	var/helmet = list("Etruscan Bascinet","Volf Plate Helmet","Visored Sallet","Snouted Visored Sallet","Slitted Kettle","Simple Helmet","Kettle Helmet","Sallet Helmet","Winged Helmet",)
+	var/helmet_choice = input(H, "Choose your Helm.", "TAKE UP HELMS") as anything in helmet
 	switch(helmet_choice)
 		if("Etruscan Bascinet")
 			head = /obj/item/clothing/head/roguetown/helmet/bascinet/etruscan
-		if("Volf Plate Helmet") 
+		if("Volf Plate Helmet")
 			head = /obj/item/clothing/head/roguetown/helmet/heavy/volfplate
-		if("Visored Sallet")	
+		if("Visored Sallet")
 			head = /obj/item/clothing/head/roguetown/helmet/sallet/visored
-		if("Slitted Kettle") 
+		if("Snouted Visored Sallet")
+			head = /obj/item/clothing/head/roguetown/helmet/sallet/visored/snouted
+		if("Slitted Kettle")
 			head = /obj/item/clothing/head/roguetown/helmet/heavy/knight/skettle
-		if("Simple Helmet")		
+		if("Simple Helmet")
 			head = /obj/item/clothing/head/roguetown/helmet
-		if("Kettle Helmet")		
+		if("Kettle Helmet")
 			head = /obj/item/clothing/head/roguetown/helmet/kettle
-		if("Sallet Helmet")		
+		if("Sallet Helmet")
 			head = /obj/item/clothing/head/roguetown/helmet/sallet
-		if("Winged Helmet") 
+		if("Winged Helmet")
 			head = /obj/item/clothing/head/roguetown/helmet/winged
 		else //In case they DC or don't choose close the panel, etc
 			head = /obj/item/clothing/head/roguetown/helmet/bascinet/etruscan

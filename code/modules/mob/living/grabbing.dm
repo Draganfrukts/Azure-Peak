@@ -17,13 +17,15 @@
 	var/mob/living/carbon/grabbee
 	var/list/dependents = list()
 	var/handaction
-	var/bleed_suppressing = 0.25 //multiplier for how much we suppress bleeding, can accumulate so two grabs means 50% less bleeding; each grab being 25% basically.
+	var/bleed_suppressing = 0.5 //multiplier for how much we suppress bleeding, can accumulate so two grabs multiply together. An aggressive grip tightens this further.
 	var/chokehold = FALSE
+	var/sippy = FALSE
+	experimental_inhand = FALSE
 
 /atom/movable //reference to all obj/item/grabbing
 	var/list/grabbedby
 
-/obj/item/grabbing/Initialize()
+/obj/item/grabbing/Initialize(mapload)
 	. = ..()
 	START_PROCESSING(SSfastprocess, src)
 
@@ -85,15 +87,23 @@
 	if(ismob(grabbed))
 		var/mob/M = grabbed
 		LAZYREMOVE(M.grabbedby, src)
-		if(iscarbon(M) && sublimb_grabbed)
+		if(iscarbon(M))
 			var/mob/living/carbon/carbonmob = M
-			var/obj/item/bodypart/part = carbonmob.get_bodypart(sublimb_grabbed)
+			var/obj/item/bodypart/part = limb_grabbed
+			if(!part && sublimb_grabbed)
+				part = carbonmob.get_bodypart(sublimb_grabbed)
 
 			// Edge case: if a weapon becomes embedded in a mob, our "grab" will be destroyed...
 			// In this case, grabbed will be the mob, and sublimb_grabbed will be the weapon, rather than a bodypart
 			// This means we should skip any further processing for the bodypart
 			if(part)
+				var/held_index = part.held_index
+				var/body_zone = part.body_zone
 				LAZYREMOVE(part.grabbedby, src)
+				carbonmob.update_hud_hand_slot(held_index)
+				var/datum/hud/hud_used = carbonmob.hud_used
+				if(hud_used?.zone_select)
+					hud_used.zone_select.update_limb(body_zone)
 				part = null
 				sublimb_grabbed = null
 	if(grabbee)
@@ -155,7 +165,10 @@
 		var/signal_result = SEND_SIGNAL(user, COMSIG_LIVING_GRAB_SELF_ATTEMPT, user, M, sublimb_grabbed, null)
 		if(signal_result & COMPONENT_CANCEL_GRAB_ATTACK)
 			return FALSE
-	user.changeNext_move(CLICK_CD_TRACKING)
+	var/clickcd = CLICK_CD_MELEE
+	if(M.mind && M != user)
+		clickcd = CLICK_CD_WRESTLING
+	user.changeNext_move(clickcd)
 
 	var/skill_diff = 0
 	var/combat_modifier = 1
@@ -179,7 +192,7 @@
 
 	if(user.cmode && !M.cmode)
 		combat_modifier += 0.3
-	
+
 	else if(!user.cmode && M.cmode)
 		combat_modifier -= 0.3
 
@@ -195,15 +208,19 @@
 				to_chat(user, span_warning("Can't get a grip!"))
 				return FALSE
 			user.stamina_add(rand(7,15))
-			if(M.grippedby(user))			//Aggro grip
-				bleed_suppressing = 0.5		//Better bleed suppression
+			M.grippedby(user)			//Aggro grip
+			if(grab_state >= GRAB_AGGRESSIVE)
+				bleed_suppressing = 0.25	//Better bleed suppression
 		if(/datum/intent/grab/choke)
+			if(HAS_TRAIT(user, TRAIT_PACIFISM))
+				to_chat(user, span_warning("Why would I do this! Am I insane?!"))
+				return FALSE
 			if(user.buckled)
 				to_chat(user, span_warning("I can't do this while buckled!"))
 				return FALSE
 			if(user.badluck(5))
 				badluckmessage(user)
-				user.stop_pulling()
+				user.stop_pulling(TRUE)
 				return FALSE
 			if(limb_grabbed && grab_state > 0) //this implies a carbon victim
 				if(iscarbon(M))
@@ -219,10 +236,9 @@
 						choke_damage *= 1.2		//Slight bonus
 					if(C.pulling == user && C.grab_state >= GRAB_AGGRESSIVE)
 						choke_damage *= 0.95	//Slight malice
-					var/neck_armor = C.run_armor_check(BODY_ZONE_PRECISE_NECK, "slash")
-					var/reduction = (neck_armor / 100) * 0.66
-					reduction = min(max(reduction, 0), 1)
-					choke_damage *= (1 - reduction)
+					var/neck_tier = C.getarmor(BODY_ZONE_PRECISE_NECK, "slash")
+					if(neck_tier > 0)
+						choke_damage *= 1 / (1 + 0.2 * neck_tier)
 					if(!HAS_TRAIT(C, TRAIT_NOBREATH))
 						if(C.stamina < C.max_stamina)
 							C.stamina_add(choke_damage*1.5)
@@ -234,12 +250,15 @@
 					to_chat(user, span_danger("I [pick("choke", "strangle")] [C][chokehold ? " with a chokehold" : ""]!"))
 					user.changeNext_move(CLICK_CD_GRABBING)	//Stops spam for choking.
 		if(/datum/intent/grab/hostage)
+			if(HAS_TRAIT(user, TRAIT_PACIFISM))
+				to_chat(user, span_warning("Why would I do this! Am I insane?!"))
+				return FALSE
 			if(user.buckled)
 				to_chat(user, span_warning("I can't do this while buckled!"))
 				return FALSE
 			if(user.badluck(10))
 				badluckmessage(user)
-				user.stop_pulling()
+				user.stop_pulling(TRUE)
 				return FALSE
 			if(limb_grabbed && grab_state > GRAB_PASSIVE) //this implies a carbon victim
 				if(ishuman(M) && M != user)
@@ -257,24 +276,30 @@
 						U.hostage = H
 						H.hostagetaker = U
 		if(/datum/intent/grab/twist)
+			if(HAS_TRAIT(user, TRAIT_PACIFISM))
+				to_chat(user, span_warning("Why would I do this! Am I insane?!"))
+				return FALSE
 			if(user.buckled)
 				to_chat(user, span_warning("I can't do this while buckled!"))
 				return FALSE
 			if(user.badluck(5))
 				badluckmessage(user)
-				user.stop_pulling()
+				user.stop_pulling(TRUE)
 				return FALSE
 			if(limb_grabbed && grab_state > 0) //this implies a carbon victim
 				if(iscarbon(M))
 					user.stamina_add(rand(3,8))
 					twistlimb(user)
 		if(/datum/intent/grab/twistitem)
+			if(HAS_TRAIT(user, TRAIT_PACIFISM))
+				to_chat(user, span_warning("Why would I do this! Am I insane?!"))
+				return FALSE
 			if(user.buckled)
 				to_chat(user, span_warning("I can't do this while buckled!"))
 				return FALSE
 			if(user.badluck(10))
 				badluckmessage(user)
-				user.stop_pulling()
+				user.stop_pulling(TRUE)
 				return FALSE
 			if(limb_grabbed && grab_state > 0) //this implies a carbon victim
 				if(ismob(M))
@@ -286,7 +311,7 @@
 				return FALSE
 			if(user.badluck(10))
 				badluckmessage(user)
-				user.stop_pulling()
+				user.stop_pulling(TRUE)
 				return FALSE
 			user.stamina_add(rand(3,13))
 			if(isitem(sublimb_grabbed))
@@ -299,7 +324,7 @@
 				return FALSE
 			if(user.badluck(10))
 				badluckmessage(user)
-				user.stop_pulling()
+				user.stop_pulling(TRUE)
 				return FALSE
 			if(!(user.mobility_flags & MOBILITY_STAND))
 				to_chat(user, span_warning("I must stand.."))
@@ -321,7 +346,7 @@
 							pincount = 0
 							qdel(src)
 							break
-						M.Stun(stun_dur - pincount * 2)	
+						M.Stun(stun_dur - pincount * 2)
 						M.Immobilize(stun_dur)	//Made immobile for the whole do_after duration, though
 						user.stamina_add(rand(1,3) + abs(skill_diff) + stun_dur / 1.5)
 						M.visible_message(span_danger("[user] keeps [M] pinned to the ground!"))
@@ -336,7 +361,7 @@
 			else
 				if(user.badluck(10))
 					badluckmessage(user)
-					user.stop_pulling()
+					user.stop_pulling(TRUE)
 					return FALSE
 				user.stamina_add(rand(5,15))
 				if(M.compliance || prob(clamp((((4 + (((user.STASTR - M.STASTR)/2) + skill_diff)) * 10 + rand(-5, 5)) * combat_modifier), 5, 95)))
@@ -349,12 +374,12 @@
 		if(/datum/intent/grab/disarm)
 			if(user.badluck(10))
 				badluckmessage(user)
-				user.stop_pulling()
+				user.stop_pulling(TRUE)
 				return FALSE
 			var/obj/item/I
 			if(sublimb_grabbed == BODY_ZONE_PRECISE_L_HAND && M.active_hand_index == 1)
 				I = M.get_active_held_item()
-			else 
+			else
 				if(sublimb_grabbed == BODY_ZONE_PRECISE_R_HAND && M.active_hand_index == 2)
 					I = M.get_active_held_item()
 				else
@@ -363,12 +388,15 @@
 			var/probby = clamp((((3 + (((user.STASTR - M.STASTR)/4) + skill_diff)) * 10) * combat_modifier), 5, 95)
 			if(I)
 				if(M.mind)
-					if(I.associated_skill)
-						probby -= M.get_skill_level(I.associated_skill) * 5
+					probby -= M.get_wskill(I) * 5
 				if(I.wielded)
 					probby -= 20
 				if(prob(probby))
-					M.dropItemToGround(I, force = FALSE, silent = FALSE)
+					if(!M.dropItemToGround(I, force = FALSE, silent = FALSE))
+						M.visible_message(span_warning("[user] tries to take [I] from [M]'s hand, but can't pry it away!"), \
+								span_userdanger("[user] tries to take [I] from my hand, but I keep my grip!"), span_hear("I hear a sickening sound of pugilism!"), COMBAT_MESSAGE_RANGE)
+						user.stop_pulling()
+						return
 					user.stop_pulling()
 					user.put_in_active_hand(I)
 					M.visible_message(span_danger("[user] takes [I] from [M]'s hand!"), \
@@ -378,7 +406,10 @@
 				else
 					probby += 20
 					if(prob(probby))
-						M.dropItemToGround(I, force = FALSE, silent = FALSE)
+						if(!M.dropItemToGround(I, force = FALSE, silent = FALSE))
+							M.visible_message(span_warning("[user] tries to disarm [M] of [I], but can't pry it away!"), \
+									span_userdanger("[user] tries to disarm me of [I], but I keep my grip!"), span_hear("I hear a sickening sound of pugilism!"), COMBAT_MESSAGE_RANGE)
+							return
 						M.visible_message(span_danger("[user] disarms [M] of [I]!"), \
 								span_userdanger("[user] disarms me of [I]!"), span_hear("I hear a sickening sound of pugilism!"), COMBAT_MESSAGE_RANGE)
 						M.Stun(6)//slight delay to pick up the weapon
@@ -391,14 +422,14 @@
 				to_chat(user, span_warning("They aren't holding anything on that hand!"))
 				return
 
-/obj/item/grabbing/proc/twistlimb(mob/living/user) //implies limb_grabbed and sublimb are things
+/obj/item/grabbing/proc/twistlimb(mob/living/user) //implies limb_grabbed and sublimb are things -- Kunai: that's fucked up, but hope this fixes that
 	if(user.badluck(5))
 		badluckmessage(user)
-		user.stop_pulling()
+		user.stop_pulling(TRUE)
 		return
 	var/mob/living/carbon/C = grabbed
-	var/armor_block = C.run_armor_check(limb_grabbed, "slash")
 	var/damage = user.get_punch_dmg()
+	var/armor_block = C.run_armor_check(limb_grabbed, "slash", armor_penetration = PEN_NONE, damage = damage)
 	if(grabbed == user && limb_grabbed.status == BODYPART_ROBOTIC)	//removing ones own prosthetic should not be violent, nor damaging
 		C.visible_message(span_notice("[user] starts twisting [limb_grabbed] of [C], twisting it out of its socket!"), span_notice("I start twisting [limb_grabbed] from [src]."))
 		playsound(user, 'sound/misc/blackbag2.ogg', 100)
@@ -414,7 +445,7 @@
 					span_userdanger("[user] twists my [parse_zone(sublimb_grabbed)]![C.next_attack_msg.Join()]"), span_hear("I hear a sickening sound of pugilism!"), COMBAT_MESSAGE_RANGE, user)
 	to_chat(user, span_warning("I twist [C]'s [parse_zone(sublimb_grabbed)].[C.next_attack_msg.Join()]"))
 	C.next_attack_msg.Cut()
-	log_combat(user, C, "limbtwisted [sublimb_grabbed] ")
+	log_combat(user, C, "limbtwisted (prosthetic) [sublimb_grabbed] ")
 	if(limb_grabbed.status == BODYPART_ROBOTIC && armor_block == 0) //Twisting off prosthetics.
 		C.visible_message(span_danger("[C]'s prosthetic [parse_zone(sublimb_grabbed)] twists off![C.next_attack_msg.Join()]"), \
 					span_userdanger("My prosthetic [parse_zone(sublimb_grabbed)] was twisted off of me![C.next_attack_msg.Join()]"), span_hear("I hear a sickening sound of pugilism!"), COMBAT_MESSAGE_RANGE, user)
@@ -453,6 +484,9 @@
 			user.put_in_active_hand(limb_grabbed)
 
 /obj/item/grabbing/proc/headbutt(mob/living/carbon/human/H)
+	if(HAS_TRAIT(H, TRAIT_PACIFISM))
+		to_chat(H, span_warning("Why would I do this! Am I insane?!"))
+		return FALSE
 	var/mob/living/carbon/C = grabbed
 	var/obj/item/bodypart/Chead = C.get_bodypart(BODY_ZONE_HEAD)
 	var/obj/item/bodypart/Hhead = H.get_bodypart(BODY_ZONE_HEAD)
@@ -477,6 +511,9 @@
 	log_combat(H, C, "headbutted ")
 
 /obj/item/grabbing/proc/twistitemlimb(mob/living/user) //implies limb_grabbed and sublimb are things
+	if(HAS_TRAIT(user, TRAIT_PACIFISM))
+		to_chat(user, span_warning("Why would I do this! Am I insane?!"))
+		return FALSE
 	var/mob/living/M = grabbed
 	var/damage = rand(5,10)
 	var/obj/item/I = sublimb_grabbed
@@ -496,7 +533,9 @@
 		var/obj/item/I = locate(sublimb_grabbed) in L.embedded_objects
 		if(QDELETED(I) || QDELETED(L) || !L.remove_embedded_object(I))
 			return FALSE
-		L.receive_damage(I.embedding.embedded_unsafe_removal_pain_multiplier*I.w_class) //It hurts to rip it out, get surgery you dingus.
+
+		if(!(HAS_TRAIT(M, TRAIT_LEECHRESIST) && istype(I, /obj/item/natural/worms/leech)))
+			L.receive_damage(I.embedding.embedded_unsafe_removal_pain_multiplier * I.w_class) //It hurts to rip it out, get surgery you dingus.
 		user.dropItemToGround(src) // this will unset vars like limb_grabbed
 		user.put_in_hands(I)
 		C.emote("paincrit", TRUE)
@@ -526,7 +565,7 @@
 		return
 	if(user.badluck(5))
 		badluckmessage(user)
-		user.stop_pulling()
+		user.stop_pulling(TRUE)
 		return
 	user.changeNext_move(CLICK_CD_GRABBING)
 	switch(user.used_intent.type)
@@ -534,6 +573,9 @@
 			if(isturf(T))
 				user.Move_Pulled(T)
 		if(/datum/intent/grab/smash)
+			if(HAS_TRAIT(user, TRAIT_PACIFISM))
+				to_chat(user, span_warning("Why would I do this! Am I insane?!"))
+				return FALSE
 			if(!(user.mobility_flags & MOBILITY_STAND))
 				to_chat(user, span_warning("I must stand.."))
 				return
@@ -562,10 +604,13 @@
 		return
 	if(user.badluck(5))
 		badluckmessage(user)
-		user.stop_pulling()
+		user.stop_pulling(TRUE)
 		return
 	user.changeNext_move(CLICK_CD_GRABBING)
 	if(user.used_intent.type == /datum/intent/grab/smash)
+		if(HAS_TRAIT(user, TRAIT_PACIFISM))
+			to_chat(user, span_warning("Why would I do this! Am I insane?!"))
+			return FALSE
 		if(isstructure(O) && O.blade_dulling != DULLING_CUT)
 			if(!(user.mobility_flags & MOBILITY_STAND))
 				to_chat(user, span_warning("I must stand.."))
@@ -580,12 +625,15 @@
 
 
 /obj/item/grabbing/proc/smashlimb(atom/A, mob/living/user) //implies limb_grabbed and sublimb are things
+	if(HAS_TRAIT(user, TRAIT_PACIFISM))
+		to_chat(user, span_warning("Why would I do this! Am I insane?!"))
+		return FALSE
 	if(user.badluck(10))
 		badluckmessage(user)
-		user.stop_pulling()
+		user.stop_pulling(TRUE)
 		return
 	var/mob/living/carbon/C = grabbed
-	var/armor_block = C.run_armor_check(limb_grabbed, d_type, armor_penetration = BLUNT_DEFAULT_PENFACTOR)
+	var/armor_block = C.run_armor_check(limb_grabbed, d_type, armor_penetration = PEN_NONE)
 	var/damage = user.get_punch_dmg()
 	var/unarmed_skill = user.get_skill_level(/datum/skill/combat/unarmed)
 	damage *= (1 + (unarmed_skill / 10))	//1.X multiplier where X is the unarmed skill.
@@ -693,6 +741,7 @@
 	id = "oiled"
 	duration = 5 MINUTES
 	alert_type = /atom/movable/screen/alert/status_effect/oiled
+	examine_text = span_info("SUBJECTPRONOUN is covered in oil!")
 	var/slip_chance = 2 // chance to slip when moving
 
 /datum/status_effect/buff/oiled/on_apply()
@@ -724,7 +773,6 @@
 /atom/movable/screen/alert/status_effect/oiled
 	name = "Oiled"
 	desc = "I'm covered in oil, making me slippery and harder to grab!"
-	icon_state = "oiled"
 
 /atom/proc/liquid_slip(dir=null, total_time = 0.5 SECONDS, height = 16, stun_duration = 1 SECONDS, flip_count = 1)
 	animate(src) // cleanse animations as funny as a ton of stacked flips would be it would be an eye sore

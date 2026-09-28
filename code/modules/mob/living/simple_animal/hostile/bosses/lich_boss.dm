@@ -3,7 +3,7 @@
 	desc = "An incomprehensibly powerful necromancer, dressed in the papal garbs of a Rockhillian priest - a glimpse into what once was. The air around you crackles with unholy energy."
 	mob_biotypes = MOB_HUMANOID|MOB_UNDEAD
 	boss_abilities = list(/datum/action/boss/lich_summon_minions)
-	faction = list("lich")
+	faction = list(FACTION_LICH)
 	del_on_death = TRUE
 	icon = 'icons/mob/evilpope.dmi'
 	icon_state = "EvilPope"
@@ -35,11 +35,11 @@
 	STALUC = 15
 	loot = list(/obj/effect/temp_visual/lich_dying)
 	projectiletype = /obj/projectile/magic
-	var/allowed_projectile_types = list(/obj/projectile/magic/lightning, 
+	var/allowed_projectile_types = list(/obj/projectile/magic/lightning,
 	/obj/projectile/magic/sickness,
-	/obj/projectile/magic/arcane_barrage, 
+	/obj/projectile/magic/arcane_barrage,
 	/obj/projectile/magic/acidsplash,
-	/obj/projectile/magic/aoe/fireball/spitfire)
+	/obj/projectile/magic/spitfire)
 	patron = /datum/patron/inhumen/zizo
 	footstep_type = FOOTSTEP_MOB_SHOE
 	stat_attack = UNCONSCIOUS
@@ -58,7 +58,7 @@
 		/mob/living/carbon/human/species/skeleton/npc/mediumspread/lich = 60,
 	)
 
-/mob/living/simple_animal/hostile/boss/lich/Initialize()
+/mob/living/simple_animal/hostile/boss/lich/Initialize(mapload)
 	projectiletype = /obj/projectile/bullet/reusable/deepone
 	. = ..()
 	blink = new /obj/effect/proc_holder/spell/targeted/turf_teleport/blink
@@ -72,6 +72,8 @@
 	AddSpell(blink)
 	//ADD_TRAIT(src, TRAIT_NOFIRE, TRAIT_GENERIC) //Testing vulnerability to the new silver changes. Un-// these if it becomes too easy.
 	ADD_TRAIT(src, TRAIT_SILVER_WEAK, TRAIT_GENERIC)
+	ADD_TRAIT(src, TRAIT_NPC_EXAMINE, TRAIT_GENERIC)
+	ADD_TRAIT(src, TRAIT_NOZIZORECRUIT, TRAIT_GENERIC) //I know what you are
 	//REMOVE_TRAIT(src, TRAIT_SIMPLE_WOUNDS, TRAIT_GENERIC) //Ditto.
 
 /mob/living/simple_animal/hostile/boss/lich/Shoot()
@@ -186,7 +188,7 @@
 	damage_type = BURN
 	nodamage = FALSE
 	speed = 0.3
-	flag = "magic"
+	flag = "fire"
 	light_color = "#ffffff"
 /obj/projectile/magic/lich/lightning/on_hit(target)
 	. = ..()
@@ -199,6 +201,8 @@
 			return BULLET_ACT_BLOCK
 		if(isliving(target))
 			var/mob/living/L = target
+			if(out_of_effective_range())
+				return
 			L.Immobilize(1, src)
 			playsound(get_turf(src), pick('sound/misc/elec (1).ogg', 'sound/misc/elec (2).ogg', 'sound/misc/elec (3).ogg'), 100, FALSE)
 	qdel(src)
@@ -243,7 +247,7 @@
 	duration = 30
 	randomdir = FALSE
 
-/obj/effect/temp_visual/lich_dying/Initialize()
+/obj/effect/temp_visual/lich_dying/Initialize(mapload)
 	. = ..()
 	visible_message(span_boldannounce("The Archlich collapses into a pile of dust and bone, unholy energy dispersing into the air!"))
 	INVOKE_ASYNC(src, TYPE_PROC_REF(/atom/movable, say), "Impossible!", null, list("colossus", "yell"))
@@ -255,7 +259,6 @@
 	playsound(T,'sound/vo/mobs/skel/skeleton_death (5).ogg', 80, TRUE, TRUE)
 	new /obj/item/roguekey/mage/lich(T)
 	return ..()
-
 
 /mob/living/simple_animal/hostile/retaliate/rogue/boss/lich/simple_limb_hit(zone)
 	if(!zone)
@@ -303,11 +306,11 @@
 	name = "lich"
 	icon_state = "instrike"
 	attack_verb = list("strikes", "cuts", "cleaves", "slashes")
-	animname = "blank22"
+	animname = "cut"
 	blade_class = BCLASS_CUT
 	hitsound = 'sound/combat/hits/bladed/genchop (1).ogg'
 	chargetime = 20
-	penfactor = 25
+	penfactor = PEN_MEDIUM
 	swingdelay = 3
 	candodge = TRUE
 	canparry = TRUE

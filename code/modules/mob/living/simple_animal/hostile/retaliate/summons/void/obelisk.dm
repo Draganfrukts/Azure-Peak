@@ -1,8 +1,7 @@
-/mob/living/simple_animal/hostile/retaliate/rogue/voidstoneobelisk/Initialize()
+/mob/living/simple_animal/hostile/retaliate/rogue/voidstoneobelisk/Initialize(mapload)
 	. = ..()
 	ADD_TRAIT(src,TRAIT_NOFIRE, "[type]")
 	ADD_TRAIT(src, TRAIT_NOBREATH, TRAIT_GENERIC)
-	ADD_TRAIT(src, TRAIT_ANTIMAGIC, TRAIT_GENERIC)
 	ADD_TRAIT(src, TRAIT_TOXIMMUNE, TRAIT_GENERIC)
 	ADD_TRAIT(src, TRAIT_NOPAINSTUN, TRAIT_GENERIC)
 	ADD_TRAIT(src, TRAIT_SHOCKIMMUNE, TRAIT_GENERIC)
@@ -25,18 +24,18 @@
 /mob/living/simple_animal/hostile/retaliate/rogue/voidstoneobelisk
 	icon = 'icons/mob/summonable/32x32.dmi'
 	name = "voidstone obelisk"
-	desc = "A construct from another age. It is marked by glowing sigils and it's material seems to absorb magic!"
+	desc = "A construct from another age. It is marked by glowing sigils!"
 	icon_state = "obelisk-combined"
 	icon_living = "obelisk-combined"
 	icon_dead = "obelisk-combined"
 
-	faction = list("abberant")
+	faction = list(FACTION_ABBERANT)
 	emote_hear = null
 	emote_see = null
 	turns_per_move = 6
-	speed = 5
+	move_base_delay = MOVEMENT_DELAY_CRAWLING
 	see_in_dark = 9
-	move_to_delay = 12
+	move_to_delay = 6
 	vision_range = 9
 	aggro_vision_range = 9
 	movement_type = FLYING
@@ -62,8 +61,7 @@
 	retreat_distance = 0
 	minimum_distance = 0
 	deaggroprob = 0
-	defprob = 35
-	retreat_health = 0.2
+	retreat_health = 0
 	food = 0
 	dodgetime = 17
 	aggressive = 1
@@ -85,11 +83,11 @@
 	name = "slam"
 	icon_state = "instrike"
 	attack_verb = list("slam", "rams")
-	animname = "blank22"
+	animname = "strike"
 	blade_class = BCLASS_BLUNT
 	hitsound = 'sound/combat/hits/onstone/wallhit.ogg'
 	chargetime = 0
-	penfactor = 20
+	penfactor = PEN_LIGHT
 	swingdelay = 0
 	candodge = TRUE
 	canparry = TRUE
@@ -102,8 +100,8 @@
 	new /obj/item/magic/voidstone(deathspot)
 	spill_embedded_objects()
 	update_icon()
-	sleep(1)
-	qdel(src)
+	spawn(1)
+		qdel(src)
 
 
 /mob/living/simple_animal/hostile/retaliate/rogue/voidstoneobelisk/MoveToTarget(list/possible_targets)
@@ -122,11 +120,11 @@
 				OpenFire(target)
 		if(retreat_distance != null) //If we have a retreat distance, check if we need to run from our target
 			if(target_distance <= retreat_distance) //If target's closer than our retreat distance, run
-				walk_away(src,target,retreat_distance,move_to_delay)
+				walk_away(src, target, retreat_distance, cached_multiplicative_slowdown)
 			else
-				Goto(target,move_to_delay,minimum_distance) //Otherwise, get to our minimum distance so we chase them
+				Goto(target, minimum_distance) //Otherwise, get to our minimum distance so we chase them
 		else
-			Goto(target,move_to_delay,minimum_distance)
+			Goto(target, minimum_distance)
 		if(target)
 			if(targets_from && isturf(targets_from.loc) && target.Adjacent(targets_from)) //If they're next to us, attack
 				MeleeAction()
@@ -139,7 +137,7 @@
 	else
 		if(ranged_ignores_vision && ranged_cooldown <= world.time) //we can't see our target... but we can fire at them!
 			OpenFire(target)
-		Goto(target,move_to_delay,minimum_distance)
+		Goto(target, minimum_distance)
 		FindHidden()
 		return 1
 

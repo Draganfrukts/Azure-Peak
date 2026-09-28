@@ -21,7 +21,9 @@
 	/obj/item/grown/log/tree/stick = 16,
 	/obj/structure/flora/roguegrass/pyroclasticflowers = 3,
 	/obj/structure/flora/roguegrass/maneater/real=3,
-	/obj/structure/flora/roguegrass/herb/random = 5)
+	/obj/structure/flora/roguegrass/herb/random = 5,
+	/obj/structure/leyline/normal/decap = 2,
+	/obj/effect/hunting_track = 3)
 	spawnableTurfs = list(/turf/open/floor/rogue/snowpatchy=15)
 	allowed_areas = list(/area/rogue/outdoors/mountains/decap)
 
@@ -32,7 +34,7 @@
 	allowed_areas = list(/area/rogue/outdoors/mountains/decap)
 
 /datum/mapGeneratorModule/decapgrass
-	clusterCheckFlags =  CLUSTER_CHECK_SAME_ATOMS
+	clusterCheckFlags =	CLUSTER_CHECK_SAME_ATOMS
 	allowed_turfs = list(/turf/open/floor/rogue/grass, /turf/open/floor/rogue/grassred, /turf/open/floor/rogue/grassyel, /turf/open/floor/rogue/grasscold)
 	excluded_turfs = list()
 	allowed_areas = list(/area/rogue/outdoors/mountains/decap)
@@ -41,4 +43,5 @@
 							/obj/structure/flora/roguegrass/bush/westleach = 2,
 							/obj/item/natural/stone = 6,
 							/obj/item/natural/rock = 1,
-							/obj/item/grown/log/tree/stick = 3)
+							/obj/item/grown/log/tree/stick = 3,
+							/obj/effect/hunting_track = 3)

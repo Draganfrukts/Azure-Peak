@@ -23,7 +23,7 @@
 	mob_overlay_icon = 'icons/roguetown/clothing/special/onmob/gronn.dmi'
 	icon_state = "gronnleatherarmor"
 	item_state = "gronnleatherarmor"
-	armor = ARMOR_GRONN_LIGHT
+	armor = ARMOR_LEATHER
 
 /obj/item/clothing/under/roguetown/trou/leather/gronn
 	name = "gronnic fur pants"
@@ -31,11 +31,11 @@
 			Those of Gronn adopt a design that offers superior protection against the blunted hits and slashing claws of beasts."
 	icon_state = "gronnleatherpants"
 	item_state = "gronnleatherpants"
-	armor = ARMOR_GRONN_LIGHT
+	armor = ARMOR_LEATHER
 	max_integrity = ARMOR_INT_LEG_HARDLEATHER
 	icon = 'icons/roguetown/clothing/special/gronn.dmi'
 	mob_overlay_icon = 'icons/roguetown/clothing/special/onmob/gronn.dmi'
-	
+
 /obj/item/clothing/gloves/roguetown/angle/gronn
 	name = "gronnic fur-lined leather gloves"
 	desc = "Thick, padded gloves made for the harshest of climates and the wildest of beasts encountered in the untamed north."
@@ -54,9 +54,17 @@
 	item_state = "gronnfurgloves"
 	icon = 'icons/roguetown/clothing/special/gronn.dmi'
 	mob_overlay_icon = 'icons/roguetown/clothing/special/onmob/gronn.dmi'
-	unarmed_bonus = 1.25
-	max_integrity = 250
+	unarmed_bonus = 6
+	max_integrity = ARMOR_INT_SIDE_HARDLEATHER
 	color = "#ffffff"
+
+/obj/item/clothing/gloves/roguetown/angle/gronnfur/cleric
+	name = "thin fur-lined bone gloves"
+	desc = "A pair of thinner leather gloves with some bone reinforcements across the wrists\
+			and the back of the hand, offering barely much protection against\
+			the claws of beasts and plants alike. Commonly worn by preachers."
+	max_integrity = ARMOR_INT_SIDE_LEATHER
+	armor = ARMOR_LEATHER
 
 /obj/item/clothing/head/roguetown/helmet/leather/shaman_hood
 	slot_flags = ITEM_SLOT_HEAD|ITEM_SLOT_HIP
@@ -68,7 +76,7 @@
 	icon_state = "gronnfurhood"
 	item_state = "gronnfurhood"
 	bloody_icon = 'icons/effects/blood64.dmi'
-	armor = ARMOR_LEATHER_GOOD
+	armor = ARMOR_LEATHER
 	flags_inv = HIDEEARS|HIDEFACE
 	worn_x_dimension = 32
 	worn_y_dimension = 48
@@ -159,7 +167,7 @@
 			update_icon()
 		qdel(I)
 	. = ..()
-	
+
 
 /obj/item/clothing/head/roguetown/helmet/leather/shaman_hood/AdjustClothes(mob/user)
 	if(loc == user)
@@ -206,6 +214,7 @@
 	icon_state = "gronnchain"
 	item_state = "gronnchain"
 	smeltresult = /obj/item/ingot/iron
+	armor = ARMOR_MAILLE
 
 /obj/item/clothing/gloves/roguetown/chain/gronn
 	name = "gronn byrine gloves"
@@ -215,7 +224,7 @@
 	icon_state = "gronnchaingloves"
 	item_state = "gronnchaingloves"
 
-/obj/item/clothing/under/roguetown/splintlegs/gronn
+/obj/item/clothing/under/roguetown/chainlegs/gronn
 	name = "gronn byrine chausses"
 	desc = "A pair of chain-wrapped pants with a leather subligar, ensuring both protection and comfort."
 	icon = 'icons/roguetown/clothing/special/gronn.dmi'

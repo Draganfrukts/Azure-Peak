@@ -1,8 +1,3 @@
-/*				//Var for keeping track of timer
-var/global/feeding_hole_wheat_count = 0
-var/global/feeding_hole_reset_timer
-*/
-			//WIP for now it does really nothing, but people will be gaslighted into thinking it does.
 /obj/structure/feedinghole
 	name = "FEEDING HOLE"
 	desc = ""
@@ -48,7 +43,8 @@ var/global/feeding_hole_reset_timer
 		if(istype(I, /obj/item/natural/bundle))
 			var/obj/item/natural/bundle/B = I
 			if(B.stacktype == R.item_type)
-				R.held_items[1] += B.amount
+				R.stockpile_amount += B.amount
+				SStreasury.dirty_market_view()
 				qdel(B)
 				if(sound == TRUE)
 					playsound(loc, 'sound/misc/hiss.ogg', 100, FALSE, -1)
@@ -56,22 +52,9 @@ var/global/feeding_hole_reset_timer
 		else if(istype(I,R.item_type))
 			if(!R.check_item(I))
 				continue
-			if(!R.mint_item)
-				R.held_items[1] += 1 //stacked logs need to check for multiple
-				qdel(I)
-				if(sound == TRUE)
-					playsound(loc, 'sound/misc/hiss.ogg', 100, FALSE, -1)
-			else
-				var/area/A = GLOB.areas_by_type[R.mint_item]
-				if(!A)
-					say("Couldn't find where to send the submission.")
-					return
-				var/list/turfs = list()
-				for(var/turf/T in A)
-					turfs += T
-				var/turf/T = pick(turfs)
-				I.forceMove(T)
-				if(sound == TRUE)
-					playsound(loc, 'sound/misc/hiss.ogg', 100, FALSE, -1)
-					playsound(loc, 'sound/misc/disposalflush.ogg', 100, FALSE, -1)
+			R.stockpile_amount += 1 //stacked logs need to check for multiple
+			SStreasury.dirty_market_view()
+			qdel(I)
+			if(sound == TRUE)
+				playsound(loc, 'sound/misc/hiss.ogg', 100, FALSE, -1)
 			return

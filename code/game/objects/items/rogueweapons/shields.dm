@@ -30,6 +30,12 @@
 	COOLDOWN_DECLARE(shield_bang)
 	special = /datum/special_intent/limbguard
 
+/obj/item/rogueweapon/shield/equipped(mob/user, slot, initial)
+	. = ..()
+	if(HAS_TRAIT(user, TRAIT_TINYPAWS))
+		to_chat(user, span_danger("The shield is too bulky for me to wield effectively!"))
+		forceMove(user.loc)
+
 /obj/item/rogueweapon/shield/attackby(obj/item/attackby_item, mob/user, params)
 
 	// Shield banging
@@ -73,7 +79,7 @@
 	icon_state = "inbash"
 	hitsound = list('sound/combat/shieldbash_wood.ogg')
 	chargetime = 0
-	penfactor = BLUNT_DEFAULT_PENFACTOR
+	penfactor = PEN_NONE
 	item_d_type = "blunt"
 	intent_intdamage_factor = BLUNT_DEFAULT_INT_DAMAGEFACTOR
 
@@ -119,6 +125,7 @@
 	dropshrink = 0.8
 	anvilrepair = /datum/skill/craft/carpentry
 	coverage = 30
+	max_integrity = 120
 	heraldry_x_offset = 1
 	heraldry_y_offset = -1 // 1px right and down to make it look centered
 
@@ -157,7 +164,7 @@
 - #B8B8B8, #C2C2C2, #CCCCCC, #D6D6D6, #E2E2E2, #EFEFEF, #FFFFFF
 - For kite shield I specifically applied dark edges to the side to create the illusion of edge
 - This was done with Aseprite's Replace Color tool. Wooden Shield has 7 colors, Kite & Heater had 8, and Iron had something like 15. I compressed the rest's range.
-- Iron Shield had like 7 colors that were just a tiny variation with one pixel it felt like - so I just compressed literally all of them into E2E2E2 with no actual loss of fidelity. 
+- Iron Shield had like 7 colors that were just a tiny variation with one pixel it felt like - so I just compressed literally all of them into E2E2E2 with no actual loss of fidelity.
 - If you want edge, boss, rims etc. to be dynamically excluded just paint them transparent.
 - This applies a shading and 3D depth to a flat heraldry, and allows us to in the future uses heraldry across multiple shields. For now, since I have no art skills I cannot retroactively convert the existing per shield heraldry to a flat heraldry that is then, applied dynamically on top.
 - But once artist catch up to my work this will enables us to share 1 heraldry across 4 or more shields with very simple work.
@@ -288,6 +295,12 @@
 	var/list/available = icon_states('icons/roguetown/weapons/shield_heraldry_masks.dmi')
 	return (mask_state in available)
 
+/obj/item/rogueweapon/shield/obj_break(damage_flag)
+	. = ..()
+	// Clear heraldry so the player can re-apply it after repairing
+	heraldry_state = null
+	heraldry_preview = null
+
 /obj/item/rogueweapon/shield/attack_right(mob/user)
 	if(!has_heraldry_mask())
 		to_chat(user, span_warning("This shield cannot bear heraldry."))
@@ -324,7 +337,7 @@
 			if("gen")
 				return list("shrink" = 0.6,"sx" = -5,"sy" = -1,"nx" = 6,"ny" = -1,"wx" = 0,"wy" = -2,"ex" = 0,"ey" = -2,"northabove" = 0,"southabove" = 1,"eastabove" = 1,"westabove" = 0,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 0,"sflip" = 0,"wflip" = 0,"eflip" = 0)
 			if("onback")
-				return list("shrink" = 0.6,"sx" = 1,"sy" = 4,"nx" = 1,"ny" = 2,"wx" = 3,"wy" = 3,"ex" = 0,"ey" = 2,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 8,"sflip" = 0,"wflip" = 0,"eflip" = 0,"northabove" = 1,"southabove" = 0,"eastabove" = 0,"westabove" = 0)
+				return list("shrink" = 0.6,"sx" = 1,"sy" = 4,"nx" = 1,"ny" = 2,"wx" = 3,"wy" = 3,"ex" = -3,"ey" = 3,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 8,"sflip" = 0,"wflip" = 0,"eflip" = 0,"northabove" = 1,"southabove" = 0,"eastabove" = 0,"westabove" = 0)
 
 /obj/item/rogueweapon/shield/tower
 	name = "tower shield"
@@ -338,10 +351,11 @@
 	resistance_flags = FLAMMABLE
 	var/swapped = FALSE
 	wdefense = 10
-	coverage = 40
+	coverage = 55
 	parrysound = list('sound/combat/parry/shield/towershield (1).ogg','sound/combat/parry/shield/towershield (2).ogg','sound/combat/parry/shield/towershield (3).ogg')
-	max_integrity = 300
+	max_integrity = 280
 	anvilrepair = /datum/skill/craft/weaponsmithing
+	smeltresult = /obj/item/ingot/iron
 
 /obj/item/rogueweapon/shield/tower/holysee
 	name = "decablessed shield"
@@ -351,7 +365,7 @@
 	throwforce = 10
 	throw_speed = 1
 	throw_range = 3
-	possible_item_intents = list(SHIELD_BASH_METAL, SHIELD_BLOCK, SHIELD_SMASH_METAL)	
+	possible_item_intents = list(SHIELD_BASH_METAL, SHIELD_BLOCK, SHIELD_SMASH_METAL)
 	wlength = WLENGTH_NORMAL
 	resistance_flags = null
 	flags_1 = CONDUCT_1
@@ -360,7 +374,7 @@
 	attacked_sound = list('sound/combat/parry/shield/metalshield (1).ogg','sound/combat/parry/shield/metalshield (2).ogg','sound/combat/parry/shield/metalshield (3).ogg')
 	parrysound = list('sound/combat/parry/shield/metalshield (1).ogg','sound/combat/parry/shield/metalshield (2).ogg','sound/combat/parry/shield/metalshield (3).ogg')
 	max_integrity = 330
-	sellprice = 30
+	smeltresult = /obj/item/ingot/steelholy
 
 /obj/item/rogueweapon/shield/tower/holysee/MiddleClick(mob/user, params)
 	. = ..()
@@ -382,7 +396,7 @@
 			if("gen")
 				return list("shrink" = 0.6,"sx" = -5,"sy" = -1,"nx" = 6,"ny" = -1,"wx" = 0,"wy" = -2,"ex" = 0,"ey" = -2,"northabove" = 0,"southabove" = 1,"eastabove" = 1,"westabove" = 0,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 0,"sflip" = 0,"wflip" = 0,"eflip" = 0)
 			if("onback")
-				return list("shrink" = 0.6,"sx" = 1,"sy" = 4,"nx" = 1,"ny" = 2,"wx" = 3,"wy" = 3,"ex" = 0,"ey" = 2,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 8,"sflip" = 0,"wflip" = 0,"eflip" = 0,"northabove" = 1,"southabove" = 0,"eastabove" = 0,"westabove" = 0)
+				return list("shrink" = 0.6,"sx" = 1,"sy" = 4,"nx" = 1,"ny" = 2,"wx" = 3,"wy" = 3,"ex" = -3,"ey" = 3,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 8,"sflip" = 0,"wflip" = 0,"eflip" = 0,"northabove" = 1,"southabove" = 0,"eastabove" = 0,"westabove" = 0)
 
 /obj/item/rogueweapon/shield/tower/metal
 	name = "kite shield"
@@ -397,13 +411,13 @@
 	resistance_flags = null
 	flags_1 = CONDUCT_1
 	wdefense = 12
-	coverage = 60
-	heraldry_x_offset = 1 // Shift right by 1px to center flat heraldry.
+	coverage = 55
+	heraldry_x_offset = 1
 	attacked_sound = list('sound/combat/parry/shield/metalshield (1).ogg','sound/combat/parry/shield/metalshield (2).ogg','sound/combat/parry/shield/metalshield (3).ogg')
 	parrysound = list('sound/combat/parry/shield/metalshield (1).ogg','sound/combat/parry/shield/metalshield (2).ogg','sound/combat/parry/shield/metalshield (3).ogg')
-	max_integrity = 300
-	sellprice = 30
+	max_integrity = 280
 	anvilrepair = /datum/skill/craft/weaponsmithing
+	smeltresult = /obj/item/ingot/steel
 
 /obj/item/rogueweapon/shield/tower/metal/getonmobprop(tag)
 	if(tag)
@@ -411,12 +425,39 @@
 			if("gen")
 				return list("shrink" = 0.6,"sx" = -5,"sy" = -1,"nx" = 6,"ny" = -1,"wx" = 0,"wy" = -2,"ex" = 0,"ey" = -2,"northabove" = 0,"southabove" = 1,"eastabove" = 1,"westabove" = 0,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 0,"sflip" = 0,"wflip" = 0,"eflip" = 0)
 			if("onback")
-				return list("shrink" = 0.6,"sx" = 1,"sy" = 4,"nx" = 1,"ny" = 2,"wx" = 3,"wy" = 3,"ex" = 0,"ey" = 2,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 8,"sflip" = 0,"wflip" = 0,"eflip" = 0,"northabove" = 1,"southabove" = 0,"eastabove" = 0,"westabove" = 0)
+				return list("shrink" = 0.6,"sx" = 1,"sy" = 4,"nx" = 1,"ny" = 2,"wx" = 3,"wy" = 3,"ex" = -3,"ey" = 3,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 8,"sflip" = 0,"wflip" = 0,"eflip" = 0,"northabove" = 1,"southabove" = 0,"eastabove" = 0,"westabove" = 0)
 	return ..()
+
+/obj/item/rogueweapon/shield/tower/metal/zizo
+	name = "avantyne darkshield"
+	desc = "A threaded purportance, avantyne weaving through and consuming steel. The surface is uncharacteristically soft, not unlike silk \
+	or skin; uncomforting to the unexpecting touch, but more-than-excellent for catching blows."
+	icon_state = "zizoshield"
+	smeltresult = /obj/item/ingot/component/zizo
+
+/obj/item/rogueweapon/shield/tower/metal/zizo/get_examine_highlight_status()
+	return list(EXAMINEHIGHLIGHT_HERESYSEVERITY_ALARMING, HERESYDESC_ZIZO_WEAPON)
+
+/obj/item/rogueweapon/shield/tower/metal/zizo/Initialize(mapload)
+	. = ..()
+	AddComponent(/datum/component/cursed_item, TRAIT_CABAL, "SHIELD")
+
+/obj/item/rogueweapon/shield/tower/metal/avantyne
+	name = "avantyne-threaded pavise"
+	desc = "An interloper in causality's ever-so-fragile stream, woven from wafers to ward against those who're not yet ready to comprehend \
+	the gospel of Her disciples. Zizo sought to ward Her children from extinction, but failed; and in the throes of divine mania, She had come \
+	to realize that this world was no longer worth saving."
+	max_integrity = 400
+	force = 25
+	throwforce = 20
+	coverage = 75
+	icon_state = "zizoshield"
+	smeltresult = /obj/item/ingot/avantyne
 
 /obj/item/rogueweapon/shield/tower/metal/gold
 	name = "golden shield"
-	desc = "A resplendant kite shield, assembled from six golden plates that've been hooked together by a glimmering holy sigil. Nobility may be fragile, but - so long as its grip remains steadfast - none could ever hope to sever its weakest link."
+	desc = "A resplendant kite shield, assembled from six golden plates that've been hooked together by a glimmering holy sigil. Nobility may be fragile, \
+	but - so long as its grip remains steadfast - none could ever hope to sever its weakest link."
 	icon_state = "goldshield"
 	force = 25
 	throwforce = 35
@@ -435,8 +476,9 @@
 	unenchantable = TRUE
 
 /obj/item/rogueweapon/shield/tower/metal/psy
-	name = "Covenant"
-	desc = "A Psydonian endures. A Psydonian preserves themselves. A Psydonian preserves His flock."
+	name = "\"Covenant\""
+	desc = "'A Psydonian endures. A Psydonian preserves themselves. A Psydonian preserves His flock.' </br>A blessed silver pavise, capable of thwarting the deadliness of \
+	even the hottest balefires. The one who wields it shall never falter; and the ones behind them shall never suffer."
 	icon_state = "psyshield"
 	force = 15
 	throwforce = 5
@@ -467,7 +509,8 @@
 
 /obj/item/rogueweapon/shield/tower/metal/alloy
 	name = "decrepit shield"
-	desc = "A hefty tower shield, wrought from frayed bronze. Looped with dried kelp and reeking of saltwater, you'd assume that this had been fished out from the remains of a long-sunken warship.. alongside its former legionnaire."
+	desc = "A hefty tower shield, wrought from rotted metal. Looped with dried kelp and reeking of saltwater, you'd assume that this had been fished \
+	out from the remains of a long-sunken warship.. alongside its former legionnaire."
 	max_integrity = 120
 	wdefense = 9
 	icon_state = "ancientsh"
@@ -478,9 +521,10 @@
 
 /obj/item/rogueweapon/shield/tower/metal/palloy
 	name = "ancient shield"
-	desc = "A venerable scutum, plated with polished gilbranze. An undying legionnaire's closest friend; that which rebukes arrow-and-bolt alike with unphasing prejudice. It is a reminder - one of many - that Her progress cannot be stopped."
+	desc = "A venerable scutum, plated with polished gilbranze. An undying legionnaire's closest friend; that which rebukes arrow-and-bolt alike with \
+	unphasing prejudice. It is a reminder - one of many - that Her progress cannot be stopped."
 	icon_state = "ancientsh"
-	smeltresult = /obj/item/ingot/purifiedaalloy
+	smeltresult = /obj/item/ingot/aaslag
 
 /obj/item/rogueweapon/shield/tower/raneshen
 	name = "rider shield"
@@ -500,7 +544,7 @@
 			if("gen")
 				return list("shrink" = 0.6,"sx" = -5,"sy" = -1,"nx" = 6,"ny" = -1,"wx" = 0,"wy" = -2,"ex" = 0,"ey" = -2,"northabove" = 0,"southabove" = 1,"eastabove" = 1,"westabove" = 0,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 0,"sflip" = 0,"wflip" = 1,"eflip" = 0)
 			if("onback")
-				return list("shrink" = 0.6,"sx" = 1,"sy" = 4,"nx" = 1,"ny" = 2,"wx" = 3,"wy" = 3,"ex" = 0,"ey" = 2,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 8,"sflip" = 0,"wflip" = 0,"eflip" = 0,"northabove" = 1,"southabove" = 0,"eastabove" = 0,"westabove" = 0)
+				return list("shrink" = 0.6,"sx" = 1,"sy" = 4,"nx" = 1,"ny" = 2,"wx" = 3,"wy" = 3,"ex" = -3,"ey" = 3,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 8,"sflip" = 0,"wflip" = 0,"eflip" = 0,"northabove" = 1,"southabove" = 0,"eastabove" = 0,"westabove" = 0)
 
 /obj/item/rogueweapon/shield/tower/spidershield
 	name = "spider shield"
@@ -563,7 +607,7 @@
 			if("gen")
 				return list("shrink" = 0.6,"sx" = -5,"sy" = -1,"nx" = 6,"ny" = -1,"wx" = 0,"wy" = -2,"ex" = 0,"ey" = -2,"northabove" = 0,"southabove" = 1,"eastabove" = 1,"westabove" = 0,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 0,"sflip" = 0,"wflip" = 1,"eflip" = 0)
 			if("onback")
-				return list("shrink" = 0.6,"sx" = 1,"sy" = 4,"nx" = 1,"ny" = 2,"wx" = 3,"wy" = 3,"ex" = 0,"ey" = 2,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 8,"sflip" = 0,"wflip" = 0,"eflip" = 0,"northabove" = 1,"southabove" = 0,"eastabove" = 0,"westabove" = 0)
+				return list("shrink" = 0.6,"sx" = 1,"sy" = 4,"nx" = 1,"ny" = 2,"wx" = 3,"wy" = 3,"ex" = -3,"ey" = 3,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 8,"sflip" = 0,"wflip" = 0,"eflip" = 0,"northabove" = 1,"southabove" = 0,"eastabove" = 0,"westabove" = 0)
 
 /obj/item/rogueweapon/shield/buckler/palloy
 	name = "ancient buckler"
@@ -571,11 +615,11 @@
 	the encroach of rust and rot threatens even this memory."
 	icon_state = "ancient_buckler"
 	max_integrity = 85
-	smeltresult = /obj/item/ingot/purifiedaalloy
+	smeltresult = /obj/item/ingot/aaslag
 
 // unique, better buckler for champion
 /obj/item/rogueweapon/shield/buckler/banneret
-	name = "'Aegis'"
+	name = "\"Aegis\""
 	desc = "A special buckler made out of blacksteel for the Knight Banneret, adorned with a crest. An inscription along the top reads,\"RUAT CAELUM\""
 	icon_state = "capbuckler"
 	icon = 'icons/roguetown/weapons/special/captain.dmi'
@@ -604,8 +648,7 @@
 			if("gen")
 				return list("shrink" = 0.6,"sx" = -5,"sy" = -1,"nx" = 6,"ny" = -1,"wx" = 0,"wy" = -2,"ex" = 0,"ey" = -2,"northabove" = 0,"southabove" = 1,"eastabove" = 1,"westabove" = 0,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 0,"sflip" = 0,"wflip" = 0,"eflip" = 0)
 			if("onback")
-				return list("shrink" = 0.6,"sx" = 1,"sy" = 4,"nx" = 1,"ny" = 2,"wx" = 3,"wy" = 3,"ex" = 0,"ey" = 2,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 8,"sflip" = 0,"wflip" = 0,"eflip" = 0,"northabove" = 1,"southabove" = 0,"eastabove" = 0,"westabove" = 0)
-
+				return list("shrink" = 0.6,"sx" = 1,"sy" = 4,"nx" = 1,"ny" = 2,"wx" = 3,"wy" = 3,"ex" = -3,"ey" = 3,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 8,"sflip" = 0,"wflip" = 0,"eflip" = 0,"northabove" = 1,"southabove" = 0,"eastabove" = 0,"westabove" = 0)
 
 /obj/item/rogueweapon/shield/iron
 	name = "iron shield"
@@ -622,6 +665,7 @@
 	possible_item_intents = list(SHIELD_SMASH_METAL, SHIELD_BLOCK) // No SHIELD_BASH. Too heavy to swing quickly, or something.
 	max_integrity = 220
 	anvilrepair = /datum/skill/craft/weaponsmithing
+	smeltresult = /obj/item/ingot/iron
 
 /obj/item/rogueweapon/shield/iron/getonmobprop(tag)
 	. = ..()
@@ -630,14 +674,29 @@
 			if("gen")
 				return list("shrink" = 0.6,"sx" = -5,"sy" = -1,"nx" = 6,"ny" = -1,"wx" = 0,"wy" = -2,"ex" = 0,"ey" = -2,"northabove" = 0,"southabove" = 1,"eastabove" = 1,"westabove" = 0,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 0,"sflip" = 0,"wflip" = 0,"eflip" = 0)
 			if("onback")
-				return list("shrink" = 0.6,"sx" = 1,"sy" = 4,"nx" = 1,"ny" = 2,"wx" = 3,"wy" = 3,"ex" = 0,"ey" = 2,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 8,"sflip" = 0,"wflip" = 0,"eflip" = 0,"northabove" = 1,"southabove" = 0,"eastabove" = 0,"westabove" = 0)
+				return list("shrink" = 0.6,"sx" = 1,"sy" = 4,"nx" = 1,"ny" = 2,"wx" = 3,"wy" = 3,"ex" = -3,"ey" = 3,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 8,"sflip" = 0,"wflip" = 0,"eflip" = 0,"northabove" = 1,"southabove" = 0,"eastabove" = 0,"westabove" = 0)
 
 /obj/item/rogueweapon/shield/iron/bone
 	name = "bone shield"
 	desc = "If they couldn't protect their previous owners, how confident are you in these bones protecting you?"
 	icon_state = "boneshield"
-	smeltresult = null 
-	
+	smeltresult = null
+
+/obj/item/rogueweapon/shield/iron/graggar
+	name = "vicious targe"
+	desc = "A decorated targe, splattered and sanctified with the trophies of Psydonia's most dangerous hunters. No matter the icy rains, \
+	no matter the scorching heat – no matter the wrath of their enemies, Graggar never faltered in His arms. When Ravox broke their oath and \
+	rescinded their claim to Godhood, grief could not describe what He had felt."
+	icon_state = "graggarshield"
+	max_integrity = 300
+
+/obj/item/rogueweapon/shield/iron/graggar/Initialize(mapload)
+	. = ..()
+	AddComponent(/datum/component/cursed_item, TRAIT_HORDE, "SHIELD", "RENDERED ASUNDER")
+
+/obj/item/rogueweapon/shield/iron/graggar/get_examine_highlight_status()
+	return list(EXAMINEHIGHLIGHT_HERESYSEVERITY_ALARMING, HERESYDESC_GRAGGAR_RELIC)
+
 #undef SHIELD_BANG_COOLDOWN
 
 /obj/item/rogueweapon/shield/bronze
@@ -653,7 +712,7 @@
 	minstr = 11 //Particularly heavy to use as a melee weapon.
 	attacked_sound = list('sound/combat/parry/shield/metalshield (1).ogg','sound/combat/parry/shield/metalshield (2).ogg','sound/combat/parry/shield/metalshield (3).ogg')
 	parrysound = list('sound/combat/parry/shield/metalshield (1).ogg','sound/combat/parry/shield/metalshield (2).ogg','sound/combat/parry/shield/metalshield (3).ogg')
-	possible_item_intents = list(/datum/intent/shield/block, /datum/intent/mace/smash/shield/metal, /datum/intent/effect/daze) // No SHIELD_BASH. Able to inflict Daze due to its weight. 
+	possible_item_intents = list(/datum/intent/shield/block, /datum/intent/mace/smash/shield/metal, /datum/intent/effect/daze) // No SHIELD_BASH. Able to inflict Daze due to its weight.
 	max_integrity = 260
 	anvilrepair = /datum/skill/craft/weaponsmithing
 
@@ -664,7 +723,24 @@
 			if("gen")
 				return list("shrink" = 0.6,"sx" = -5,"sy" = -1,"nx" = 6,"ny" = -1,"wx" = 0,"wy" = -2,"ex" = 0,"ey" = -2,"northabove" = 0,"southabove" = 1,"eastabove" = 1,"westabove" = 0,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 0,"sflip" = 0,"wflip" = 0,"eflip" = 0)
 			if("onback")
-				return list("shrink" = 0.6,"sx" = 1,"sy" = 4,"nx" = 1,"ny" = 2,"wx" = 3,"wy" = 3,"ex" = 0,"ey" = 2,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 8,"sflip" = 0,"wflip" = 0,"eflip" = 0,"northabove" = 1,"southabove" = 0,"eastabove" = 0,"westabove" = 0)
+				return list("shrink" = 0.6,"sx" = 1,"sy" = 4,"nx" = 1,"ny" = 2,"wx" = 3,"wy" = 3,"ex" = -3,"ey" = 3,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 8,"sflip" = 0,"wflip" = 0,"eflip" = 0,"northabove" = 1,"southabove" = 0,"eastabove" = 0,"westabove" = 0)
+
+/obj/item/rogueweapon/shield/bronze/great
+	name = "hoplon greatshield"
+	desc = "A heavy shield, taller and thicker than most of their contemporaries. It has survived the Calamity, endured the Apotheosis, and blunted the Sundering; \
+	and for one final time, it shall ward this dying world from a crueler fate."
+	icon_state = "bronzegreatshield"
+	item_state = "bronzegreatshield"
+	max_integrity = 360 //Highest integrity and passive projectile-blocking chance of most non-unique shields.
+	possible_item_intents = list(/datum/intent/shield/block, /datum/intent/mace/smash/shield/metal/great, /datum/intent/effect/daze) // No SHIELD_BASH. Able to inflict Daze due to its weight.
+	force = 28
+	coverage = 75
+	wdefense = 10
+	minstr = 12 //Requires a natural +STR modifier or statpack to double as a melee weapon, for its given class. Note that it has a heavier charge time and active stamina drain, too, as.. well, it's quite heavy.
+
+/obj/item/rogueweapon/shield/bronze/great/get_mechanics_examine(mob/user)
+	. = ..()
+	. += span_info("This greatshield has a uniquely high chance to block incoming projectiles, without requiring the active use of the 'BLOCK' intent.")
 
 /obj/item/rogueweapon/shield/iron/steppesman
 	name = "steppesman shield"
@@ -680,10 +756,6 @@
 	coverage = 15
 	max_integrity = 200
 	possible_item_intents = list(SHIELD_BLOCK, FENCER_DAZE) */
-
-//////////////
-// SPECIAL! //
-//////////////
 
 /obj/item/rogueweapon/shield/steam
 	name = "steam shield"
@@ -745,6 +817,7 @@
 /obj/item/rogueweapon/shield/steam/proc/steamready(mob/user)
 	playsound(user, 'sound/items/steamcreation.ogg', 100, FALSE, -1)
 	to_chat(user, span_warning("[src] is ready to be used again!"))
+
 /obj/item/rogueweapon/shield/steam/getonmobprop(tag)
 	. = ..()
 	if(tag)
@@ -752,61 +825,27 @@
 			if("gen")
 				return list("shrink" = 0.6,"sx" = -5,"sy" = -1,"nx" = 6,"ny" = -1,"wx" = 0,"wy" = -2,"ex" = 0,"ey" = -2,"northabove" = 0,"southabove" = 1,"eastabove" = 1,"westabove" = 0,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 0,"sflip" = 0,"wflip" = 0,"eflip" = 0)
 			if("onback")
-				return list("shrink" = 0.6,"sx" = 1,"sy" = 4,"nx" = 1,"ny" = 2,"wx" = 3,"wy" = 3,"ex" = 0,"ey" = 2,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 8,"sflip" = 0,"wflip" = 0,"eflip" = 0,"northabove" = 1,"southabove" = 0,"eastabove" = 0,"westabove" = 0)
+				return list("shrink" = 0.6,"sx" = 1,"sy" = 4,"nx" = 1,"ny" = 2,"wx" = 3,"wy" = 3,"ex" = -3,"ey" = 3,"nturn" = 0,"sturn" = 0,"wturn" = 0,"eturn" = 0,"nflip" = 8,"sflip" = 0,"wflip" = 0,"eflip" = 0,"northabove" = 1,"southabove" = 0,"eastabove" = 0,"westabove" = 0)
 
+/obj/item/rogueweapon/shield/tower/metal/dwarf
+	name = "dwarven shield"
+	desc = "A intricately forged kite-shield of dwarven make and use. To protect the hardiest of dwarves."
+	icon_state = "dwshield"
+	force = 22 //10% More damage, why not?
+	throw_range = 2 //Heavy
+	max_integrity = 360 //20% more integrity. It's unique and race-locked.
+	sellprice = 60
+	smeltresult = /obj/item/ingot/steel
 
-/obj/item/rogueweapon/shield/tower/metal/gold/king
-	name = "\"Bulwarke\""
-	desc = "A resplendant kite shield, assembled from six golden plates that've been hooked together by a glimmering holy sigil. Mounted in its core is a shard of Astrata's divinity authority, crackling with the strength to violently repulse man-and-monster alike. ‎</br>‎‎ </br>'Tyranny and honor! Glory to thine kingdome-come! Let thine will be done!'"
-	icon_state = "goldshieldking"
-	max_integrity = 350
-	var/smoke_path = /obj/effect/particle_effect/smoke/transparent
-	var/cooldowny
-	var/cdtime = 30 SECONDS
-	unenchantable = TRUE
-
-/obj/item/rogueweapon/shield/tower/metal/gold/king/attack_self(mob/user)
-	if(cooldowny)
-		if(world.time < cooldowny + cdtime)
-			to_chat(user, span_warning("[src] weakly crackles, yet to be ready for another repulsation!"))
-			return
-	if(prob(25))
-		smoke_path = /obj/effect/particle_effect/smoke
-	else
-		smoke_path = /obj/effect/particle_effect/smoke/transparent
-	var/list/thrownatoms = list()
-	var/atom/throwtarget
-	var/distfromcaster
-	user.visible_message(span_notice("The dorpel mounted upon [src] crackles, crackling with restored power!"))
-	to_chat(user, span_warning("[user] invokes the power within [src], releasing a powerful shockwave!"))
-	sleep(15)
-	playsound(user, 'sound/items/steamrelease.ogg', 100, FALSE, -1)
-	cooldowny = world.time
-	addtimer(CALLBACK(src,PROC_REF(steamready), user), cdtime)
-	for(var/atom/movable/AM in view(1, user))
-		thrownatoms += AM
-	for(var/turf/T in oview(2, user))
-		new smoke_path(T) //smoke everywhere!
-
-	for(var/atom/movable/AM as anything in thrownatoms)
-		if(AM == user || AM.anchored)
-			continue
-		throwtarget = get_edge_target_turf(user, get_dir(user, get_step_away(AM, user)))
-		distfromcaster = get_dist(user, AM)
-
-		if(distfromcaster == 0)
-			if(isliving(AM))
-				var/mob/living/M = AM
-				M.Paralyze(10)
-				M.adjustFireLoss(25)
-				to_chat(M, span_danger("You're slammed into the floor by [user]!"))
-		else
-			if(isliving(AM))
-				var/mob/living/M = AM
-				M.adjustFireLoss(25)
-				to_chat(M, span_danger( "You're thrown back by [user]!"))
-			AM.safe_throw_at(throwtarget, 4, 2, user, TRUE, force = MOVE_FORCE_OVERPOWERING)
-
-/obj/item/rogueweapon/shield/tower/metal/gold/king/proc/steamready(mob/user)
-	playsound(user, 'sound/items/steamcreation.ogg', 100, FALSE, -1)
-	to_chat(user, span_warning("[src] is ready to be used again!"))
+/obj/item/rogueweapon/shield/tower/metal/blacksteel
+	name = "blacksteel shield"
+	desc = "A magnificent kite shield of blacksteel. Be it knight-or-knave, those who have the strength to lift it shall yet stand against perdition."
+	icon_state = "blacksteelsh"
+	max_integrity = 400
+	force = 25
+	throwforce = 20
+	coverage = 60
+	smeltresult = /obj/item/ingot/blacksteel
+	possible_item_intents = list(/datum/intent/shield/bash/metal, /datum/intent/shield/block, /datum/intent/mace/smash/shield/metal, /datum/intent/effect/daze)
+	minstr = 11
+	wdefense = 13

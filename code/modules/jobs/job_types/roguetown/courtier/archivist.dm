@@ -6,9 +6,9 @@
 	faction = "Station"
 	total_positions = 1
 	spawn_positions = 1
-	spells = list(/obj/effect/proc_holder/spell/targeted/touch/prestidigitation)
-	vice_restrictions = list(/datum/charflaw/unintelligible)
-	allowed_races = ACCEPTED_RACES
+	spells = list()
+	vice_restrictions = list(/datum/charflaw/unintelligible, /datum/charflaw/wanted)
+	forbidden_races = list(RACES_DESPISED)
 	allowed_ages = ALL_AGES_LIST
 	cmode_music = 'sound/music/cmode/towner/combat_towner3.ogg'
 
@@ -20,8 +20,7 @@
 	round_contrib_points = 3
 
 	job_traits = list(
-		TRAIT_ARCYNE_T2,
-		TRAIT_MAGEARMOR,
+		TRAIT_ARCYNE,
 		TRAIT_INTELLECTUAL,
 		TRAIT_SEEPRICES_SHITTY,
 		TRAIT_MEDICINE_EXPERT,
@@ -36,6 +35,7 @@
 	job_subclasses = list(
 		/datum/advclass/archivist
 	)
+	has_subprefs = FALSE // only one subclass
 
 /datum/advclass/archivist
 	name = "Archivist"
@@ -43,9 +43,11 @@
 	The power to dictate how the future generations will look back on these coming days."
 	outfit = /datum/outfit/job/roguetown/archivist/basic
 	subclass_languages = list(
+		/datum/language/oldazurian,//YOU LIVE HERE
 		/datum/language/elvish,
 		/datum/language/dwarvish,
 		/datum/language/celestial,
+		/datum/language/raneshi,
 		/datum/language/hellspeak,
 		/datum/language/orcish,
 		/datum/language/grenzelhoftian,
@@ -65,13 +67,14 @@
 		STATKEY_STR = -1
 	)
 	age_mod = /datum/class_age_mod/archivist
-	subclass_spellpoints = 12
+	subclass_mage_aspects = list("mastery" = FALSE, "major" = 1, "minor" = 1, "utilities" = 2, "ward" = TRUE)
 	subclass_skills = list(
+		/datum/skill/combat/staves = SKILL_LEVEL_JOURNEYMAN,
+		/datum/skill/combat/arcyne = SKILL_LEVEL_JOURNEYMAN,
 		/datum/skill/misc/reading = SKILL_LEVEL_LEGENDARY,
 		/datum/skill/craft/alchemy = SKILL_LEVEL_LEGENDARY,
 		/datum/skill/magic/arcane = SKILL_LEVEL_APPRENTICE,
 		/datum/skill/misc/medicine = SKILL_LEVEL_APPRENTICE,
-		/datum/skill/misc/riding = SKILL_LEVEL_APPRENTICE,
 		/datum/skill/combat/wrestling = SKILL_LEVEL_NOVICE,
 		/datum/skill/combat/unarmed = SKILL_LEVEL_NOVICE,
 		/datum/skill/misc/swimming = SKILL_LEVEL_NOVICE,
@@ -84,7 +87,7 @@
 	H.adjust_blindness(-3)
 	if(should_wear_femme_clothes(H))
 		shirt = /obj/item/clothing/suit/roguetown/shirt/robe/archivist
-		head  = /obj/item/clothing/head/roguetown/roguehood/black
+		head	= /obj/item/clothing/head/roguetown/roguehood/black
 	else
 		shirt = /obj/item/clothing/suit/roguetown/shirt/robe/archivist
 		armor = /obj/item/clothing/suit/roguetown/armor/leather/vest/sailor/nightman
@@ -103,7 +106,8 @@
 		/obj/item/natural/feather,
 		/obj/item/paper,
 		/obj/item/paper,
-		/obj/item/paper
+		/obj/item/paper,
+		/obj/item/rogueweapon/spellbook
 	)
 
 	if(H.mind)
@@ -113,4 +117,4 @@
 		H.mind.AddSpell(new /obj/effect/proc_holder/spell/invoked/learn)
 		H.mind.AddSpell(new /obj/effect/proc_holder/spell/invoked/silence/archivist_silence)
 	if(H.mind)
-		SStreasury.give_money_account(ECONOMIC_UPPER_CLASS, H, "Savings.")
+		SStreasury.grant_savings(ECONOMIC_UPPER_CLASS, H)

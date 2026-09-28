@@ -4,6 +4,15 @@
 #define MAX_PLANT_WEEDS 100
 #define SOIL_DECAY_TIME 10 MINUTES
 
+#define WATER_THRESH_HIGH (MAX_PLANT_WATER * 0.6)
+#define WATER_THRESH_LOW (MAX_PLANT_WATER * 0.15)
+#define NUTRI_THRESH_HIGH (MAX_PLANT_NUTRITION * 0.6)
+#define NUTRI_THRESH_LOW (MAX_PLANT_NUTRITION * 0.15)
+#define WEEDS_THRESH_HIGH (MAX_PLANT_WEEDS * 0.6)
+#define WEEDS_THRESH_LOW (MAX_PLANT_WEEDS * 0.3)
+#define HEALTH_THRESH_LOW (MAX_PLANT_HEALTH * 0.3)
+#define HEALTH_THRESH_HIGH (MAX_PLANT_HEALTH * 0.6)
+
 GLOBAL_LIST_EMPTY(soil_list)
 
 /obj/structure/soil
@@ -54,7 +63,7 @@ GLOBAL_LIST_EMPTY(soil_list)
 		/obj/item/rogueweapon/halberd/bardiche/scythe
 	)
 
-/obj/structure/soil/Initialize()
+/obj/structure/soil/Initialize(mapload)
 	. = ..()
 	GLOB.soil_list += src
 
@@ -149,26 +158,31 @@ GLOBAL_LIST_EMPTY(soil_list)
 
 /obj/structure/soil/proc/try_handle_watering(obj/item/attacking_item, mob/user, params)
 	var/water_amount = 0
-	if(istype(attacking_item, /obj/item/reagent_containers))
+	if(istype(attacking_item, /obj/item/reagent_containers) || istype(attacking_item, /obj/item/melee/new_touch_attack/orison))
 		if(water >= MAX_PLANT_WATER * 0.8)
 			to_chat(user, span_warning("The soil is already wet!"))
 			return TRUE
-		var/obj/item/reagent_containers/container = attacking_item
-		if(container.reagents.has_reagent(/datum/reagent/water, 10))
-			container.reagents.remove_reagent(/datum/reagent/water, 10)
-			water_amount = 150
-		else if(container.reagents.has_reagent(/datum/reagent/water/gross, 10))
-			container.reagents.remove_reagent(/datum/reagent/water/gross, 10)
-			water_amount = 150
-		else
-			to_chat(user, span_warning("There's no water in \the [container]!"))
+		if(istype(attacking_item, /obj/item/melee/new_touch_attack/orison))
+			water_amount = 300
+		if(istype(attacking_item, /obj/item/reagent_containers))
+			var/obj/item/reagent_containers/container = attacking_item
+			if(container.reagents.has_reagent(/datum/reagent/water, 10))
+				container.reagents.remove_reagent(/datum/reagent/water, 10)
+				water_amount = 150
+			else if(container.reagents.has_reagent(/datum/reagent/water/gross, 10))
+				container.reagents.remove_reagent(/datum/reagent/water/gross, 10)
+				water_amount = 150
+			else
+				to_chat(user, span_warning("There's no water in \the [container]!"))
+				return TRUE
+		if(water_amount > 0)
+			var/list/wash = list('sound/foley/waterwash (1).ogg','sound/foley/waterwash (2).ogg')
+			playsound(user, pick_n_take(wash), 100, FALSE)
+			to_chat(user, span_notice("I water the soil."))
+			adjust_water(water_amount)
+			update_icon()
+			needs_icon_update = FALSE
 			return TRUE
-	if(water_amount > 0)
-		var/list/wash = list('sound/foley/waterwash (1).ogg','sound/foley/waterwash (2).ogg')
-		playsound(user, pick_n_take(wash), 100, FALSE)
-		to_chat(user, span_notice("I water the soil."))
-		adjust_water(water_amount)
-		return TRUE
 	return FALSE
 
 /obj/structure/soil/proc/try_handle_fertilizing(obj/item/attacking_item, mob/user, params)
@@ -348,31 +362,76 @@ GLOBAL_LIST_EMPTY(soil_list)
 	if (adjust_amount && pre_plant_health != plant_health)
 		needs_icon_update = TRUE
 
-/obj/structure/soil/Initialize()
-	START_PROCESSING(SSprocessing, src)
+/obj/structure/soil/Initialize(mapload)
+	START_PROCESSING(SSfarming, src)
 	GLOB.weather_act_upon_list += src
 	. = ..()
 
 /obj/structure/soil/Destroy()
-	STOP_PROCESSING(SSprocessing, src)
+	STOP_PROCESSING(SSfarming, src)
 	GLOB.weather_act_upon_list -= src
 	. = ..()
 
-/obj/structure/soil/process()
-	var/dt = 10
+/obj/structure/soil/proc/get_visual_key()
+	var/w
+	if(water >= WATER_THRESH_HIGH)
+		w = 2
+	else if(water >= WATER_THRESH_LOW)
+		w = 1
+	else
+		w = 0
+	var/n
+	if(nutrition >= NUTRI_THRESH_HIGH)
+		n = 2
+	else if(nutrition >= NUTRI_THRESH_LOW)
+		n = 1
+	else
+		n = 0
+	var/wd
+	if(weeds >= WEEDS_THRESH_HIGH)
+		wd = 2
+	else if(weeds >= WEEDS_THRESH_LOW)
+		wd = 1
+	else
+		wd = 0
+	var/ps
+	if(!plant)
+		ps = 0
+	else if(plant_dead)
+		ps = 3
+	else if(produce_ready)
+		ps = 2
+	else if(matured)
+		ps = 1
+	else
+		ps = 0
+	var/h
+	if(!plant || plant_dead)
+		h = 0
+	else if(plant_health <= HEALTH_THRESH_LOW)
+		h = 2
+	else if(plant_health <= HEALTH_THRESH_HIGH)
+		h = 1
+	else
+		h = 0
+	var/t = tilled_time > 0 ? 1 : 0
+	return "[w]-[n]-[wd]-[ps]-[h]-[t]"
+
+/obj/structure/soil/process(wait)
+	var/dt = wait
 	process_weeds(dt)
 	process_plant(dt)
 	process_soil(dt)
 	if(soil_decay_time <= 0)
 		decay_soil()
-	if (plant && needs_icon_update) // only call icon updates if we really need to (aka if we've requested an icon update and if we have a plant)
+	if(needs_icon_update) // only call icon updates if we really need to (aka if we've requested an icon update and if we have a plant)
 		update_icon()
 		needs_icon_update = FALSE
 
 /obj/structure/soil/weather_act_on(weather_trait, severity)
 	if(weather_trait != PARTICLEWEATHER_RAIN)
 		return
-	water = min(MAX_PLANT_WATER, water + min(5, severity / 4))
+	adjust_water(min(5, severity / 4))
 
 /obj/structure/soil/update_icon()
 	. = ..()
@@ -409,9 +468,9 @@ GLOBAL_LIST_EMPTY(soil_list)
 		var/plant_color
 		if(plant_dead == TRUE)
 			plant_color = null
-		else if(plant_health <=  MAX_PLANT_HEALTH * 0.3)
+		else if(plant_health <=	MAX_PLANT_HEALTH * 0.3)
 			plant_color = "#9c7b43"
-		else if (plant_health <=  MAX_PLANT_HEALTH * 0.6)
+		else if (plant_health <=	MAX_PLANT_HEALTH * 0.6)
 			plant_color = "#d8b573"
 		if(plant_dead == TRUE)
 			plant_state = "[plant.icon_state]3"
@@ -439,9 +498,9 @@ GLOBAL_LIST_EMPTY(soil_list)
 		// Plant health feedback
 		if(plant_dead == TRUE)
 			. += span_warning("It's dead!")
-		else if(plant_health <=  MAX_PLANT_HEALTH * 0.3)
+		else if(plant_health <=	MAX_PLANT_HEALTH * 0.3)
 			. += span_warning("It's dying!")
-		else if (plant_health <=  MAX_PLANT_HEALTH * 0.6)
+		else if (plant_health <=	MAX_PLANT_HEALTH * 0.6)
 			. += span_warning("It's brown and unhealthy...")
 		// Plant maturation and produce feedback
 		if(matured)
@@ -667,6 +726,9 @@ GLOBAL_LIST_EMPTY(soil_list)
 		return
 	var/base_amount = rand(plant.produce_amount_min, plant.produce_amount_max)
 	var/spawn_amount = max(base_amount + modifier, 1)
+	var/area/A = get_area(src)
+	if(A && is_type_in_typecache(A, GLOB.roguetown_areas_typecache))
+		record_material_flow(MATERIAL_FLOW_IN, MATERIAL_SOURCE_DOMESTIC, plant.produce_type, spawn_amount)
 	for(var/i in 1 to spawn_amount)
 		new plant.produce_type(loc)
 	produce_ready = FALSE
@@ -690,6 +752,14 @@ GLOBAL_LIST_EMPTY(soil_list)
 	plant_dead = FALSE
 	update_icon()
 
+/obj/structure/soil/debug_soil
+	water = MAX_PLANT_WATER
+	nutrition = MAX_PLANT_NUTRITION
+
+/obj/structure/soil/debug_soil/Initialize(mapload)
+	. = ..()
+	insert_plant(GLOB.plant_defs[/datum/plant_def/wheat])
+
 #undef MAX_PLANT_HEALTH
 #undef MAX_PLANT_WATER
 #undef MAX_PLANT_NUTRITION
@@ -707,3 +777,11 @@ GLOBAL_LIST_EMPTY(soil_list)
 #undef PLANT_WEEDS_HARM_RATE
 #undef SOIL_WATER_DECAY_RATE
 #undef SOIL_NUTRIMENT_DECAY_RATE
+#undef WATER_THRESH_HIGH
+#undef WATER_THRESH_LOW
+#undef NUTRI_THRESH_HIGH
+#undef NUTRI_THRESH_LOW
+#undef WEEDS_THRESH_HIGH
+#undef WEEDS_THRESH_LOW
+#undef HEALTH_THRESH_LOW
+#undef HEALTH_THRESH_HIGH

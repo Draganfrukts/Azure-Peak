@@ -44,8 +44,8 @@
 	nomouseover = FALSE
 	var/swimdir = FALSE
 
-/turf/open/water/Initialize()
-	.  = ..()
+/turf/open/water/Initialize(mapload)
+	.	= ..()
 	water_overlay = new(src)
 	water_top_overlay = new(src)
 	update_icon()
@@ -63,9 +63,8 @@
 	if(isliving(AM) && !AM.throwing)
 		var/mob/living/user = AM
 		if(isliving(user) && !user.is_floor_hazard_immune())
-			for(var/obj/structure/S in src)
-				if(S.obj_flags & BLOCK_Z_OUT_DOWN)
-					return
+			if(platform_atom_count > 0)
+				return
 			if(water_overlay)
 				if((get_dir(src, newloc) == SOUTH))
 					water_overlay.layer = BELOW_MOB_LAYER
@@ -124,9 +123,8 @@
 	if(!swimmer.check_armor_skill())
 		. += UNSKILLED_ARMOR_PENALTY
 	if(.) // this check is expensive so we only run it if we do expect to use stamina
-		for(var/obj/structure/S in src)
-			if(S.obj_flags & BLOCK_Z_OUT_DOWN)
-				return 0
+		if(platform_atom_count > 0)
+			return 0
 		for(var/D in GLOB.cardinals) //adjacent to a floor to hold onto
 			if(istype(get_step(src, D), /turf/open/floor))
 				return 0
@@ -164,9 +162,8 @@
 
 /turf/open/water/Entered(atom/movable/AM, atom/oldLoc)
 	. = ..()
-	for(var/obj/structure/S in src)
-		if(S.obj_flags & BLOCK_Z_OUT_DOWN)
-			return
+	if(platform_atom_count > 0)
+		return
 	if(istype(AM, /obj/item/reagent_containers/food/snacks/fish))
 		var/obj/item/reagent_containers/food/snacks/fish/F = AM
 		if (F.sinkable)
@@ -180,6 +177,7 @@
 			L.visible_message(span_warning("[L] spasms violently upon touching the water!"), span_danger("The water... it burns me!"))
 			L.adjustFireLoss(25)
 			return
+
 		if (istype(src,/turf/open/water/bloody))
 			L.add_mob_blood(L)
 
@@ -219,7 +217,7 @@
 			playsound(user, 'sound/foley/drawwater.ogg', 100, FALSE)
 			if(do_after(user, 8, target = src))
 				user.changeNext_move(CLICK_CD_MELEE)
-				C.reagents.add_reagent(water_reagent, 200)
+				C.reagents.add_reagent(water_reagent, C.reagents.maximum_volume)
 				to_chat(user, span_notice("I fill [C] from [src]."))
 				// If the user is filling a water purifier and the water isn't already clean...
 				if (istype(C, /obj/item/reagent_containers/glass/bottle/waterskin/purifier) && water_reagent != water_reagent_purified)
@@ -250,8 +248,19 @@
 				if(istype(src,/turf/open/water/sewer) || istype(src,/turf/open/water/swamp) || istype(src, /turf/open/water/sewer))
 					if (istype(src, /turf/open/water/sewer))
 						user.add_stress(/datum/stressevent/sewertouched)
-					if (!HAS_TRAIT(L,TRAIT_LEECHIMMUNE)) // cleaning yourself in nasty water is a wonderful way to get leeches.
+					if (!HAS_TRAIT(L,TRAIT_LEECHIMMUNE) && !HAS_TRAIT(L,TRAIT_BOGWALKER)) // cleaning yourself in nasty water is a wonderful way to get leeches.
 						if (prob(20)) // 1 in 5 chance of getting leeched if you wash up in gross water.
+
+							if(HAS_TRAIT(L, TRAIT_LEECHRESIST))
+								var/avoid_chance = 20
+								avoid_chance += (L.STASPD - 10) * 10
+								avoid_chance += (L.STALUC - 10) * 5
+								avoid_chance = clamp(avoid_chance, 0, 100)
+								if(prob(avoid_chance))
+									return
+								else
+									to_chat(L, span_notice("Ouch! I am being sucked off!!"))
+
 							var/list/zones = list(BODY_ZONE_CHEST, BODY_ZONE_R_ARM, BODY_ZONE_L_ARM, BODY_ZONE_PRECISE_NECK, BODY_ZONE_HEAD)
 							var/zone = pick(zones)
 							var/obj/item/bodypart/BP = L.get_bodypart(zone)
@@ -339,7 +348,7 @@
 			returned -= 1
 	return max(returned, 0.5)
 
-//turf/open/water/Initialize()
+//turf/open/water/Initialize(mapload)
 //	dir = pick(NORTH,SOUTH,WEST,EAST)
 //	. = ..()
 
@@ -354,8 +363,8 @@
 	slowdown = 3
 	water_reagent = /datum/reagent/water/bathwater
 
-/turf/open/water/bath/Initialize()
-	.  = ..()
+/turf/open/water/bath/Initialize(mapload)
+	.	= ..()
 	icon_state = "bathtile"
 
 /turf/open/water/sewer
@@ -369,10 +378,10 @@
 	wash_in = FALSE
 	water_reagent = /datum/reagent/water/gross/sewage
 
-/turf/open/water/sewer/Initialize()
+/turf/open/water/sewer/Initialize(mapload)
 	icon_state = "paving"
 	water_color = pick("#705a43","#697043")
-	.  = ..()
+	.	= ..()
 
 /turf/open/water/swamp
 	name = "murk"
@@ -396,17 +405,17 @@
 	wash_in = FALSE
 	water_reagent = /datum/reagent/blood/shitty
 
-/turf/open/water/swamp/Initialize()
+/turf/open/water/swamp/Initialize(mapload)
 	icon_state = "dirt"
 	dir = pick(GLOB.cardinals)
 	water_color = pick("#705a43")
-	.  = ..()
+	.	= ..()
 
-/turf/open/water/bloody/Initialize()
+/turf/open/water/bloody/Initialize(mapload)
 	icon_state = "dirt"
 	dir = pick(GLOB.cardinals)
 	water_color = pick("#880808")
-	.  = ..()
+	.	= ..()
 
 
 
@@ -414,7 +423,9 @@
 
 /turf/open/water/swamp/Entered(atom/movable/AM, atom/oldLoc)
 	. = ..()
-	if(HAS_TRAIT(AM, TRAIT_LEECHIMMUNE))
+	if(!oldLoc)
+		return
+	if(HAS_TRAIT(AM, TRAIT_LEECHIMMUNE) || HAS_TRAIT(AM, TRAIT_BOGWALKER))
 		return
 	if(isliving(AM) && !AM.throwing)
 		if(ishuman(AM))
@@ -431,6 +442,17 @@
 				return
 			if(C.blood_volume <= 0)
 				return
+
+			if(HAS_TRAIT(C, TRAIT_LEECHRESIST))
+				var/avoid_chance = 20
+				avoid_chance += (C.STASPD - 10) * 10
+				avoid_chance += (C.STALUC - 10) * 5
+				avoid_chance = clamp(avoid_chance, 0, 100)
+				if(prob(avoid_chance))
+					return
+				else
+					to_chat(C, span_notice("Ouch! I am being sucked off!!"))
+
 			var/list/zonee = list(BODY_ZONE_R_LEG, BODY_ZONE_L_LEG, BODY_ZONE_CHEST)
 			for(var/i = 0, i <= zonee.len, i++)
 				var/zone = pick(zonee)
@@ -454,31 +476,49 @@
 
 /turf/open/water/swamp/deep/Entered(atom/movable/AM, atom/oldLoc)
 	. = ..()
-	if(HAS_TRAIT(AM, TRAIT_LEECHIMMUNE))
-		return
+	if(!oldLoc)
+		return .
+
+	if(HAS_TRAIT(AM, TRAIT_LEECHIMMUNE) ||	HAS_TRAIT(AM, TRAIT_BOGWALKER))
+		return .
+
 	if(isliving(AM) && !AM.throwing)
 		if(ishuman(AM))
 			var/mob/living/carbon/human/C = AM
-			// check if we're riding a boat or a mount (we can presume a living mob is a mount), no leeches if so
 			if(istype(C.buckled, /obj/vehicle/ridden) || isliving(C.buckled))
-				return
+				return .
+
 			var/chance = 6
 			if(C.m_intent == MOVE_INTENT_RUN)
 				chance = 12		//yikes
-			if(C.m_intent == MOVE_INTENT_SNEAK)
+			else if(C.m_intent == MOVE_INTENT_SNEAK)
 				chance = 2
+
 			if(!prob(chance))
-				return
+				return .
+
 			if(C.blood_volume <= 0)
-				return
-			var/list/zonee = list(BODY_ZONE_CHEST,BODY_ZONE_R_LEG,BODY_ZONE_L_LEG,BODY_ZONE_R_ARM,BODY_ZONE_L_ARM)
-			for(var/i = 0, i <= zonee.len, i++)
+				return .
+
+			if(HAS_TRAIT(C, TRAIT_LEECHRESIST))
+				var/avoid_chance = 20
+				avoid_chance += (C.STASPD - 10) * 10
+				avoid_chance += (C.STALUC - 10) * 5
+				avoid_chance = clamp(avoid_chance, 0, 100)
+				if(prob(avoid_chance))
+					return
+				else
+					to_chat(C, span_notice("Ouch! I am being sucked off!!"))
+
+			var/list/zonee = list(BODY_ZONE_CHEST, BODY_ZONE_R_LEG, BODY_ZONE_L_LEG, BODY_ZONE_R_ARM, BODY_ZONE_L_ARM)
+			for(var/i = 1; i <= zonee.len; i++)
 				var/zone = pick(zonee)
 				var/obj/item/bodypart/BP = C.get_bodypart(zone)
 				if(!BP)
 					continue
 				if(BP.skeletonized)
 					continue
+
 				var/obj/item/natural/worms/leech/I = new(C)
 				BP.add_embedded_object(I, silent = TRUE)
 				return .
@@ -487,16 +527,32 @@
 	name = "water"
 	desc = "Clear and shallow water, what a blessing!"
 	icon = 'icons/turf/roguefloor.dmi'
-	icon_state = "rockw2"
+	icon_state = "rockw3"
 	water_level = 2
 	slowdown = 3
 	wash_in = TRUE
 	water_reagent = /datum/reagent/water
 
-/turf/open/water/cleanshallow/Initialize()
+/turf/open/water/cleanshallow/Initialize(mapload)
 	icon_state = "rock"
 	dir = pick(GLOB.cardinals)
-	.  = ..()
+	.	= ..()
+
+/turf/open/water/cleanshallow/deep
+	name = "deep water"
+	desc = "Clear and deep water, beautiful but dangerous should you not know how to swim."
+	icon = 'icons/turf/roguefloor.dmi'
+	icon_state = "rockw4"
+	water_level = 3
+	slowdown = 5
+	swim_skill = TRUE
+	water_color = "#5d7e84"
+
+/turf/open/water/cleanshallow/deep/Initialize(mapload)
+	. = ..()
+	icon_state = "rock"
+	water_color = "#5d7e84"
+	update_icon()
 
 /turf/open/water/river
 	name = "river"
@@ -510,7 +566,86 @@
 	swimdir = TRUE
 
 /turf/open/water/river/flow
+	icon_state = "rockwd2"
+
+/turf/open/water/river/flow/deep
+	name = "deep river"
+	desc = "A deep and flowing river of crystal clear water."
 	icon_state = "rockwd"
+	water_level = 3
+	slowdown = 5
+	swim_skill = TRUE
+	water_color = "#5a7a80"
+
+/turf/open/water/river/flow/deep/Initialize(mapload)
+	. = ..()
+	icon_state = "rock"
+	update_icon()
+
+/turf/open/water/river/flow/deep/west
+	dir = 8
+
+/turf/open/water/river/flow/deep/east
+	dir = 4
+
+/turf/open/water/river/flow/deep/north
+	dir = 1
+
+/turf/open/water/river/flow/murk
+	name = "murk river"
+	desc = "A foul river of weeds and algae."
+	icon_state = "dirtwd2"
+	water_level = 2
+	water_color = "#705a43"
+	slowdown = 3
+	wash_in = TRUE
+	water_reagent = /datum/reagent/water/gross
+
+/turf/open/water/river/flow/murk/Initialize(mapload)
+	. = ..()
+	icon_state = "rock"
+	update_icon()
+
+/turf/open/water/river/flow/murk/Entered(atom/movable/AM, atom/oldLoc)
+	. = ..()
+	if(!oldLoc)
+		return
+	if(HAS_TRAIT(AM, TRAIT_LEECHIMMUNE) || HAS_TRAIT(AM, TRAIT_BOGWALKER))
+		return
+	if(isliving(AM) && !AM.throwing)
+		if(ishuman(AM))
+			var/mob/living/carbon/human/C = AM
+			if(istype(C.buckled, /obj/vehicle/ridden) || isliving(C.buckled))
+				return
+			var/chance = 3
+			if(C.m_intent == MOVE_INTENT_RUN)
+				chance = 6
+			if(C.m_intent == MOVE_INTENT_SNEAK)
+				chance = 1
+			if(!prob(chance))
+				return
+			if(C.blood_volume <= 0)
+				return
+			if(HAS_TRAIT(C, TRAIT_LEECHRESIST))
+				var/avoid_chance = 20
+				avoid_chance += (C.STASPD - 10) * 10
+				avoid_chance += (C.STALUC - 10) * 5
+				avoid_chance = clamp(avoid_chance, 0, 100)
+				if(prob(avoid_chance))
+					return
+				else
+					to_chat(C, span_notice("Ouch! I am being sucked off!!"))
+			var/list/zonee = list(BODY_ZONE_R_LEG, BODY_ZONE_L_LEG, BODY_ZONE_CHEST)
+			for(var/i = 1; i <= zonee.len; i++)
+				var/zone = pick(zonee)
+				var/obj/item/bodypart/BP = C.get_bodypart(zone)
+				if(!BP)
+					continue
+				if(BP.skeletonized)
+					continue
+				var/obj/item/natural/worms/leech/I = new(C)
+				BP.add_embedded_object(I, silent = TRUE)
+				return .
 
 /turf/open/water/river/flow/west
 	dir = 8
@@ -531,13 +666,14 @@
 		water_top_overlay.icon_state = "rivertop"
 		water_top_overlay.dir = dir
 
-/turf/open/water/river/Initialize()
+/turf/open/water/river/Initialize(mapload)
 	icon_state = "rock"
-	.  = ..()
+	.	= ..()
 
 /turf/open/water/river/Entered(atom/movable/AM, atom/oldLoc)
 	. = ..()
-	START_PROCESSING(SSrivers, src)
+	if(platform_atom_count <= 0)
+		START_PROCESSING(SSrivers, src)
 
 /turf/open/water/river/get_heuristic_slowdown(mob/traverser, travel_dir)
 	var/const/UPSTREAM_PENALTY = 4
@@ -546,9 +682,8 @@
 	. = ..()
 	if(traverser.is_floor_hazard_immune())
 		return
-	for(var/obj/structure/S in src)
-		if(S.obj_flags & BLOCK_Z_OUT_DOWN)
-			return
+	if(platform_atom_count > 0)
+		return
 	if(travel_dir == dir) // downriver
 		. += DOWNSTREAM_BONUS // faster!
 	else if(travel_dir == GLOB.reverse_dir[dir]) // upriver
@@ -557,16 +692,18 @@
 		. += SIDESTREAM_PENALTY // sidestream walking isn't free, bro
 
 /turf/open/water/river/proc/process_river()
+	if(platform_atom_count > 0)
+		STOP_PROCESSING(SSrivers, src)
+		return
 	var/found_movable = FALSE
 	for(var/atom/movable/A in contents)
-		found_movable = TRUE
-		for(var/obj/structure/S in src)
-			if(S.obj_flags & BLOCK_Z_OUT_DOWN)
-				return
-		if((A.loc == src))
-			A.ConveyorMove(dir)
+		if(!A.anchored)
+			found_movable = TRUE
+			if((A.loc == src))
+				A.ConveyorMove(dir)
 
-	if(found_movable)
+	// stop processing once there's nothing left to move
+	if(!found_movable)
 		STOP_PROCESSING(SSrivers, src)
 		return
 
@@ -601,6 +738,20 @@
 	swim_skill = TRUE
 	wash_in = TRUE
 
+/turf/open/water/ocean/deep/dark
+	water_color = "#000211"
+
+/turf/open/water/ocean/abyssal
+	name = "darkwater"
+	desc = "Water from another realm, it's impossibly deep, like everything below the surface isn't fully within this plane."
+	icon_state = "water"
+	icon = 'icons/turf/roguefloor.dmi'
+	water_level = 3
+	water_color = "#000211"
+	slowdown = 8
+	swim_skill = TRUE
+	wash_in = FALSE
+
 /turf/open/water/pond
 	name = "pond"
 	desc = "Still and alarmingly idyllic water. Covered in concerning overgrowth of duckweed."
@@ -612,3 +763,37 @@
 	swim_skill = TRUE
 	wash_in = TRUE
 	water_reagent = /datum/reagent/water/gross
+
+/turf/open/water/river/flow/murk/deep
+	name = "deep murk river"
+	desc = "A deep and foul river of weeds and algae."
+	icon_state = "dirtwd"
+	water_level = 3
+	water_color = "#705a43"
+	slowdown = 5
+	swim_skill = TRUE
+	wash_in = TRUE
+	water_reagent = /datum/reagent/water/gross
+
+/turf/open/water/river/flow/murk/deep/Initialize(mapload)
+	. = ..()
+	icon_state = "rock"
+	update_icon()
+
+/turf/open/water/river/flow/murk/west
+	dir = 8
+
+/turf/open/water/river/flow/murk/east
+	dir = 4
+
+/turf/open/water/river/flow/murk/north
+	dir = 1
+
+/turf/open/water/river/flow/murk/deep/west
+	dir = 8
+
+/turf/open/water/river/flow/murk/deep/east
+	dir = 4
+
+/turf/open/water/river/flow/murk/deep/north
+	dir = 1

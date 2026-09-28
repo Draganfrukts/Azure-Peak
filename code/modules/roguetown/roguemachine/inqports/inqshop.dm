@@ -2,10 +2,10 @@
 	category = 1 // Category for the HERMES. They are - "✤ SUPPLIES ✤", "✤ ARTICLES ✤", "✤ RELIQUARY ✤", "✤ WARDROBE ✤", "✤ EQUIPMENT ✤".
 
 /datum/inqports/supplies/
-	category = 2  // Category for the HERMES. They are - "✤ SUPPLIES ✤", "✤ ARTICLES ✤", "✤ RELIQUARY ✤", "✤ WARDROBE ✤", "✤ EQUIPMENT ✤".
+	category = 2	// Category for the HERMES. They are - "✤ SUPPLIES ✤", "✤ ARTICLES ✤", "✤ RELIQUARY ✤", "✤ WARDROBE ✤", "✤ EQUIPMENT ✤".
 
 /datum/inqports/articles/
-	category = 3  // Category for the HERMES. They are - "✤ SUPPLIES ✤", "✤ ARTICLES ✤", "✤ RELIQUARY ✤", "✤ WARDROBE ✤", "✤ EQUIPMENT ✤".
+	category = 3	// Category for the HERMES. They are - "✤ SUPPLIES ✤", "✤ ARTICLES ✤", "✤ RELIQUARY ✤", "✤ WARDROBE ✤", "✤ EQUIPMENT ✤".
 
 /datum/inqports/equipment/
 	category = 4 // Category for the HERMES. They are - "✤ SUPPLIES ✤", "✤ ARTICLES ✤", "✤ RELIQUARY ✤", "✤ WARDROBE ✤", "✤ EQUIPMENT ✤".
@@ -16,23 +16,23 @@
 
 /obj/structure/closet/crate/chest/inqcrate/supplies/
 	name = "inquisitorial supply crate"
-	desc = "A crate of boswellia wood, marked with the sigil of the Holy Psydonic Inquisition." 
+	desc = "A crate of boswellia wood, marked with the sigil of the Holy Psydonic Inquisition."
 
 /obj/structure/closet/crate/chest/inqcrate/articles/
 	name = "inquisitorial article crate"
-	desc = "A crate of boswellia wood, marked with the sigil of the Holy Psydonic Inquisition." 
+	desc = "A crate of boswellia wood, marked with the sigil of the Holy Psydonic Inquisition."
 
 /obj/structure/closet/crate/chest/inqreliquary/relic/
 	name = "reliquary crate"
-	desc = "A decorated crate of boswellia wood, braced with silver and marked with the Archbishop's personal sigil. It houses a " 
+	desc = "A decorated crate of boswellia wood, braced with silver and marked with the Archbishop's personal sigil. It houses a "
 
 /obj/structure/closet/crate/chest/inqcrate/equipment/
 	name = "inquisitorial equipment crate"
-	desc = "A crate of boswellia wood, marked with the sigil of the Holy Psydonic Inquisition." 
+	desc = "A crate of boswellia wood, marked with the sigil of the Holy Psydonic Inquisition."
 
 /obj/structure/closet/crate/chest/inqcrate/wardrobe/
 	name = "inquisitorial wardrobe crate"
-	desc = "A crate of boswellia wood, marked with the sigil of the Holy Psydonic Inquisition." 
+	desc = "A crate of boswellia wood, marked with the sigil of the Holy Psydonic Inquisition."
 
 /// ✤ RELIQUARY ✤ START HERE! WOW!
 
@@ -44,13 +44,13 @@
 	name = "The Archbishop's Allowance - Hundreds Of Mammons"
 	item_type = /obj/structure/closet/crate/chest/inqcrate/supplies/extrafunding
 	marquescost = 16
-	maximum = 1
+	maximum = 3
 
-/obj/item/roguecoin/silver/inqpile/Initialize()
+/obj/item/roguecoin/silver/inqpile/Initialize(mapload)
 	. = ..()
 	set_quantity(20)
 
-/obj/structure/closet/crate/chest/inqcrate/supplies/extrafunding/Initialize()
+/obj/structure/closet/crate/chest/inqcrate/supplies/extrafunding/Initialize(mapload)
 	. = ..()
 	new /obj/item/roguecoin/silver/inqpile(src)
 	new /obj/item/roguecoin/silver/inqpile(src)
@@ -61,9 +61,9 @@
 	name = "The Archibishop's Bullion - Blessed Silver Ingots"
 	item_type = /obj/structure/closet/crate/chest/inqreliquary/relic/bullion/
 	marquescost = 16
-	maximum = 3
+	maximum = 5
 
-/obj/structure/closet/crate/chest/inqreliquary/relic/bullion/Initialize()
+/obj/structure/closet/crate/chest/inqreliquary/relic/bullion/Initialize(mapload)
 	. = ..()
 	new /obj/item/ingot/silverblessed/bullion(src)
 	new /obj/item/ingot/silverblessed/bullion(src)
@@ -73,17 +73,23 @@
 	new /obj/item/ingot/silverblessed/bullion(src)
 
 /datum/inqports/supplies/quicksilver
-	name = "The Archbishop's Poultice"
+	name = "The Archbishop's Poultice - Cure For Cursed Blood"
 	item_type = /obj/item/quicksilver
 	maximum = 1
 	marquescost = 12
+
+/datum/inqports/supplies/litany
+	name = "The Archbishop's Litany - Singular Blessing Of Psydonic Weaponry"
+	item_type = /obj/item/inqarticles/litany
+	maximum = 5
+	marquescost = 6
 
 /datum/inqports/supplies/psybuns
 	name = "The 'Otavan Bakery Special' Crate"
 	item_type = /obj/structure/closet/crate/chest/inqcrate/supplies/psybuns
 	marquescost = 8
 
-/obj/structure/closet/crate/chest/inqcrate/supplies/psybuns/Initialize()
+/obj/structure/closet/crate/chest/inqcrate/supplies/psybuns/Initialize(mapload)
 	. = ..()
 	new /obj/item/reagent_containers/food/snacks/rogue/psycrossbun(src)
 	new /obj/item/reagent_containers/food/snacks/rogue/psycrossbun(src)
@@ -111,13 +117,13 @@
 	item_type = /obj/structure/closet/crate/chest/inqcrate/supplies/medical
 	marquescost = 6
 
-/obj/item/natural/bundle/cloth/roll/Initialize()
+/obj/item/natural/bundle/cloth/roll/Initialize(mapload)
 	. = ..()
 	icon_state = "clothroll2"
 	amount = 10
 	grid_width = 64
 
-/obj/structure/closet/crate/chest/inqcrate/supplies/medical/Initialize()
+/obj/structure/closet/crate/chest/inqcrate/supplies/medical/Initialize(mapload)
 	. = ..()
 	new /obj/item/needle(src)
 	new /obj/item/needle(src)
@@ -129,37 +135,63 @@
 	new /obj/item/natural/bundle/cloth/bandage/full(src)
 	new /obj/item/natural/bundle/cloth/bandage/full(src)
 	new /obj/item/natural/bundle/cloth/bandage/full(src)
+
+/datum/inqports/supplies/restorationbig
+	name = "3 Bottles of Restoration"
+	item_type = /obj/structure/closet/crate/chest/inqcrate/supplies/restorationbig
+	marquescost = 12
+	maximum = 3
+
+/obj/structure/closet/crate/chest/inqcrate/supplies/restorationbig/Initialize(mapload)
+	. = ..()
+	new /obj/item/reagent_containers/glass/bottle/rogue/restoration(src)
+	new /obj/item/reagent_containers/glass/bottle/rogue/restoration(src)
+	new /obj/item/reagent_containers/glass/bottle/rogue/restoration(src)
+
+/datum/inqports/supplies/restoration
+	name = "3 Vials of Restoration"
+	item_type = /obj/structure/closet/crate/chest/inqcrate/supplies/restoration
+	marquescost = 12
+
+/obj/structure/closet/crate/chest/inqcrate/supplies/restoration/Initialize(mapload)
+	. = ..()
+	new /obj/item/reagent_containers/glass/bottle/alchemical/restoration(src)
+	new /obj/item/reagent_containers/glass/bottle/alchemical/restoration(src)
+	new /obj/item/reagent_containers/glass/bottle/alchemical/restoration(src)
 
 /datum/inqports/supplies/lifeblood
-	name = "3 Vials of Strong Lifeblood"
-	item_type = /obj/structure/closet/crate/chest/inqcrate/supplies/sredvials
-	maximum = 1
-	marquescost = 8
+	name = "3 Bottles of Lifeblood"
+	item_type = /obj/structure/closet/crate/chest/inqcrate/supplies/lifeblood
+	marquescost = 10
 
-/obj/structure/closet/crate/chest/inqcrate/supplies/sredvials/Initialize()
+/obj/structure/closet/crate/chest/inqcrate/supplies/lifeblood/Initialize(mapload)
 	. = ..()
-	new /obj/item/reagent_containers/glass/bottle/alchemical/healthpotnew(src)
-	new /obj/item/reagent_containers/glass/bottle/alchemical/healthpotnew(src)
-	new /obj/item/reagent_containers/glass/bottle/alchemical/healthpotnew(src)
+	new /obj/item/reagent_containers/glass/bottle/rogue/healthpot(src)
+	new /obj/item/reagent_containers/glass/bottle/rogue/healthpot(src)
+	new /obj/item/reagent_containers/glass/bottle/rogue/healthpot(src)
 
 /datum/inqports/supplies/manna
 	name = "3 Bottles of Manna"
 	item_type = /obj/structure/closet/crate/chest/inqcrate/supplies/manna
-	maximum = 3
 	marquescost = 8
 
-/obj/structure/closet/crate/chest/inqcrate/supplies/manna/Initialize()
+/obj/structure/closet/crate/chest/inqcrate/supplies/manna/Initialize(mapload)
 	. = ..()
 	new /obj/item/reagent_containers/glass/bottle/rogue/manapot(src)
 	new /obj/item/reagent_containers/glass/bottle/rogue/manapot(src)
 	new /obj/item/reagent_containers/glass/bottle/rogue/manapot(src)
+
+/datum/inqports/supplies/flint
+	name = "1 Tool of Firestarting"
+	item_type = /obj/item/flint
+	marquescost = 2
 
 /datum/inqports/supplies/smokes
 	name = "3 Smokebombs"
 	item_type = /obj/structure/closet/crate/chest/inqcrate/supplies/smokes
 	marquescost = 4
 
-/obj/structure/closet/crate/chest/inqcrate/supplies/smokes/Initialize()
+/obj/structure/closet/crate/chest/inqcrate/supplies/smokes/Initialize(mapload)
 	. = ..()
 	new /obj/item/bomb/smoke(src)
 	new /obj/item/bomb/smoke(src)
@@ -169,9 +201,8 @@
 	name = "3 Bottlebombs"
 	item_type = /obj/structure/closet/crate/chest/inqcrate/supplies/bottlebombs
 	marquescost = 6
-	maximum = 3
 
-/obj/structure/closet/crate/chest/inqcrate/supplies/bottlebombs/Initialize()
+/obj/structure/closet/crate/chest/inqcrate/supplies/bottlebombs/Initialize(mapload)
 	. = ..()
 	new /obj/item/bomb(src)
 	new /obj/item/bomb(src)
@@ -183,7 +214,7 @@
 	marquescost = 8
 	maximum = 3
 
-/obj/structure/closet/crate/chest/inqcrate/supplies/tnt/Initialize()
+/obj/structure/closet/crate/chest/inqcrate/supplies/tnt/Initialize(mapload)
 	. = ..()
 	new /obj/item/tntstick(src)
 	new /obj/item/tntstick(src)
@@ -193,7 +224,7 @@
 	name = "1 Blastpowder Satchel"
 	item_type = /obj/item/satchel_bomb
 	marquescost = 12
-	maximum = 2
+	maximum = 3
 
 // ✤ ARTICLES ✤ RIGHT HERE! THAT'S RIGHT!
 
@@ -203,9 +234,23 @@
 	marquescost = 16
 	maximum = 1
 
-/obj/structure/closet/crate/chest/inqreliquary/relic/crankbox/Initialize()
+/obj/structure/closet/crate/chest/inqreliquary/relic/crankbox/Initialize(mapload)
 	. = ..()
 	new /obj/item/psydonmusicbox(src)
+
+/datum/inqports/articles/psymaul
+	name = "Relic - The Maul, Evershattering"
+	item_type = /obj/structure/closet/crate/chest/inqreliquary/relic/psymaul/
+	marquescost = 6 //its meant to be easy to aquire, even solo orthodoxist can get it. unique weapon/wall leveling tool, marq shop keeps it from being stolen until you get the thing.
+	maximum = 1
+	//it does 15% of max structure integ as damage, get siegebows if you want more leveling walls and faster.
+
+//Intended to exist seperate to inquisitor.
+
+/obj/structure/closet/crate/chest/inqreliquary/relic/psymaul/Initialize(mapload)
+	. = ..()
+	new /obj/item/rogueweapon/mace/maul/grand/psy(src)
+	new /obj/item/rogueweapon/scabbard/gwstrap(src) //so you can lug it around
 
 /datum/inqports/articles/bmirror
 	name = "Relic - The Mirrors, Everseeing"
@@ -213,21 +258,37 @@
 	marquescost = 8
 	maximum = 2
 
-/obj/structure/closet/crate/chest/inqreliquary/relic/bmirror/Initialize()
+/obj/structure/closet/crate/chest/inqreliquary/relic/bmirror/Initialize(mapload)
 	. = ..()
 	new /obj/item/inqarticles/bmirror(src)
 
 /datum/inqports/articles/superbow
-	name = "Relic - The Ballista, Evercracking"
+	name = "Relic - The Ballista, Eversundering"
 	item_type = /obj/structure/closet/crate/chest/inqreliquary/relic/superbow/
 	marquescost = 16
 	maximum = 1
 
-/obj/structure/closet/crate/chest/inqreliquary/relic/superbow/Initialize()
+/obj/structure/closet/crate/chest/inqreliquary/relic/superbow/Initialize(mapload)
 	. = ..()
-	new /obj/item/gun/ballistic/revolver/grenadelauncher/crossbow/heavy(src)
-	new /obj/item/quiver/bolt/heavy/standard(src)
-	new /obj/item/ammo_casing/caseless/rogue/heavy_bolt/silver(src)
+	new /obj/item/gun/ballistic/revolver/grenadelauncher/crossbow/heavy/relic/marque(src)
+	new /obj/item/quiver/bolt/heavy/stake_silver(src)
+
+/datum/inqports/articles/psyarmor
+	name = "Relic - The Platemaille, Everwithstanding"
+	item_type = /obj/structure/closet/crate/chest/inqreliquary/relic/psyarmor/
+	marquescost = 16
+	maximum = 1
+
+/obj/structure/closet/crate/chest/inqreliquary/relic/psyarmor/Initialize(mapload)
+	. = ..()
+	new /obj/item/clothing/head/roguetown/helmet/heavy/ordinatorhelm(src)
+	new /obj/item/clothing/suit/roguetown/armor/plate/full/fluted/ornate/ordinator(src)
+	new /obj/item/clothing/wrists/roguetown/bracers/psythorns(src)
+	new /obj/item/clothing/head/roguetown/helmet/blacksteel/psychains(src)
+	new /obj/item/clothing/shoes/roguetown/boots/otavan/inqboots(src)
+	new /obj/item/clothing/gloves/roguetown/plate(src)
+	new /obj/item/clothing/under/roguetown/platelegs(src)
+	new /obj/item/clothing/suit/roguetown/armor/leather/studded/cuirbouilli(src)
 
 /datum/inqports/articles/stampstuff
 	name = "1 Lump of Redtallow"
@@ -236,7 +297,12 @@
 
 /datum/inqports/articles/stamppot
 	name = "1 Tallowpot"
-	item_type = /obj/item/inqarticles/tallowpot
+	item_type = /obj/item/tallowpot
+	marquescost = 2
+
+/datum/inqports/articles/blessedring
+	name = "1 Blessed Signet Ring"
+	item_type = /obj/item/clothing/ring/signet/psy
 	marquescost = 4
 
 /datum/inqports/articles/indexers
@@ -244,7 +310,7 @@
 	item_type = /obj/structure/closet/crate/chest/inqcrate/articles/indexers
 	marquescost = 3
 
-/obj/structure/closet/crate/chest/inqcrate/articles/indexers/Initialize()
+/obj/structure/closet/crate/chest/inqcrate/articles/indexers/Initialize(mapload)
 	. = ..()
 	new /obj/item/inqarticles/indexer(src)
 	new /obj/item/inqarticles/indexer(src)
@@ -255,7 +321,7 @@
 	item_type = /obj/structure/closet/crate/chest/inqcrate/articles/accusations
 	marquescost = 6
 
-/obj/structure/closet/crate/chest/inqcrate/articles/accusations/Initialize()
+/obj/structure/closet/crate/chest/inqcrate/articles/accusations/Initialize(mapload)
 	. = ..()
 	new /obj/item/paper/inqslip/accusation(src)
 	new /obj/item/paper/inqslip/accusation(src)
@@ -266,7 +332,7 @@
 	item_type = /obj/structure/closet/crate/chest/inqcrate/articles/confessions
 	marquescost = 6
 
-/obj/structure/closet/crate/chest/inqcrate/articles/confessions/Initialize()
+/obj/structure/closet/crate/chest/inqcrate/articles/confessions/Initialize(mapload)
 	. = ..()
 	new /obj/item/paper/inqslip/confession(src)
 	new /obj/item/paper/inqslip/confession(src)
@@ -278,7 +344,7 @@
 	marquescost = 6
 	maximum = 1
 
-/obj/structure/closet/crate/chest/inqcrate/articles/indexaccused/Initialize()
+/obj/structure/closet/crate/chest/inqcrate/articles/indexaccused/Initialize(mapload)
 	. = ..()
 	new /obj/item/inqarticles/indexer(src)
 	new /obj/item/inqarticles/indexer(src)
@@ -292,36 +358,54 @@
 /datum/inqports/equipment/silvarrow
 	name = "1 Silver Arrow"
 	item_type = /obj/item/ammo_casing/caseless/rogue/arrow/silver
-	maximum = 3
-	marquescost = 6
+	marquescost = 3
 
 /datum/inqports/equipment/silvbolt
 	name = "1 Silver Bolt"
 	item_type = /obj/item/ammo_casing/caseless/rogue/bolt/silver
-	maximum = 3
-	marquescost = 6
+	marquescost = 3
 
 /datum/inqports/equipment/silvheavybolt
 	name = "1 Silver Heavy Bolt"
 	item_type = /obj/item/ammo_casing/caseless/rogue/heavy_bolt/silver
-	maximum = 3
-	marquescost = 8
+	marquescost = 6
 
 /datum/inqports/equipment/silverstake
 	name = "1 Silver-Tipped Stake"
-	item_type = /obj/item/rogueweapon/huntingknife/idagger/silver/stake/psy
+	item_type = /obj/item/rogueweapon/huntingknife/idagger/silver/stake/psy/preblessed
 	maximum = 5
 	marquescost = 8
 
+/datum/inqports/supplies/blessedlightbolts
+	name = "1 Quiver of Light Sunderbolts"
+	item_type = /obj/item/quiver/bolt/lightholy
+	marquescost = 6
+
 /datum/inqports/supplies/blessedbolts
 	name = "1 Quiver of Sunderbolts"
-	item_type = /obj/item/quiver/holybolts
+	item_type = /obj/item/quiver/bolt/holy
 	marquescost = 6
+
+/datum/inqports/supplies/blessedbolts
+	name = "1 Quiver of Pyrobolts"
+	item_type = /obj/item/quiver/bolt/pyro
+	marquescost = 8
+
+/datum/inqports/supplies/siegestake
+	name = "1 Quiver of Siegestakes"
+	item_type = /obj/item/quiver/bolt/heavy/stake
+	marquescost = 8
+
+/datum/inqports/supplies/siegestakesilver
+	name = "1 Quiver of Silver-Tipped Siegestakes"
+	maximum = 3
+	item_type = /obj/item/quiver/bolt/heavy/stake_silver
+	marquescost = 12
 
 /datum/inqports/equipment/nocshades
 	name = "1 Pair of Nocshade-Lenses"
 	item_type = /obj/item/clothing/mask/rogue/spectacles/inq
-	marquescost = 10
+	marquescost = 8
 
 /datum/inqports/equipment/climbinggear
 	name = "1 Set of Climbing Gear"
@@ -348,7 +432,7 @@
 	item_type = /obj/structure/closet/crate/chest/inqcrate/equipment/inqcordage
 	marquescost = 3
 
-/obj/structure/closet/crate/chest/inqcrate/equipment/inqcordage/Initialize()
+/obj/structure/closet/crate/chest/inqcrate/equipment/inqcordage/Initialize(mapload)
 	. = ..()
 	new /obj/item/rope/inqarticles/inquirycord(src)
 	new /obj/item/rope/inqarticles/inquirycord(src)
@@ -359,7 +443,7 @@
 	item_type = /obj/structure/closet/crate/chest/inqcrate/supplies/chains
 	marquescost = 6
 
-/obj/structure/closet/crate/chest/inqcrate/supplies/chains/Initialize()
+/obj/structure/closet/crate/chest/inqcrate/supplies/chains/Initialize(mapload)
 	. = ..()
 	new /obj/item/rope/chain(src)
 	new /obj/item/rope/chain(src)
@@ -370,18 +454,18 @@
 	item_type = /obj/structure/closet/crate/chest/inqcrate/equipment/blackbags
 	marquescost = 6
 
-/obj/structure/closet/crate/chest/inqcrate/equipment/blackbags/Initialize()
+/obj/structure/closet/crate/chest/inqcrate/equipment/blackbags/Initialize(mapload)
 	. = ..()
 	new /obj/item/clothing/head/inqarticles/blackbag(src)
 	new /obj/item/clothing/head/inqarticles/blackbag(src)
 	new /obj/item/clothing/head/inqarticles/blackbag(src)
 
 /datum/inqports/equipment/psybles
-	name = "3 Tomes of Psydonic Scripture"
+	name = "3 Books of the Psydonic Orthodoxy"
 	item_type = /obj/structure/closet/crate/chest/inqcrate/articles/psybles
 	marquescost = 3
 
-/obj/structure/closet/crate/chest/inqcrate/articles/psybles/Initialize()
+/obj/structure/closet/crate/chest/inqcrate/articles/psybles/Initialize(mapload)
 	. = ..()
 	new /obj/item/book/rogue/bibble/psy(src)
 	new /obj/item/book/rogue/bibble/psy(src)
@@ -405,13 +489,17 @@
 /datum/inqports/wardrobe/psycrosssilver
 	name = "1 Silver Psycross"
 	item_type = /obj/item/clothing/neck/roguetown/psicross/silver
-	maximum = 3
 	marquescost = 12
 
 /datum/inqports/wardrobe/otavansatchel
-	name = "1 Satchel, Otavan Leather"
+	name = "1 Satchel, Otavan"
 	item_type = /obj/item/storage/backpack/rogue/satchel/otavan
 	marquescost = 3
+
+/datum/inqports/wardrobe/otavansatchel/short
+	name = "1 Short Satchel, Otavan"
+	item_type = /obj/item/storage/backpack/rogue/satchel/otavan/short
+	marquescost = 4
 
 /datum/inqports/wardrobe/satchelbelted
 	name = "1 Satchel, Belted"
@@ -433,18 +521,24 @@
 	item_type = /obj/item/clothing/wrists/roguetown/bracers/psythorns
 	marquescost = 12
 
+/datum/inqports/wardrobe/psydonchains
+	name = "1 Psydonian Chain-Orle"
+	item_type = /obj/item/clothing/head/roguetown/helmet/blacksteel/psychains
+	marquescost = 6
+
 /datum/inqports/wardrobe/psydonhelms
 	name = "The 'Greathelms of Psydon' Crate"
 	item_type = /obj/structure/closet/crate/chest/inqcrate/equipment/psydonhelms
 	marquescost = 12
 	maximum = 1
 
-/obj/structure/closet/crate/chest/inqcrate/equipment/psydonhelms/Initialize()
+/obj/structure/closet/crate/chest/inqcrate/equipment/psydonhelms/Initialize(mapload)
 	. = ..()
 	new /obj/item/clothing/head/roguetown/helmet/heavy/psydonbarbute(src)
 	new /obj/item/clothing/head/roguetown/helmet/heavy/psysallet(src)
 	new /obj/item/clothing/head/roguetown/helmet/heavy/psybucket(src)
 	new /obj/item/clothing/head/roguetown/helmet/heavy/psydonhelm(src)
+	new /obj/item/clothing/head/roguetown/helmet/heavy/volfplate/psydonic(src)
 	new /obj/item/clothing/head/roguetown/helmet/heavy/absolver/unblessed(src)
 
 /datum/inqports/wardrobe/fencerset
@@ -452,7 +546,7 @@
 	item_type = /obj/structure/closet/crate/chest/inqcrate/wardrobe/fencerset
 	marquescost = 12
 
-/obj/structure/closet/crate/chest/inqcrate/wardrobe/fencerset/Initialize()
+/obj/structure/closet/crate/chest/inqcrate/wardrobe/fencerset/Initialize(mapload)
 	. = ..()
 	new /obj/item/clothing/suit/roguetown/armor/gambeson/heavy/otavan/inq(src)
 	new /obj/item/clothing/neck/roguetown/fencerguard/inq(src)
@@ -465,7 +559,7 @@
 	item_type = /obj/structure/closet/crate/chest/inqcrate/wardrobe/fencersthree
 	marquescost = 12
 
-/obj/structure/closet/crate/chest/inqcrate/wardrobe/fencersthree/Initialize()
+/obj/structure/closet/crate/chest/inqcrate/wardrobe/fencersthree/Initialize(mapload)
 	. = ..()
 	new /obj/item/clothing/suit/roguetown/armor/gambeson/heavy/otavan/inq(src)
 	new /obj/item/clothing/suit/roguetown/armor/gambeson/heavy/otavan/inq(src)
@@ -474,9 +568,9 @@
 /datum/inqports/wardrobe/confessionalcombo
 	name = "The 'Confessional Combination' Crate"
 	item_type = /obj/structure/closet/crate/chest/inqcrate/wardrobe/confessionalcombo
-	marquescost = 10
+	marquescost = 12
 
-/obj/structure/closet/crate/chest/inqcrate/wardrobe/confessionalcombo/Initialize()
+/obj/structure/closet/crate/chest/inqcrate/wardrobe/confessionalcombo/Initialize(mapload)
 	. = ..()
 	new /obj/item/clothing/head/roguetown/roguehood/psydon/confessor(src)
 	new /obj/item/clothing/suit/roguetown/armor/leather/heavy/coat/confessor(src)
@@ -484,9 +578,9 @@
 /datum/inqports/wardrobe/inspectorcoat
 	name = "The 'Inquisitior's Spare Laundry' Crate"
 	item_type = /obj/structure/closet/crate/chest/inqcrate/wardrobe/inspectorcoats
-	marquescost = 10
+	marquescost = 12
 
-/obj/structure/closet/crate/chest/inqcrate/wardrobe/inspectorcoats/Initialize()
+/obj/structure/closet/crate/chest/inqcrate/wardrobe/inspectorcoats/Initialize(mapload)
 	. = ..()
 	new /obj/item/clothing/head/roguetown/inqhat(src)
 	new /obj/item/clothing/suit/roguetown/armor/plate/scale/inqcoat(src)
@@ -496,9 +590,9 @@
 /datum/inqports/wardrobe/inspector
 	name = "The 'Inquisitor's Personal Wardrobe' Crate"
 	item_type = /obj/structure/closet/crate/chest/inqcrate/wardrobe/inspector
-	marquescost = 10
+	marquescost = 12
 
-/obj/structure/closet/crate/chest/inqcrate/wardrobe/inspector/Initialize()
+/obj/structure/closet/crate/chest/inqcrate/wardrobe/inspector/Initialize(mapload)
 	. = ..()
 	new /obj/item/clothing/head/roguetown/inqhat(src)
 	new /obj/item/clothing/suit/roguetown/armor/plate/scale/inqcoat(src)
@@ -508,9 +602,9 @@
 /datum/inqports/wardrobe/psydonianstandard
 	name = "The 'Inquisitorial Standard' Crate"
 	item_type = /obj/structure/closet/crate/chest/inqcrate/wardrobe/psydonian
-	marquescost = 10
+	marquescost = 12
 
-/obj/structure/closet/crate/chest/inqcrate/wardrobe/psydonian/Initialize()
+/obj/structure/closet/crate/chest/inqcrate/wardrobe/psydonian/Initialize(mapload)
 	. = ..()
 	new /obj/item/clothing/under/roguetown/heavy_leather_pants/otavan(src)
 	new /obj/item/clothing/suit/roguetown/armor/gambeson/heavy/inq(src)
@@ -522,7 +616,7 @@
 	item_type = /obj/structure/closet/crate/chest/inqcrate/wardrobe/nobledressup
 	marquescost = 20
 
-/obj/structure/closet/crate/chest/inqcrate/wardrobe/nobledressup/Initialize()
+/obj/structure/closet/crate/chest/inqcrate/wardrobe/nobledressup/Initialize(mapload)
 	. = ..()
 	new /obj/item/clothing/cloak/lordcloak/ladycloak(src)
 	new /obj/item/clothing/cloak/lordcloak(src)

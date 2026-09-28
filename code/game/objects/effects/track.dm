@@ -95,10 +95,6 @@
 
 //Probabilities end (albeit mud is handled seperately).
 
-//For highlighting tracks
-/mob/living/carbon/human
-	var/mob/living/current_mark
-
 //Analysis levels depending on skillcheck during reveal.
 #define ANALYSIS_TERRIBLE 1
 #define ANALYSIS_BAD 2
@@ -148,7 +144,12 @@
 	///Base difficulty for noticing these tracks
 	var/base_diff = 11
 
-/obj/effect/track/Initialize()
+/obj/effect/track/get_mechanics_examine(mob/user)
+	. = ..()
+	. += span_info("Right-clicking the eye on your HUD allows you to check for tracks, alongside hidden ambushes and traps. The effectiveness of each check scales with your character's Perception and Tracking skill.")
+	. += span_info("The higher your Tracking skill is, the more likely you can discover older and hidden tracks. Likewise, higher levels also let you determine how old the tracks are, which direction they've went, and what kinds of footwear or soles made them.")
+
+/obj/effect/track/Initialize(mapload)
 	. = ..()
 	real_image = image(icon, src, real_icon_state, ABOVE_OPEN_TURF_LAYER) //Default image in case manually created.
 
@@ -292,7 +293,7 @@
 	known_by[tracker] = competence
 	if(ishuman(tracker))
 		var/mob/living/carbon/human/H = tracker
-		if(HAS_TRAIT(tracker, TRAIT_SLEUTH) && H.current_mark == creator)
+		if(HAS_TRAIT(tracker, TRAIT_PERFECT_TRACKER) && H.current_mark == creator)
 			if(!(tracker in highlighted))
 				real_icon_state = "tracks_marked"
 				real_image = image(icon, src, real_icon_state, ABOVE_OPEN_TURF_LAYER, original_dir)

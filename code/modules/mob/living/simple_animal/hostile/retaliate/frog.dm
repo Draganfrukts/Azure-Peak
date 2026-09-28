@@ -23,14 +23,14 @@
 	response_harm_simple = "splat"
 	density = FALSE
 	ventcrawler = VENTCRAWLER_ALWAYS
-	faction = list("hostile")
+	faction = list(FACTION_HOSTILE)
 	attack_sound = 'sound/blank.ogg'
 	pass_flags = PASSTABLE | PASSGRILLE | PASSMOB
 	mob_size = MOB_SIZE_TINY
 	gold_core_spawnable = HOSTILE_SPAWN
 	var/stepped_sound = 'sound/blank.ogg'
 
-/mob/living/simple_animal/hostile/retaliate/frog/Initialize()
+/mob/living/simple_animal/hostile/retaliate/frog/Initialize(mapload)
 	. = ..()
 	if(prob(1))
 		name = "rare frog"

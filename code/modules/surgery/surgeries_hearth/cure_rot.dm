@@ -5,7 +5,7 @@
 		/datum/surgery_step/burn_rot,
 		/datum/surgery_step/cauterize
 	)
-	target_mobtypes = list(/mob/living/carbon/human, /mob/living/carbon/monkey)
+	target_mobtypes = list(/mob/living/carbon/human)
 	possible_locs = list(BODY_ZONE_CHEST)
 
 /datum/surgery_step/burn_rot
@@ -16,12 +16,13 @@
 		TOOL_WELDER = 70,
 		TOOL_HOT = 35,
 	)
-	target_mobtypes = list(/mob/living/carbon/human, /mob/living/carbon/monkey)
+	target_mobtypes = list(/mob/living/carbon/human)
 	time = 8 SECONDS
 	surgery_flags = SURGERY_INCISED
 	skill_min = SKILL_LEVEL_APPRENTICE
 	preop_sound = 'sound/surgery/cautery1.ogg'
 	success_sound = 'sound/surgery/cautery2.ogg'
+	possible_locs = list(BODY_ZONE_CHEST)
 
 /datum/surgery_step/burn_rot/preop(mob/user, mob/living/target, target_zone, obj/item/tool, datum/intent/intent)
 	display_results(user, target, span_notice("I begin to burn the rot within [target]..."),
@@ -39,7 +40,7 @@
 		if(medskill > SKILL_LEVEL_EXPERT)
 			burndam = 0
 
-	var/datum/antagonist/zombie/was_zombie = target.mind?.has_antag_datum(/datum/antagonist/zombie)
+	var/was_zombie = HAS_TRAIT(target, TRAIT_DEADITE)
 	if(target.infected == FALSE)
 		if(target.stat == DEAD || was_zombie)											//Checks if the target is a dead rotted corpse.
 			target.death()	//Kills the target if they are a zombie as a fail-safe.

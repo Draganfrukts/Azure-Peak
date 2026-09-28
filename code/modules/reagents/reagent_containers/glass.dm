@@ -7,9 +7,14 @@
 	volume = 50
 	reagent_flags = OPENCONTAINER|REFILLABLE
 	spillable = TRUE
-	possible_item_intents = list(INTENT_POUR, /datum/intent/fill, INTENT_SPLASH, INTENT_GENERIC)
+	possible_item_intents = list(INTENT_POUR, INTENT_FILL, INTENT_SPLASH, INTENT_GENERIC)
 	resistance_flags = ACID_PROOF
 	var/is_infinite = FALSE
+	var/closed = FALSE // DO NOT rely on this, use reagent_flags/spillable instead. Originally from /bottle, moved here to reduce istype() checks.
+
+/obj/item/reagent_containers/glass/get_mechanics_examine(mob/user)
+	. = ..()
+	. += span_info("Right click on someone to offer your glass to them. If someone else offers a glass to you in response, they'll clink together in celebration!")
 
 /obj/item/reagent_containers/glass/examine(mob/user)
 	. = ..()
@@ -23,14 +28,10 @@
 	is_infinite = FALSE
 
 /obj/item/reagent_containers/glass/proc/set_infinite(mob/user, delay)
-	if(is_infinite)
-		to_chat(user, span_info("It's already blessed to never run out!"))
-		return FALSE
-	else
-		is_infinite = TRUE
-		var/timer = (delay ? delay : 60 SECONDS)
-		addtimer(CALLBACK(src, PROC_REF(reset_infinite)), timer)
-		return TRUE
+	is_infinite = TRUE
+	var/timer = (delay ? delay : 60 SECONDS)
+	addtimer(CALLBACK(src, PROC_REF(reset_infinite)), timer)
+	return TRUE
 
 /datum/intent/fill
 	name = "fill"
@@ -112,7 +113,38 @@
 	if(user.used_intent.type == INTENT_GENERIC)
 		return ..()
 
+	// Provide actual messages telling you whether either or both of the containers is closed. I don't care to refactor all this other reagent_containers stuff rn.
+	var/nodup = FALSE
+	var/they_closed = FALSE
+	if(istype(target, /obj/item/reagent_containers/glass))
+		var/obj/item/reagent_containers/glass/they = target
+		if(they.closed)
+			they_closed = TRUE
 
+	switch(user.used_intent.type)
+		if(INTENT_POUR)
+			if(closed)
+				if(they_closed)
+					to_chat(user, span_warning("[src] and [target] are corked!"))
+					nodup = TRUE
+				else
+					to_chat(user, span_warning("[src] I'm trying to pour from is corked!"))
+			if(they_closed && !nodup)
+				to_chat(user, span_warning("[src] I'm trying to fill up is corked!"))
+		if(INTENT_FILL)
+			if(closed)
+				if(they_closed)
+					to_chat(user, span_warning("[src] and [target] are corked!"))
+					nodup = TRUE
+				else
+					to_chat(user, span_warning("[src] I'm trying to fill up is corked!"))
+			if(they_closed && !nodup)
+				to_chat(user, span_warning("[src] I'm trying to pour from is corked!"))
+		if(INTENT_SPLASH)
+			if(closed)
+				if(!user.mob_timers["splashclosed_notif"] || (world.time > (user.mob_timers["splashclosed_notif"] + 0.3 SECONDS)))
+					to_chat(user, span_warning("[src] I'm trying to splash with is corked!"))
+					user.mob_timers["splashclosed_notif"] = world.time
 
 	if(!spillable)
 		to_chat(user, span_warning("[src] is closed!"))
@@ -188,6 +220,11 @@
 	if((!proximity) || !check_allowed_items(target,target_self=1))
 		return ..()
 
+	if(closed && user.used_intent.type == INTENT_SPLASH)
+		if(!user.mob_timers["splashclosed_notif"] || (world.time > (user.mob_timers["splashclosed_notif"] + 0.3 SECONDS)))
+			to_chat(user, span_warning("[src] I'm trying to splash with is corked!"))
+			user.mob_timers["splashclosed_notif"] = world.time
+
 	if(!spillable)
 		return
 
@@ -205,8 +242,8 @@
 		reagents.expose_temperature(hotness)
 		to_chat(user, span_notice("I heat [name] with [I]!"))
 
-	if(istype(I, /obj/item/reagent_containers/food/snacks/egg)) //breaking eggs
-		var/obj/item/reagent_containers/food/snacks/egg/E = I
+	if(istype(I, /obj/item/reagent_containers/food/snacks/rogue/egg)) //breaking eggs
+		var/obj/item/reagent_containers/food/snacks/rogue/egg/E = I
 		if(reagents)
 			if(reagents.total_volume >= reagents.maximum_volume)
 				to_chat(user, span_notice("[src] is full."))
@@ -216,6 +253,23 @@
 				onfill(E, user, silent = FALSE)
 				qdel(E)
 			return
+
+	if(istype(I, /obj/item/natural/cloth))
+		var/obj/item/natural/cloth/T = I
+		if(T.wet >= 10)
+			to_chat(user, span_warning("[T] is already soaked!"))
+			return
+		var/removereg = /datum/reagent/water
+		if(!reagents.has_reagent(/datum/reagent/water, 5))
+			removereg = /datum/reagent/water/gross
+			if(!reagents.has_reagent(/datum/reagent/water/gross, 5))
+				to_chat(user, span_warning("There's not enough water to soak [T] in."))
+				return
+		wash_atom(T)
+		playsound(src, pick('sound/foley/waterwash (1).ogg','sound/foley/waterwash (2).ogg'), 100, FALSE)
+		reagents.remove_reagent(removereg, 5)
+		user.visible_message(span_info("[user] soaks [T] in [src]."), span_info("I soak [T] in [src]."))
+		return
 	..()
 
 // Called whenever this container is successfully filled via the target.
@@ -245,7 +299,7 @@
 	dropshrink = 0.8
 	slot_flags = null
 	resistance_flags = NONE
-	armor = list("blunt" = 25, "slash" = 20, "stab" = 15, "piercing" = 0, "fire" = 75, "acid" = 50) //Weak melee protection, because you can wear it on your head
+	armor = ARMOR_BUCKET
 	slot_equipment_priority = list( \
 		SLOT_BACK, SLOT_RING,\
 		SLOT_PANTS, SLOT_ARMOR,\

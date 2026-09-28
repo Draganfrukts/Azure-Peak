@@ -3,9 +3,11 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// DRINKS BELOW, Beer is up there though, along with cola. Cap'n Pete's Cuban Spiced Rum////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
-//Rougetown Reagents - Ported from Dreamkeep
+//Roguetown Reagents - Ported from Dreamkeep
 /datum/reagent/consumable/acorn_powder
-	name = "Acorn Powder"
+	cuisine = CUISINE_NORTHERN
+	drink_type = DRINKTYPE_CAFFEINE
+	name = "acorn powder"
 	description = "A bitter fine powder."
 	color = "#dcb137"
 	quality = DRINK_VERYGOOD
@@ -16,7 +18,9 @@
 	..()
 
 /datum/reagent/consumable/Acoffee
-	name = "Acorn Coffee"
+	cuisine = CUISINE_NORTHERN
+	drink_type = DRINKTYPE_CAFFEINE
+	name = "acorn coffee"
 	description = "A nice bitter stimulating brew"
 	color = "#800000"
 	quality = DRINK_VERYGOOD
@@ -79,7 +83,7 @@
 		container.reagents.del_reagent(/datum/reagent/water)
 
 /datum/reagent/consumable/milk
-	name = "Milk"
+	name = "milk"
 	description = "An opaque white liquid produced by the mammary glands of mammals."
 	color = "#DFDFDF" // rgb: 223, 223, 223
 	taste_description = "milk"

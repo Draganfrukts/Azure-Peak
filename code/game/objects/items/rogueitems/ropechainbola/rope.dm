@@ -18,8 +18,10 @@
 	sewrepair = TRUE
 	grid_width = 32
 	grid_height = 64
+	var/matthios_chains = FALSE
+	dropshrink = 0.9
 
-/obj/item/rope/Initialize()
+/obj/item/rope/Initialize(mapload)
 	. = ..()
 	var/static/list/slapcraft_recipe_list = list(
 		/datum/crafting_recipe/roguetown/survival/ropebelt,
@@ -89,6 +91,10 @@
 	if(C.handcuffed)
 		return
 
+	if(src.matthios_chains && HAS_TRAIT(C, TRAIT_FREEMAN))
+		to_chat(user, span_warning("[C] shall not be bound by this, for they walk among the ordained free."))
+		return
+
 	if(!user.Adjacent(C))
 		return
 
@@ -102,7 +108,9 @@
 
 	var/surrender_mod = 1
 	if(C.compliance || C.surrendering || HAS_TRAIT(C, TRAIT_BAGGED))
-		surrender_mod = 0.5	
+		surrender_mod = 0.5
+	if(src.matthios_chains && HAS_TRAIT(C, TRAIT_NOBLE))
+		surrender_mod = 0.5
 
 	C.visible_message(span_warning("[user] is trying to tie [C]'s arms with [src.name]!"), \
 						span_userdanger("[user] is trying to tie my arms with [src.name]!"))
@@ -125,6 +133,10 @@
 	if(C.legcuffed)
 		return
 
+	if(src.matthios_chains && HAS_TRAIT(C, TRAIT_FREEMAN))
+		to_chat(user, span_warning("[C] shall not be bound by this, for they walk among the ordained free."))
+		return
+
 	if(!user.Adjacent(C))
 		return
 
@@ -139,13 +151,15 @@
 	var/surrender_mod = 1
 	if(C.compliance || C.surrendering)
 		surrender_mod = 0.5
+	if(src.matthios_chains && HAS_TRAIT(C, TRAIT_NOBLE))
+		surrender_mod = 0.5
 
 	C.visible_message(span_warning("[user] is trying to tie [C]'s legs with [src.name]!"), \
 						span_userdanger("[user] is trying to tie my legs with [src.name]!"))
 
 	playsound(loc, cuffsound, 30, TRUE, -2)
 
-	if(!do_mob(user, C, 60 * surrender_mod) || C.get_num_legs(FALSE) < 2)
+	if(!do_mob(user, C, 60 * surrender_mod, double_progress = TRUE, can_move = FALSE) || C.get_num_legs(FALSE) < 2)
 		to_chat(user, span_warning("I fail to tie up [C]!"))
 		return
 

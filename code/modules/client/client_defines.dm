@@ -9,14 +9,20 @@
 		////////////////
 	///Contains admin info. Null if client is not an admin.
 	var/datum/admins/holder = null
- 	///Needs to implement InterceptClickOn(user,params,atom) proc
+	///Needs to implement InterceptClickOn(user,params,atom) proc
 	var/datum/click_intercept = null
+	///The game master panel this client currently has open
+	var/datum/game_master/game_master_menu
 	///Used for admin AI interaction
 	var/AI_Interact = FALSE
 
- 	///Used to cache this client's bans to save on DB queries
+	///Used to cache this client's bans to save on DB queries
 	var/ban_cache = null
- 	///Contains the last message sent by this client - used to protect against copy-paste spamming.
+	///Caps the next file this client uploads to this many bytes
+	var/upload_limit
+	///Restricts the next file this client uploads to these extensions
+	var/list/upload_exts
+	///Contains the last message sent by this client - used to protect against copy-paste spamming.
 	var/last_message = ""
 	///contins a number of how many times a message identical to last_message was sent.
 	var/last_message_count = 0
@@ -42,6 +48,8 @@
 		///////////////
 		//SOUND STUFF//
 		///////////////
+	///Active balloon alert count, used to vertically stack concurrent balloons so they don't overlap.
+	var/active_balloon_count = 0
 	///Currently playing ambience sound
 	var/ambience_playing = null
 	///Whether an ambience sound has been played and one shouldn't be played again, unset by a callback
@@ -62,7 +70,7 @@
 		////////////////////////////////////
 	///Used to determine how old the account is - in days.
 	var/player_age = -1
- 	///Date that this account was first seen in the server
+	///Date that this account was first seen in the server
 	var/player_join_date = null
 	///So admins know why it isn't working - Used to determine what other accounts previously logged in from this ip
 	var/related_accounts_ip = "Requires database"
@@ -81,6 +89,8 @@
 	var/mouse_up_icon = null
 	///used to make a special mouse cursor, this one for mouse up icon
 	var/mouse_down_icon = null
+	/// world.time of last intercepted mouse-up, used to prevent double-clicks after signal intercept
+	var/click_intercept_time = 0
 
 	///Used for ip intel checking to identify evaders, disabled because of issues with traffic
 	var/ip_intel = "Disabled"
@@ -89,11 +99,11 @@
 	var/lastping = 0
 	///Average ping of the client
 	var/avgping = 0
- 	///world.time they connected
+	///world.time they connected
 	var/connection_time
- 	///world.realtime they connected
+	///world.realtime they connected
 	var/connection_realtime
- 	///world.timeofday they connected
+	///world.timeofday they connected
 	var/connection_timeofday
 
 	///If the client is currently in player preferences
@@ -106,14 +116,19 @@
 	///goonchat chatoutput of the client
 	var/datum/chatOutput/chatOutput
 
- 	///lazy list of all credit object bound to this client
+	///lazy list of all credit object bound to this client
 	var/list/credits = list()
 
- 	///these persist between logins/logouts during the same round.
+	///these persist between logins/logouts during the same round.
 	var/datum/player_details/player_details
 
-	///Should only be a key-value list of north/south/east/west = atom/movable/screen.
-	var/list/char_render_holders
+	/**
+	 * Assoc list with all the active maps - when a screen obj is added to
+	 * a map, it's put in here as well.
+	 *
+	 * Format: list(<mapname> = list(/atom/movable/screen))
+	 */
+	var/list/screen_maps = list()
 
 	///Amount of keydowns in the last keysend checking interval
 	var/client_keysend_amount = 0
@@ -133,7 +148,20 @@
 	var/list/seen_messages
 
 	var/list/current_weathers = list()
-	var/last_lighting_update = 0
+	var/last_weather_x
+	var/last_weather_y
+	var/last_weather_z
+	/// our current tab
+	var/stat_tab
+
+	/// list of all tabs
+	var/list/panel_tabs = list()
+	/// Signature of the last listed-turf contents sent, to skip redundant rebuilds.
+	var/listedturf_sig
+	var/listedturf_dirty = FALSE
+	var/list/listedturf_appearances
+	/// Whether the living-only Stats tab is currently shown in the statbrowser.
+	var/statbrowser_stats_shown = FALSE
 
 	var/list/open_popups = list()
 
@@ -141,7 +169,7 @@
 	var/rain_sound = FALSE
 	var/last_droning_sound
 	var/sound/droning_sound
-	
+
 	// List of all asset filenames sent to this client by the asset cache, along with their assoicated md5s
 	var/list/sent_assets = list()
 	/// List of all completed blocking send jobs awaiting acknowledgement by send_asset
@@ -155,11 +183,11 @@
 		return
 	if(!isobserver(mob) && !isliving(mob))
 		return
-	if(!force)
-		if(last_lighting_update)
-			if(length(last_lighting_update & list(mob.x, mob.y, mob.z)) == 3)
-				return
-	last_lighting_update = list(mob.x, mob.y, mob.z)
+	if(!force && mob.x == last_weather_x && mob.y == last_weather_y && mob.z == last_weather_z)
+		return
+	last_weather_x = mob.x
+	last_weather_y = mob.y
+	last_weather_z = mob.z
 	var/area/A = get_area(mob)
 	var/obj/PMW = locate(/atom/movable/screen/plane_master/weather) in screen
 	if(PMW && A)

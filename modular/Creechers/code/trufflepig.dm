@@ -1,17 +1,17 @@
-/*  * * * * * * * * * * * * * * * * * * * * * * * * *
+/*	* * * * * * * * * * * * * * * * * * * * * * * * *
  *													*		Animal that can locate hidden truffles in bog area dirt turf
  *					TRUFFLE PIG						*		Dig them up with a shovel, pig will demand truffles eventually or stop working
- *					 								*		Meant to help locate some extra food in the wilderness
+ *														*		Meant to help locate some extra food in the wilderness
  *													*
  * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 
-//	........   Dirt changes   ................
+//	........	Dirt changes	................
 /turf/open/floor/rogue/dirt //truffles, var needed for the sniffing function
 	var/hidden_truffles
 	var/hidden_toxicshrooms
 
-/turf/open/floor/rogue/dirt/Initialize()
+/turf/open/floor/rogue/dirt/Initialize(mapload)
 	. = ..()
 	if(istype(loc, /area/rogue/outdoors/woods))
 		if(!((locate(/obj/structure) in src) || (locate(/obj/machinery) in src)))
@@ -39,7 +39,7 @@
 	else ..()
 
 
-//	........   Truffles   ................
+//	........	Truffles	................
 /obj/item/reagent_containers/food/snacks/rogue/truffles
 	name = "truffles"
 	icon = 'modular/Creechers/icons/piggie.dmi'
@@ -57,7 +57,7 @@
 	bonus_reagents = list(/datum/reagent/consumable/nutriment = 2)
 	color = "#835b4f"
 	tastes = list("succulent truffles" = 1)
-/obj/item/reagent_containers/food/snacks/rogue/truffles/Initialize()
+/obj/item/reagent_containers/food/snacks/rogue/truffles/Initialize(mapload)
 	icon_state = pick("mushroom1_full","mushroom1_full","mushroom1_full")
 	. = ..()
 
@@ -73,11 +73,11 @@
 /obj/item/reagent_containers/food/snacks/rogue/toxicshrooms/cooked
 	bonus_reagents = list(/datum/reagent/consumable/nutriment = 2)
 	color = "#835b4f"
-/obj/item/reagent_containers/food/snacks/rogue/toxicshrooms/Initialize()
+/obj/item/reagent_containers/food/snacks/rogue/toxicshrooms/Initialize(mapload)
 	icon_state = pick("mushroom1_full","mushroom1_full","mushroom1_full")
 	. = ..()
 
-//	........   Truffle Pig   ................
+//	........	Truffle Pig	................
 /mob/living/simple_animal/hostile/retaliate/rogue/trufflepig
 	icon = 'modular/Creechers/icons/piggie.dmi'
 	name = "truffle pig"
@@ -95,15 +95,32 @@
 	see_in_dark = 6
 	move_to_delay = 7
 	animal_species = /mob/living/simple_animal/hostile/retaliate/rogue/trufflepig
-	botched_butcher_results = list(/obj/item/reagent_containers/food/snacks/rogue/meat/fatty = 1,
-					/obj/item/reagent_containers/food/snacks/fat = 1,
-					/obj/item/natural/hide = 1)
-	butcher_results = list(/obj/item/reagent_containers/food/snacks/rogue/meat/fatty = 2,
-						/obj/item/reagent_containers/food/snacks/fat = 2,
-						/obj/item/natural/hide = 1)
-	perfect_butcher_results = list(/obj/item/reagent_containers/food/snacks/rogue/meat/fatty = 4, // Prev standard. Butcher has use and
-					/obj/item/reagent_containers/food/snacks/fat = 2,
-					/obj/item/natural/hide = 2)
+	botched_butcher_results = list(
+		/obj/item/reagent_containers/food/snacks/rogue/meat/fatty = 2,
+		/obj/item/alch/sinew = 2,
+		/obj/item/natural/bone = 4,
+		/obj/item/alch/viscera = 1,
+	)
+	butcher_results = list(
+		/obj/item/reagent_containers/food/snacks/rogue/meat/fatty = 4,
+		/obj/item/reagent_containers/food/snacks/rogue/meat/pork_belly = 1,
+		/obj/item/reagent_containers/food/snacks/fat = 2,
+		/obj/item/natural/bundle/bone/full = 1,
+		/obj/item/alch/sinew = 3,
+		/obj/item/alch/bone = 1,
+		/obj/item/alch/viscera = 2,
+		/obj/item/reagent_containers/food/snacks/rogue/meat/ham = 2,
+	)
+	perfect_butcher_results = list(
+		/obj/item/reagent_containers/food/snacks/rogue/meat/fatty = 6,
+		/obj/item/reagent_containers/food/snacks/rogue/meat/pork_belly = 2,
+		/obj/item/reagent_containers/food/snacks/fat = 4,
+		/obj/item/natural/bundle/bone/full = 1,
+		/obj/item/alch/sinew = 4,
+		/obj/item/alch/bone = 1,
+		/obj/item/alch/viscera = 2,
+		/obj/item/reagent_containers/food/snacks/rogue/meat/ham = 2,
+	)
 	base_intents = list(/datum/intent/simple/headbutt)
 	health = 80
 	maxHealth = 80
@@ -153,7 +170,7 @@
 				qdel(M)
 				break
 
-/mob/living/simple_animal/hostile/retaliate/rogue/trufflepig/Initialize()
+/mob/living/simple_animal/hostile/retaliate/rogue/trufflepig/Initialize(mapload)
 	. = ..()
 	AddElement(/datum/element/ai_retaliate)
 	ai_controller.set_blackboard_key(BB_BASIC_FOODS, food_type)
@@ -211,7 +228,7 @@
 		return ..()
 
 
-//	........   Truffle Search   ................
+//	........	Truffle Search	................
 /mob/living/simple_animal/hostile/retaliate/rogue/trufflepig/proc/trufflesearch(turf/T, range = world.view)
 	var/list/found_stuff = list()
 	for(var/turf/open/floor/rogue/dirt/M in range(range, T))

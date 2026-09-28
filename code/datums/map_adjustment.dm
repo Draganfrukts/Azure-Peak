@@ -1,11 +1,11 @@
 //PORT OF https://github.com/BeeStation/BeeStation-Hornet/pull/11210
 /*
  *	[What does this do?]
- * 		It supports to make adjustment for each map
+ *		It supports to make adjustment for each map
  *
- * 	[Why don't you just make this with map json file?]
- * 		Some stuff is easy to mistake.
- * 		Being a part of DM files can make a failsafe.
+ *	[Why don't you just make this with map json file?]
+ *		Some stuff is easy to mistake.
+ *		Being a part of DM files can make a failsafe.
  *
 */
 /datum/map_adjustment
@@ -48,7 +48,7 @@
 		J?.tutorial = tutorial_adjust[job]
 	for(var/job as anything in species_adjust)
 		var/datum/job/J = SSjob.GetJobType(job)
-		J?.allowed_races = species_adjust[job]
+		J?.forbidden_races = species_adjust[job]
 	for(var/job as anything in sexes_adjust)
 		var/datum/job/J = SSjob.GetJobType(job)
 		J?.allowed_sexes = sexes_adjust[job]

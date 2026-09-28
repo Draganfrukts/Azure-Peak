@@ -1,11 +1,14 @@
 /area/rogue/indoors/cave
 	name = "The Undercoast" // Forgive me I need a better name but Northern Coastl Cave is too wordy
+	loot_budget = LOOT_BUDGET_UNDERCOAST
+	loot_pool_key = "undercoast"
 	icon_state = "cave"
 	ambientsounds = AMB_GENCAVE
 	ambientnight = AMB_GENCAVE
 	soundenv = 8
 	deathsight_message = "a dark cave where Abyssor's dream echoes"
 	detail_text = DETAIL_TEXT_UNDERCOAST
+	area_sniff_message = "You smell the sea and the damp, murky depths."
 
 /area/rogue/indoors/cave/underhamlet
 	name = "The Underhamlet"
@@ -31,8 +34,15 @@
 	name = "Southern Undercoast"
 	first_time_text = "Southern Undercoast"
 
+/area/rogue/indoors/cave/bog
+	icon_state = "bog"
+	name = "Flooded Caves"
+	first_time_text = "Flooded Caves"
+	deathsight_message = "dank, moldy caverns flowing with foul water from a rotten swamp"
+
 /area/rogue/under/cave/mazedungeon
 	name = "Temple of the Shattered God"
+	loot_budget = LOOT_BUDGET_TEMPLE_SHATTERED
 	icon_state = "under"
 	first_time_text = "TEMPLE OF THE SHATTERED GOD"
 	droning_sound = 'sound/music/area/dungeon2.ogg'
@@ -44,6 +54,7 @@
 
 /area/rogue/under/cave/orcdungeon
 	name = "Old Ruin"
+	loot_budget = LOOT_BUDGET_ORC_DUNGEON
 	icon_state = "under"
 	first_time_text = "OLD RUIN"
 	droning_sound = 'sound/music/area/dungeon.ogg'

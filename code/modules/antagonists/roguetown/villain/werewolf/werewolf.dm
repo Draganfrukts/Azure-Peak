@@ -1,16 +1,25 @@
+// Roundstart scaling (storyteller_scale_slots): scaling=2, min_players=25, default_cap=2.
+// The Guaranteed Antag presets raise the cap so werewolves scale with pop - 4 normally, 8 under the
+// aggressive No-Wretch preset (which also doubles the per-population step).
 /datum/antagonist/werewolf
 	name = "Verewolf"
 	roundend_category = "Werewolves"
 	antagpanel_category = "Werewolf"
 	job_rank = ROLE_WEREWOLF
+	storyteller_antag_flags = STORYTELLER_ANTAG_VILLAIN | STORYTELLER_ANTAG_ROUNDSTART
+	override_candidatereq = TRUE
+	storyteller_min_players = 25
+	storyteller_slot_scaling = 2
+	storyteller_slot_default_cap = 2
+	storyteller_maxcaps = list(/datum/storyteller/gamemode/guaranteed_antag = 2, /datum/storyteller/gamemode/guaranteed_antag/low_wretch = 3)
 	var/list/inherent_traits = list(
 		TRAIT_IGNORESLOWDOWN,
 		TRAIT_IGNOREDAMAGESLOWDOWN,
-		TRAIT_NOPAIN, 
-		TRAIT_NOPAINSTUN, 
-		TRAIT_CRITICAL_RESISTANCE, 
-		TRAIT_NOFALLDAMAGE1, 
-		TRAIT_KNEESTINGER_IMMUNITY, 
+		TRAIT_NOPAIN,
+		TRAIT_NOPAINSTUN,
+		TRAIT_CRITICAL_RESISTANCE,
+		TRAIT_NOFALLDAMAGE1,
+		TRAIT_KNEESTINGER_IMMUNITY,
 		TRAIT_SHOCKIMMUNE,
 		TRAIT_SILVER_WEAK,
 		TRAIT_STRENGTH_UNCAPPED,
@@ -33,7 +42,8 @@
 		TRAIT_LYCANRESILENCE,
 		TRAIT_CHUNKYFINGERS, //So they can no longer use weapons at all.
 		TRAIT_UNLYCKERABLE, //Literal archenemy
-		TRAIT_ZOMBIE_IMMUNE
+		TRAIT_ZOMBIE_IMMUNE,
+		TRAIT_UNCONVERTIBLE // major antag
 	)
 	confess_lines = list(
 		"THE BEAST INSIDE ME!",
@@ -46,17 +56,33 @@
 	var/transforming
 	var/untransforming
 	var/wolfname = "Verewolf"
+	has_tempo = TRUE
+	var/static/list/dendor_cries = list('sound/effects/werewolf_sounds/wscream1.ogg',
+								'sound/effects/werewolf_sounds/wscream2.ogg',
+								'sound/effects/werewolf_sounds/wscream3.ogg',
+								'sound/effects/werewolf_sounds/wscream4.ogg',
+								'sound/effects/werewolf_sounds/wscream5.ogg')
 
 /datum/antagonist/werewolf/lesser
 	name = "Lesser Verewolf"
 	increase_votepwr = FALSE
 
+/datum/antagonist/werewolf/noinfect
+	name = "Lowest Verewolf"
+	increase_votepwr = FALSE
+
+
 /datum/antagonist/werewolf/lesser/roundend_report()
+	return
+
+/datum/antagonist/werewolf/noinfect/roundend_report()
 	return
 
 /datum/antagonist/werewolf/examine_friendorfoe(datum/antagonist/examined_datum,mob/examiner,mob/examined)
 	if(istype(examined_datum, /datum/antagonist/werewolf/lesser))
 		return span_boldnotice("A young lupine kin.")
+	if(istype(examined_datum, /datum/antagonist/werewolf/noinfect))
+		return span_boldnotice("A young lupine kin. the curse is weak with them")
 	if(istype(examined_datum, /datum/antagonist/werewolf))
 		return span_boldnotice("An elder lupine kin.")
 	if(istype(examined_datum, /datum/antagonist/maniac))
@@ -79,7 +105,7 @@
 	owner.special_role = name
 	if(increase_votepwr)
 		forge_werewolf_objectives()
-	
+
 	wolfname = "[pick(GLOB.wolf_prefixes)] [pick(GLOB.wolf_suffixes)]"
 	return ..()
 
@@ -104,11 +130,29 @@
 
 /datum/antagonist/werewolf/greet()
 	to_chat(owner.current, span_userdanger("Since a bite long, long ago, Dendor's Madness has welled within me. Before the Moonlight, I will sate my hallowed Hunger."))
+	var/picked_sound = pick(dendor_cries)
+	owner.current.playsound_local(get_turf(owner.current), picked_sound, 100)
+	var/mob/living/carbon/human/H = owner.current
+	for(var/datum/charflaw/cf in H.charflaws)
+		H.charflaws.Remove(cf)
+		QDEL_NULL(cf)
 	return ..()
 
 /datum/antagonist/werewolf/lesser/greet()
-	// leave this empty so that lesser verevolf's dont get the greeting on bite.
-	// there is probably a better way to do this but this works until sm1 smarter inevitably rewrites WW.
+	// DO NOT call parent.
+	// lesser verevolfs should always be created by alpha bites, which have their own way of informing the user
+	// they are a werewolf. despite this, i still want to provide a new audio cue in the form of [THE CRY].
+	// remove it if it's obstructive. thx.
+	var/picked_sound = pick(dendor_cries)
+	owner.current.playsound_local(get_turf(owner.current), picked_sound, 100)
+
+/datum/antagonist/werewolf/noinfect/greet()
+	// DO NOT call parent.
+	// Noinfect verevolfs
+	// they are a werewolf. despite this, i still want to provide a new audio cue in the form of [THE CRY].
+	// remove it if it's obstructive. thx.
+	var/picked_sound = pick(dendor_cries)
+	owner.current.playsound_local(get_turf(owner.current), picked_sound, 100)
 
 /mob/living/carbon/human/proc/can_werewolf()
 	if(!mind)
@@ -122,7 +166,7 @@
 	//No cross species pollination!!!
 	if(mind.has_antag_datum(/datum/antagonist/gnoll))
 		return FALSE
-	if(HAS_TRAIT(src, TRAIT_SILVER_BLESSED))
+	if(HAS_TRAIT(src, TRAIT_SILVER_BLESSED) || HAS_TRAIT(src, TRAIT_IRONMAN) || HAS_TRAIT(src, TRAIT_ROTMAN) || HAS_TRAIT(src, TRAIT_NOWW)) // i don't know if other padding keeps them from turning but just to make sure lmao
 		return FALSE
 	return TRUE
 
@@ -141,6 +185,9 @@
 	if(!wolfy)
 		return
 	if(stat >= DEAD) //do shit the natural way i guess
+		return
+	if(HAS_TRAIT(src, TRAIT_BLACKBLOOD) && prob(40)) // since WWs are harder to infect, reducing this to just a fraction of the normal chance
+		to_chat(src, span_danger("I feel something churning within my body... No, not again...! Not this time!"))
 		return
 	to_chat(src, span_danger("I feel horrible... REALLY horrible..."))
 	mob_timers["puke"] = world.time
@@ -169,20 +216,28 @@
 
 /obj/item/clothing/suit/roguetown/armor/regenerating/skin/werewolf_skin
 	slot_flags = null
+	blocking_behavior = null
 	name = "verewolf's skin"
 	desc = "an impenetrable hide of dendor's fury"
 	icon_state = null
-	body_parts_covered = FULL_BODY
-	body_parts_inherent = FULL_BODY
+	body_parts_covered = CHEST
+	body_parts_inherent = CHEST
 	armor = ARMOR_WWOLF
-	prevent_crits = PREVENT_CRITS_ALL
 	blocksound = SOFTHIT
 	blade_dulling = DULLING_BASHCHOP
 	sewrepair = FALSE
-	max_integrity = 550
+	max_integrity = 750
 	item_flags = DROPDEL
-	repair_time = 15 SECONDS
+	repair_time = 20 SECONDS
 	interrupt_damount = 35
+
+/obj/item/clothing/suit/roguetown/armor/regenerating/skin/werewolf_skin/extremities
+	max_integrity = 550
+	slot_flags = ITEM_SLOT_ARMOR
+	repair_time = 20 SECONDS
+	body_parts_covered = FULL_BODY_NO_CHEST
+	body_parts_inherent = FULL_BODY_NO_CHEST
+	name = "verewolf's thin skin"
 
 /datum/intent/simple/werewolf
 	name = "claw"
@@ -191,7 +246,7 @@
 	attack_verb = list("claws", "mauls", "eviscerates")
 	animname = "chop"
 	hitsound = "genslash"
-	penfactor = 60
+	penfactor = PEN_HEAVY
 	candodge = TRUE
 	canparry = TRUE
 	miss_text = "slashes the air!"
@@ -204,7 +259,7 @@
 	icon_state = "insmash"
 	maxrange = 5
 	chargetime = 1
-	penfactor = 60
+	penfactor = PEN_HEAVY
 
 /obj/item/rogueweapon/werewolf_claw
 	name = "Verevolf Claw"
@@ -230,7 +285,8 @@
 	parrysound = list('sound/combat/parry/parrygen.ogg')
 	embedding = list("embedded_pain_multiplier" = 0, "embed_chance" = 0, "embedded_fall_chance" = 0)
 	item_flags = DROPDEL
-	special = /datum/special_intent/axe_swing	//Good pairing for area denial for WW's.
+	special = /datum/special_intent/axe_swing/graggarite	//Good pairing for area denial for WW's.
+	experimental_inhand = FALSE
 
 /obj/item/rogueweapon/werewolf_claw/right
 	icon_state = "claw_r"
@@ -238,6 +294,6 @@
 /obj/item/rogueweapon/werewolf_claw/left
 	icon_state = "claw_l"
 
-/obj/item/rogueweapon/werewolf_claw/Initialize()
+/obj/item/rogueweapon/werewolf_claw/Initialize(mapload)
 	. = ..()
 	ADD_TRAIT(src, TRAIT_NOEMBED, TRAIT_GENERIC)

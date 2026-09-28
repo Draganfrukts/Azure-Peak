@@ -2,12 +2,11 @@
 	name = "Forlorn Hope"
 	tutorial = "The Forlorn Hope - not to be confused with their extremist cousins - are an ever-growing mercenary company formed off the back of a Ranesheni slave revolt. Drawing from all walks of life, their ranks come from both purchased and liberated slaves. Coin is power, and power is the path to freedom."
 	allowed_sexes = list(MALE, FEMALE)
-	allowed_races = RACES_ALL_KINDS
 	outfit = /datum/outfit/job/roguetown/mercenary/forlorn
 	class_select_category = CLASS_CAT_RANESHENI
 	min_pq = 2
 	cmode_music = 'sound/music/combat_blackstar.ogg'
-	subclass_languages = list(/datum/language/celestial)
+	subclass_languages = list(/datum/language/raneshi)
 	category_tags = list(CTAG_MERCENARY)
 	traits_applied = list(TRAIT_MEDIUMARMOR)
 	subclass_stats = list(
@@ -103,16 +102,14 @@
 
 
 /datum/advclass/mercenary/forlorn/real
-	name = "Holy Order of the Forlorn Hope"	//Possible temporary name until I come up with something cooler or better.
-	tutorial = "The Holy Order of the Forlorn Hope - not to be confused with their less extremist cousins - was founded in the name of Noc and the banishment of the rot, it's riddled with the wounded, the veterans and the landless of the civil war and subsequent deadite horde that felled Pack Vakran. Take up the banner and reclaim your lyfe, fight in the name of the Ten, or use the pretense of faith and zealotry to make ends meet by any means necessary."
+	name = "Holy Order of the Black Book"
+	tutorial = "The Holy Order of the Black Book is a forlorn hope founded in the name of Noc and the banishment of the rot, made up of the destitute of the civil war and subsequent deadite horde that felled Pack Vakran in the marshes of Raneshen. Take up the banner and reclaim your lyfe, fight in the name of the Ten, or use the pretense of faith and zealotry to make ends meet by any means necessary."
 	allowed_sexes = list(MALE, FEMALE)
-	allowed_races = list(
-		/datum/species/lupian, 
-		/datum/species/vulpkanin)
+	forbidden_races = list(RACES_NOC)
 	outfit = /datum/outfit/job/roguetown/mercenary/forlorn/real
 	class_select_category = CLASS_CAT_RANESHENI
 	cmode_music = 'sound/music/combat_blackstar.ogg'
-	subclass_languages = list(/datum/language/celestial)
+	subclass_languages = list(/datum/language/celestial)	//There is no limit to the LARP
 	category_tags = list(CTAG_MERCENARY)
 	traits_applied = list(TRAIT_CRITICAL_RESISTANCE, TRAIT_NOPAINSTUN)
 	subclass_stats = list(
@@ -121,8 +118,8 @@
 		STATKEY_CON = 2
 	)
 	subclass_skills = list(
-		/datum/skill/misc/swimming = SKILL_LEVEL_APPRENTICE,
-		/datum/skill/misc/climbing = SKILL_LEVEL_APPRENTICE,
+		/datum/skill/misc/swimming = SKILL_LEVEL_JOURNEYMAN,
+		/datum/skill/misc/climbing = SKILL_LEVEL_JOURNEYMAN,
 		/datum/skill/misc/sneaking = SKILL_LEVEL_APPRENTICE,
 		/datum/skill/combat/bows = SKILL_LEVEL_NOVICE,
 		/datum/skill/combat/crossbows = SKILL_LEVEL_NOVICE,
@@ -163,10 +160,12 @@
 /datum/outfit/job/roguetown/mercenary/forlorn/choose_loadout(mob/living/carbon/human/H)
 	. = ..()
 	var/weapons = list(
-	"The Volf (Noccite Warhammer & Shield)",
-	"The Jackal (Forlorner Longsword & Hand Mace)",
-	"The Venard (Hand Mace & Crossbow)",
-	"The Coyote (Falchion & Bow)")
+	"The Volf (Noccite Warhammer & Shield)",	//For the footsoldier.
+	"The Jackal (Forlorner Longsword & Hand Mace) \[+1 STR -1 SPE\]",	//For the hedge knight.
+	"The Crested Volf (Noccite Halberd & Dagger) \[+2 CON -1 STR\]",	//For the militiaman.
+	"The Venard (Hand Mace & Crossbow)",	//For the sharpshooter.
+	"The Coyote (Falchion & Recurve Bow) \[+2 PER -1 STR\]",	//For the hunter.
+	)
 	var/weapon_choice = input(H, "Choose your expertise.", "UNITED THROUGH SUFFERING.") as anything in weapons
 	switch(weapon_choice)
 		if("The Volf (Noccite Warhammer & Shield)")
@@ -174,7 +173,7 @@
 			H.equip_to_slot_or_del(new /obj/item/rogueweapon/shield/heater, SLOT_BACK_L)
 			H.adjust_skillrank_up_to(/datum/skill/combat/maces, SKILL_LEVEL_EXPERT)
 			H.adjust_skillrank_up_to(/datum/skill/combat/shields = SKILL_LEVEL_EXPERT)
-		if("The Jackal (Forlorner Longsword)")
+		if("The Jackal (Forlorner Longsword & Hand Mace)")
 			H.equip_to_slot_or_del(new /obj/item/rogueweapon/pick/militia/steel, SLOT_BELT_L) // The steel war pick is genuinely such an incredible weapon that you don't deserve a shield on principle. You have two pick intents and a two-handed 50 AP stab.
 			H.adjust_skillrank_up_to(/datum/skill/combat/swords, SKILL_LEVEL_EXPERT)
 		if("The Venard (Hand Mace & Crossbow)")
